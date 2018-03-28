@@ -1,0 +1,8 @@
+language: go
+go: "1.10"
+
+install:
+  - make tools
+
+script:
+  - make test build-x
