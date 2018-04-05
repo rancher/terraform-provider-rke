@@ -1,0 +1,4 @@
+bin/
+test/
+/**/.terraform*
+/**/terraform.tfstate*

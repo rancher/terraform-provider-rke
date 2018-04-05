@@ -1,0 +1,83 @@
+# Gopkg.toml example
+#
+# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#   name = "github.com/x/y"
+#   version = "2.4.0"
+#
+# [prune]
+#   non-go = false
+#   go-tests = true
+#   unused-packages = true
+
+ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp/nomad*"]
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/hashicorp/go-getter"
+
+[[constraint]]
+  name = "github.com/hashicorp/terraform"
+  version = "0.11.5"
+
+[[constraint]]
+  name = "github.com/rancher/rke"
+  version = "0.1.5"
+
+[[override]]
+  name = "k8s.io/api"
+  version = "kubernetes-1.8.3"
+
+[[override]]
+  name = "k8s.io/apimachinery"
+  version = "kubernetes-1.8.3"
+
+[[override]]
+  name = "k8s.io/apiserver"
+  version = "kubernetes-1.8.3"
+
+[[override]]
+  name = "k8s.io/apiextensions-apiserver"
+  version = "kubernetes-1.8.3"
+
+[[override]]
+  name = "k8s.io/client-go"
+  version = "v5.0.0"
+
+[[override]]
+  name = "k8s.io/kubernetes"
+  version = "1.8.3"
+
+[[override]]
+  name = "github.com/docker/distribution"
+  revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
+
+[[override]]
+  name = "github.com/docker/docker"
+  revision = "ecf4125b85e0faa57d2739348e0d453c1d24d10c"
+
+[[override]]
+  name = "github.com/rancher/norman"
+  revision = "ff60298f31f081b06d198815b4c178a578664f7d"
+
+[[override]]
+  name = "github.com/rancher/types"
+  revision = "2e66000b6b101dbad981c350fd8216bd90ad562a"
+
+[prune]
+  go-tests = true
+  unused-packages = true
