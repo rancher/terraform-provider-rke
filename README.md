@@ -58,10 +58,43 @@ resource rke_cluster "cluster" {
 * default k8s version: `v1.10.1-rancher1`
 * default network plugin: `canal`
 
+#### With Kubernetes provider 
+
+You can view an example of using RKE provider and [Kubernetes provider](https://www.terraform.io/docs/providers/kubernetes/index.html) together, [here](examples/with_kubernetes_provider/example.tf).
+
+```hcl
+resource rke_cluster "cluster" {
+  nodes = [
+    {
+      address = "1.2.3.4"
+      user    = "ubuntu"
+      role    = ["controlplane", "worker", "etcd"]
+      ssh_key = "${file("~/.ssh/id_rsa")}"
+    },
+  ]
+}
+
+provider "kubernetes" {
+  host     = "${rke_cluster.cluster.api_server_url}"
+  username = "${rke_cluster.cluster.kube_admin_user}"
+
+  client_certificate     = "${rke_cluster.cluster.client_cert}"
+  client_key             = "${rke_cluster.cluster.client_key}"
+  cluster_ca_certificate = "${rke_cluster.cluster.ca_crt}"
+}
+
+resource "kubernetes_namespace" "example" {
+  metadata {
+    name = "terraform-example-namespace"
+  }
+}
+```
+
 #### Deploying Rancher 2.0 using terraform-provider-rke
 
-You can view deploying Rancher 2.0 example of tffile
- - [Use own ssl certificates](examples/rancher_server_minimal/example.tf).
+You can view examples to deploying Rancher 2.0
+ 
+ - [Use own SSL certificates](examples/rancher_server_minimal/example.tf)
  - [Use SSL-passthrough](examples/rancher_server_ssl_passthrough/example.tf)
 
 #### Full example
