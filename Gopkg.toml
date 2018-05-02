@@ -32,11 +32,11 @@ ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp
 
 [[constraint]]
   name = "github.com/hashicorp/terraform"
-  version = "0.11.5"
+  version = "0.11.7"
 
 [[constraint]]
   name = "github.com/rancher/rke"
-  version = "0.1.5"
+  version = "0.1.6"
 
 [[override]]
   name = "k8s.io/api"
@@ -64,7 +64,7 @@ ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp
 
 [[override]]
   name = "github.com/docker/distribution"
-  revision = "edc3ab29cdff8694dd6feb85cfeb4b5f1b38ed9c"
+  revision = "3800056b8832cf6075e78b282ac010131d8687bc"
 
 [[override]]
   name = "github.com/docker/docker"
@@ -76,7 +76,7 @@ ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp
 
 [[override]]
   name = "github.com/rancher/types"
-  revision = "2e66000b6b101dbad981c350fd8216bd90ad562a"
+  revision = "71878a13b6cb20eac2f160c8927bc570119618fb"
 
 [prune]
   go-tests = true
