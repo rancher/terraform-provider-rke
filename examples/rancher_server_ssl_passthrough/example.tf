@@ -9,19 +9,27 @@ resource rke_cluster "cluster" {
   ]
 
   addons = <<EOL
+---
 kind: Namespace
 apiVersion: v1
 metadata:
   name: cattle-system
 ---
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: cattle-admin
+  namespace: cattle-system
+---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: cattle-crb
+  namespace: cattle-system
 subjects:
-- kind: User
-  name: system:serviceaccount:cattle-system:default
-  apiGroup: rbac.authorization.k8s.io
+- kind: ServiceAccount
+  name: cattle-admin
+  namespace: cattle-system
 roleRef:
   kind: ClusterRole
   name: cluster-admin
@@ -52,16 +60,19 @@ kind: Ingress
 metadata:
   namespace: cattle-system
   name: cattle-ingress-http
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"   # Max time in seconds for ws to remain shell window open
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"   # Max time in seconds for ws to remain shell window open
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"      # Enable ssl-passthrough to backend.
 spec:
   rules:
-  - http:
+  - host: <FQDN>  # FQDN to access cattle server
+    http:
       paths:
-      -   backend:
-            serviceName: cattle-service
-            servicePort: 80
-      -   backend:
-            serviceName: cattle-service
-            servicePort: 443
+      - backend:
+          serviceName: cattle-service
+          servicePort: 443
 ---
 kind: Deployment
 apiVersion: extensions/v1beta1
@@ -75,8 +86,9 @@ spec:
       labels:
         app: cattle
     spec:
+      serviceAccountName: cattle-admin
       containers:
-      - image: rancher/server:master
+      - image: rancher/rancher:master
         imagePullPolicy: Always
         name: cattle-server
         ports:
@@ -85,11 +97,6 @@ spec:
         - containerPort: 443
           protocol: TCP
 EOL
-
-  // addons can be specified by URL or path
-  #addons_include = [
-  #  "https://github.com/yamamoto-febc/terraform-provider-rke/blob/master/examples/rancher_server/rancher-server.yml",
-  #]
 }
 
 ###############################################################################

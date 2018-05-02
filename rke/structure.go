@@ -9,6 +9,7 @@ import (
 
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/hosts"
+	"github.com/rancher/rke/pki"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 )
 
@@ -227,6 +228,13 @@ func setMiscConfigFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d re
 		return err
 	}
 	rkeConfig.ClusterName = clusterName
+
+	var prefixPath string
+	if prefixPath, err = parseResourcePrefixPath(d); err != nil {
+		return err
+	}
+	rkeConfig.PrefixPath = prefixPath
+
 	return nil
 }
 
@@ -674,11 +682,6 @@ func parseResourceSystemImages(d resourceData) (*v3.RKESystemImages, error) {
 				"pod_infra_container":         &config.PodInfraContainer,
 				"ingress":                     &config.Ingress,
 				"ingress_backend":             &config.IngressBackend,
-				"dashboard":                   &config.Dashboard,
-				"heapster":                    &config.Heapster,
-				"grafana":                     &config.Grafana,
-				"influxdb":                    &config.Influxdb,
-				"tiller":                      &config.Tiller,
 			}
 
 			for key, dest := range valueMapping {
@@ -804,6 +807,16 @@ func parseResourceIngress(d resourceData) (*v3.IngressConfig, error) {
 				}
 				config.NodeSelector = options
 			}
+			if v, ok := rawMap["extra_args"]; ok {
+				extraArgs := map[string]string{}
+				args := v.(map[string]interface{})
+				for k, v := range args {
+					if v, ok := v.(string); ok {
+						extraArgs[k] = v
+					}
+				}
+				config.ExtraArgs = extraArgs
+			}
 
 			return config, nil
 		}
@@ -844,6 +857,13 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 		}
 	}
 	return nil, nil
+}
+
+func parseResourcePrefixPath(d resourceData) (string, error) {
+	if v, ok := d.GetOk("prefix_path"); ok {
+		return v.(string), nil
+	}
+	return "", nil
 }
 
 func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
@@ -985,11 +1005,6 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"pod_infra_container":         cluster.SystemImages.PodInfraContainer,
 			"ingress":                     cluster.SystemImages.Ingress,
 			"ingress_backend":             cluster.SystemImages.IngressBackend,
-			"dashboard":                   cluster.SystemImages.Dashboard,
-			"heapster":                    cluster.SystemImages.Heapster,
-			"grafana":                     cluster.SystemImages.Grafana,
-			"influxdb":                    cluster.SystemImages.Influxdb,
-			"tiller":                      cluster.SystemImages.Tiller,
 		},
 	})
 
@@ -1021,10 +1036,18 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"provider":      cluster.Ingress.Provider,
 			"options":       cluster.Ingress.Options,
 			"node_selector": cluster.Ingress.NodeSelector,
+			"extra_args":    cluster.Ingress.ExtraArgs,
 		},
 	})
 
-	d.Set("cluster_name", cluster.ClusterName) // nolint
+	d.Set("cluster_name", cluster.ClusterName)      // nolint
+	d.Set("kube_admin_user", pki.KubeAdminCertName) // nolint
+
+	var apiServerURL = ""
+	if len(cluster.ControlPlaneHosts) > 0 {
+		apiServerURL = fmt.Sprintf("https://" + cluster.ControlPlaneHosts[0].Address + ":6443")
+	}
+	d.Set("api_server_url", apiServerURL) // nolint
 
 	d.Set("cloud_provider", []interface{}{ // nolint
 		map[string]interface{}{
@@ -1032,6 +1055,8 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"cloud_config": cluster.CloudProvider.CloudConfig,
 		},
 	})
+
+	d.Set("prefix_path", cluster.PrefixPath) // nolint
 
 	// computed values
 	certs := []interface{}{}

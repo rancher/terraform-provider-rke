@@ -9,7 +9,7 @@ Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kube
 #### Compatible Versions
 
 - Terraform: v0.11+
-- RKE: v1.5 (Kubernetes v1.8)
+- RKE: v1.6 (Kubernetes 1.8, 1.9 and 1.10)
 
 ## Installation
 
@@ -24,7 +24,7 @@ It is same as the [requirements of RKE](https://github.com/rancher/rke/blob/mast
 
 > #### Requirements of RKE
 >
-> - Docker versions 1.12.6, 1.13.1, or 17.03 should be installed for Kubernetes 1.8.
+> - Docker versions `1.11.2` up to `1.13.1` and `17.03.x` are validated for Kubernetes versions 1.8, 1.9 and 1.10
 > - OpenSSH 7.0+ must be installed on each node for stream local forwarding to work.
 > - The SSH user used for node access must be a member of the `docker` group:
 > - Ports 6443, 2379, and 2380 should be opened between cluster nodes.
@@ -55,10 +55,14 @@ resource rke_cluster "cluster" {
 //}
 ```
 
+* default k8s version: `v1.10.1-rancher1`
+* default network plugin: `canal`
+
 #### Deploying Rancher 2.0 using terraform-provider-rke
 
-You can view deploying Rancher 2.0 example of tffile, [here](examples/rancher_server/example.tf).
-
+You can view deploying Rancher 2.0 example of tffile
+ - [Use own ssl certificates](examples/rancher_server_minimal/example.tf).
+ - [Use SSL-passthrough](examples/rancher_server_ssl_passthrough/example.tf)
 
 #### Full example
 

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/go-getter/helper/url"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -445,7 +446,7 @@ func resourceRKECluster() *schema.Resource {
 				MaxItems:    1,
 				Optional:    true,
 				Computed:    true,
-				Description: "List of images used internally for proxy, cert downlaod ,kubedns and more",
+				Description: "List of images used internally for proxy, cert download ,kubedns and more",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"etcd": {
@@ -568,31 +569,6 @@ func resourceRKECluster() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
-						"dashboard": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"heapster": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"grafana": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"influxdb": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"tiller": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
 					},
 				},
 			},
@@ -642,7 +618,7 @@ func resourceRKECluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Kubernetes version to use (if kubernetes image is specifed, image version takes precedence)",
+				Description: "Kubernetes version to use (if kubernetes image is specified, image version takes precedence)",
 			},
 			"private_registries": {
 				Type:        schema.TypeList,
@@ -699,6 +675,12 @@ func resourceRKECluster() *schema.Resource {
 							Computed:    true,
 							Description: "Ingress controller used in the cluster",
 						},
+						"extra_args": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Computed:    true,
+							Description: "Ingress controller extra arguments",
+						},
 					},
 				},
 			},
@@ -730,6 +712,12 @@ func resourceRKECluster() *schema.Resource {
 						},
 					},
 				},
+			},
+			"prefix_path": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Kubernetes directory path",
 			},
 			"ca_crt": {
 				Type:      schema.TypeString,
@@ -810,6 +798,14 @@ func resourceRKECluster() *schema.Resource {
 						},
 					},
 				},
+			},
+			"kube_admin_user": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"api_server_url": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"cluster_domain": {
 				Type:     schema.TypeString,
@@ -1056,8 +1052,25 @@ func realClusterUp( // nolint: gocyclo
 	}
 	caCrt = string(cert.EncodeCertPEM(kubeCluster.Certificates[pki.CACertName].Certificate))
 
+	if err := checkAllIncluded(kubeCluster); err != nil {
+		return APIURL, caCrt, clientCert, clientKey, err
+	}
+
 	log.Infof(ctx, "Finished building Kubernetes cluster successfully")
 	return APIURL, caCrt, clientCert, clientKey, nil
+}
+
+func checkAllIncluded(cluster *cluster.Cluster) error {
+	if len(cluster.InactiveHosts) == 0 {
+		return nil
+	}
+
+	var names []string
+	for _, host := range cluster.InactiveHosts {
+		names = append(names, host.Address)
+	}
+
+	return fmt.Errorf("Provisioning incomplete, host(s) [%s] skipped because they could not be contacted", strings.Join(names, ","))
 }
 
 func realClusterRemove(

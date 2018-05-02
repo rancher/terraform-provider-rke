@@ -626,11 +626,6 @@ func TestParseResourceSystemImages(t *testing.T) {
 				PodInfraContainer:         "pod_infra_container",
 				Ingress:                   "ingress",
 				IngressBackend:            "ingress_backend",
-				Dashboard:                 "dashboard",
-				Heapster:                  "heapster",
-				Grafana:                   "grafana",
-				Influxdb:                  "influxdb",
-				Tiller:                    "tiller",
 			},
 		},
 	}
@@ -772,6 +767,10 @@ func TestParseResourceIngress(t *testing.T) {
 						"node_selector": map[string]interface{}{
 							"role": "worker",
 						},
+						"extra_args": map[string]interface{}{
+							"foo": "foo",
+							"bar": "bar",
+						},
 					},
 				},
 			},
@@ -783,6 +782,10 @@ func TestParseResourceIngress(t *testing.T) {
 				},
 				NodeSelector: map[string]string{
 					"role": "worker",
+				},
+				ExtraArgs: map[string]string{
+					"foo": "foo",
+					"bar": "bar",
 				},
 			},
 		},
@@ -848,6 +851,13 @@ func TestParseResourceCloudProvider(t *testing.T) {
 			assert.EqualValues(t, testcase.expectConfig, config)
 		})
 	}
+}
+
+func TestParseResourcePrefixPath(t *testing.T) {
+	d := &dummyResourceData{values: map[string]interface{}{"prefix_path": "prefix_path"}}
+	prefixPath, err := parseResourcePrefixPath(d)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "prefix_path", prefixPath)
 }
 
 func TestClusterToState(t *testing.T) {
@@ -1003,11 +1013,6 @@ func TestClusterToState(t *testing.T) {
 						PodInfraContainer:         "pod_infra_container",
 						Ingress:                   "ingress",
 						IngressBackend:            "ingress_backend",
-						Dashboard:                 "dashboard",
-						Heapster:                  "heapster",
-						Grafana:                   "grafana",
-						Influxdb:                  "influxdb",
-						Tiller:                    "tiller",
 					},
 					SSHKeyPath:   "ssh_key_path",
 					SSHAgentAuth: true,
@@ -1041,6 +1046,10 @@ func TestClusterToState(t *testing.T) {
 						NodeSelector: map[string]string{
 							"role": "worker",
 						},
+						ExtraArgs: map[string]string{
+							"foo": "foo",
+							"bar": "bar",
+						},
 					},
 					ClusterName: "example",
 					CloudProvider: v3.CloudProvider{
@@ -1051,6 +1060,7 @@ func TestClusterToState(t *testing.T) {
 							"zone":   "your-zone",
 						},
 					},
+					PrefixPath: "prefix_path",
 				},
 				EtcdHosts: []*hosts.Host{
 					{
@@ -1256,11 +1266,6 @@ func TestClusterToState(t *testing.T) {
 						"pod_infra_container":         "pod_infra_container",
 						"ingress":                     "ingress",
 						"ingress_backend":             "ingress_backend",
-						"dashboard":                   "dashboard",
-						"heapster":                    "heapster",
-						"grafana":                     "grafana",
-						"influxdb":                    "influxdb",
-						"tiller":                      "tiller",
 					},
 				},
 				"ssh_key_path":   "ssh_key_path",
@@ -1298,9 +1303,15 @@ func TestClusterToState(t *testing.T) {
 						"node_selector": map[string]string{
 							"role": "worker",
 						},
+						"extra_args": map[string]string{
+							"foo": "foo",
+							"bar": "bar",
+						},
 					},
 				},
-				"cluster_name": "example",
+				"cluster_name":    "example",
+				"kube_admin_user": "kube-admin",
+				"api_server_url":  "https://192.2.0.1:6443",
 				"cloud_provider": []interface{}{
 					map[string]interface{}{
 						"name": "sakuracloud",
@@ -1311,6 +1322,7 @@ func TestClusterToState(t *testing.T) {
 						},
 					},
 				},
+				"prefix_path": "prefix_path",
 				"certificates": []interface{}{
 					map[string]interface{}{
 						"id":              "example",

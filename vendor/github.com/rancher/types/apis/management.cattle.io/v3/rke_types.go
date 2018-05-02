@@ -33,6 +33,8 @@ type RancherKubernetesEngineConfig struct {
 	ClusterName string `yaml:"cluster_name" json:"clusterName,omitempty"`
 	// Cloud Provider options
 	CloudProvider CloudProvider `yaml:"cloud_provider" json:"cloudProvider,omitempty"`
+	// kubernetes directory path
+	PrefixPath string `yaml:"prefix_path" json:"prefixPath,omitempty"`
 }
 
 type PrivateRegistry struct {
@@ -93,16 +95,6 @@ type RKESystemImages struct {
 	Ingress string `yaml:"ingress" json:"ingress,omitempty"`
 	// Ingress Controller Backend image
 	IngressBackend string `yaml:"ingress_backend" json:"ingressBackend,omitempty"`
-	// Dashboard image
-	Dashboard string `yaml:"dashboard" json:"dashboard,omitempty"`
-	// Heapster addon image
-	Heapster string `yaml:"heapster" json:"heapster,omitempty"`
-	// Grafana image for heapster addon
-	Grafana string `yaml:"grafana" json:"grafana,omitempty"`
-	// Influxdb image for heapster addon
-	Influxdb string `yaml:"influxdb" json:"influxdb,omitempty"`
-	// Tiller addon image
-	Tiller string `yaml:"tiller" json:"tiller,omitempty"`
 }
 
 type RKEConfigNode struct {
@@ -248,6 +240,8 @@ type IngressConfig struct {
 	Options map[string]string `yaml:"options" json:"options,omitempty"`
 	// NodeSelector key pair
 	NodeSelector map[string]string `yaml:"node_selector" json:"nodeSelector,omitempty"`
+	// Ingress controller extra arguments
+	ExtraArgs map[string]string `yaml:"extra_args" json:"extraArgs,omitempty"`
 }
 
 type RKEPlan struct {
@@ -397,13 +391,27 @@ type AWSCloudProvider struct {
 
 type CalicoNetworkProvider struct {
 	// Cloud provider type used with calico
-	CloudProvider string
+	CloudProvider string `json:"cloudProvider"`
 }
 
 type FlannelNetworkProvider struct {
 	// Alternate cloud interface for flannel
-	Iface string
+	Iface string `json:"iface"`
 }
 
 type CanalNetworkProvider struct {
+	FlannelNetworkProvider `yaml:",inline" json:",inline"`
+}
+
+type KubernetesServicesOptions struct {
+	// Additional options passed to KubeAPI
+	KubeAPI map[string]string `json:"kubeapi"`
+	// Additional options passed to Kubelet
+	Kubelet map[string]string `json:"kubelet"`
+	// Additional options passed to Kubeproxy
+	Kubeproxy map[string]string `json:"kubeproxy"`
+	// Additional options passed to KubeController
+	KubeController map[string]string `json:"kubeController"`
+	// Additional options passed to Scheduler
+	Scheduler map[string]string `json:"scheduler"`
 }
