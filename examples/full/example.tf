@@ -106,6 +106,15 @@ EOL
   #  }
   #}
 
+  # To specify flannel interface for canal plugin, you can use the 'canal_iface' option:
+  #network {
+  #  plugin = "canal"
+  #  options = {
+  #    canal_iface = "eth1"
+  #  }
+  #}
+
+
   ################################################
   # Authentication
   ################################################
@@ -149,11 +158,11 @@ EOL
   ################################################
   system_images {
     etcd                        = "rancher/etcd:v3.0.17"
-    kubernetes                  = "rancher/k8s:v1.8.9-rancher1-1"
-    alpine                      = "alpine:latest"
-    nginx_proxy                 = "rancher/rke-nginx-proxy:v0.1.1"
-    cert_downloader             = "rancher/rke-cert-deployer:v0.1.1"
-    kubernetes_services_sidecar = "rancher/rke-service-sidekick:v0.1.0"
+    kubernetes                  = "rancher/hyperkube:v1.10.1"
+    alpine                      = "rancher/rke-tools:v0.1.4"
+    nginx_proxy                 = "rancher/rke-tools:v0.1.4"
+    cert_downloader             = "rancher/rke-tools:v0.1.4"
+    kubernetes_services_sidecar = "rancher/rke-tools:v0.1.4"
     kube_dns                    = "rancher/k8s-dns-kube-dns-amd64:1.14.5"
     dnsmasq                     = "rancher/k8s-dns-dnsmasq-nanny-amd64:1.14.5"
     kube_dns_sidecar            = "rancher/k8s-dns-sidecar-amd64:1.14.5"
@@ -182,11 +191,13 @@ EOL
     # influxdb                    = ""
     # tiller                      = ""
   }
+
   ################################################
   # SSH configuration
   ################################################
   ssh_key_path = "~/.ssh/test"
   ssh_agent_auth = false
+
   ################################################
   # Authorization
   ################################################
@@ -196,6 +207,7 @@ EOL
   authorization {
     mode = "rbac"
   }
+
   ################################################
   # Versions
   ################################################
@@ -203,7 +215,8 @@ EOL
   ignore_docker_version = false //
   # Kubernetes version to use
   # (if kubernetes image is specifed, image version takes precedence)
-  kubernetes_version = "v1.8.9-rancher1-1"
+  kubernetes_version = "v1.10.1"
+
   ################################################
   # Private Registries
   ################################################
@@ -219,6 +232,7 @@ EOL
     user     = "Username"
     password = "password1"
   }
+
   ################################################
   # Ingress
   ################################################
@@ -230,6 +244,9 @@ EOL
     # To enable ingress on specific nodes, use the node_selector, eg:
     #node_selector = {
     #  app = "ingress"
+    #}
+    #extra_args = {
+    #  enable-ssl-passthrough = ""
     #}
   }
 
@@ -259,6 +276,9 @@ EOL
     #  securityGroupName = "rke-nsg"
     #}
   }
+
+  # Kubernetes directory path
+  # prefix_path = "/"
 }
 
 ###############################################################################
