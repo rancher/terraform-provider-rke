@@ -767,6 +767,10 @@ func TestParseResourceIngress(t *testing.T) {
 						"node_selector": map[string]interface{}{
 							"role": "worker",
 						},
+						"extra_args": map[string]interface{}{
+							"foo": "foo",
+							"bar": "bar",
+						},
 					},
 				},
 			},
@@ -778,6 +782,10 @@ func TestParseResourceIngress(t *testing.T) {
 				},
 				NodeSelector: map[string]string{
 					"role": "worker",
+				},
+				ExtraArgs: map[string]string{
+					"foo": "foo",
+					"bar": "bar",
 				},
 			},
 		},
@@ -1038,6 +1046,10 @@ func TestClusterToState(t *testing.T) {
 						NodeSelector: map[string]string{
 							"role": "worker",
 						},
+						ExtraArgs: map[string]string {
+							"foo": "foo",
+							"bar": "bar",
+						},
 					},
 					ClusterName: "example",
 					CloudProvider: v3.CloudProvider{
@@ -1290,6 +1302,10 @@ func TestClusterToState(t *testing.T) {
 						},
 						"node_selector": map[string]string{
 							"role": "worker",
+						},
+						"extra_args": map[string]string {
+							"foo": "foo",
+							"bar": "bar",
 						},
 					},
 				},

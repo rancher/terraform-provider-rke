@@ -674,6 +674,12 @@ func resourceRKECluster() *schema.Resource {
 							Computed:    true,
 							Description: "Ingress controller used in the cluster",
 						},
+						"extra_args": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Computed:    true,
+							Description: "Ingress controller extra arguments",
+						},
 					},
 				},
 			},

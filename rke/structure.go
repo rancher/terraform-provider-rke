@@ -806,6 +806,16 @@ func parseResourceIngress(d resourceData) (*v3.IngressConfig, error) {
 				}
 				config.NodeSelector = options
 			}
+			if v, ok := rawMap["extra_args"]; ok {
+				extraArgs := map[string]string{}
+				args := v.(map[string]interface{})
+				for k, v := range args {
+					if v, ok := v.(string); ok {
+						extraArgs[k] = v
+					}
+				}
+				config.ExtraArgs = extraArgs
+			}
 
 			return config, nil
 		}
@@ -1025,6 +1035,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"provider":      cluster.Ingress.Provider,
 			"options":       cluster.Ingress.Options,
 			"node_selector": cluster.Ingress.NodeSelector,
+			"extra_args": cluster.Ingress.ExtraArgs,
 		},
 	})
 
