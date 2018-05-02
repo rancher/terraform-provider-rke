@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/hashicorp/go-getter/helper/url"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -1043,8 +1044,25 @@ func realClusterUp( // nolint: gocyclo
 	}
 	caCrt = string(cert.EncodeCertPEM(kubeCluster.Certificates[pki.CACertName].Certificate))
 
+	if err := checkAllIncluded(kubeCluster); err != nil {
+		return APIURL, caCrt, clientCert, clientKey, err
+	}
+
 	log.Infof(ctx, "Finished building Kubernetes cluster successfully")
 	return APIURL, caCrt, clientCert, clientKey, nil
+}
+
+func checkAllIncluded(cluster *cluster.Cluster) error {
+	if len(cluster.InactiveHosts) == 0 {
+		return nil
+	}
+
+	var names []string
+	for _, host := range cluster.InactiveHosts {
+		names = append(names, host.Address)
+	}
+
+	return fmt.Errorf("Provisioning incomplete, host(s) [%s] skipped because they could not be contacted", strings.Join(names, ","))
 }
 
 func realClusterRemove(
