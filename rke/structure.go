@@ -227,6 +227,13 @@ func setMiscConfigFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d re
 		return err
 	}
 	rkeConfig.ClusterName = clusterName
+
+	var prefixPath string
+	if prefixPath, err = parseResourcePrefixPath(d); err != nil {
+		return err
+	}
+	rkeConfig.PrefixPath = prefixPath
+
 	return nil
 }
 
@@ -674,11 +681,6 @@ func parseResourceSystemImages(d resourceData) (*v3.RKESystemImages, error) {
 				"pod_infra_container":         &config.PodInfraContainer,
 				"ingress":                     &config.Ingress,
 				"ingress_backend":             &config.IngressBackend,
-				"dashboard":                   &config.Dashboard,
-				"heapster":                    &config.Heapster,
-				"grafana":                     &config.Grafana,
-				"influxdb":                    &config.Influxdb,
-				"tiller":                      &config.Tiller,
 			}
 
 			for key, dest := range valueMapping {
@@ -846,6 +848,13 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 	return nil, nil
 }
 
+func parseResourcePrefixPath(d resourceData) (string, error) {
+	if v, ok := d.GetOk("prefix_path"); ok {
+		return v.(string), nil
+	}
+	return "", nil
+}
+
 func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 
 	if cluster == nil {
@@ -985,11 +994,6 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"pod_infra_container":         cluster.SystemImages.PodInfraContainer,
 			"ingress":                     cluster.SystemImages.Ingress,
 			"ingress_backend":             cluster.SystemImages.IngressBackend,
-			"dashboard":                   cluster.SystemImages.Dashboard,
-			"heapster":                    cluster.SystemImages.Heapster,
-			"grafana":                     cluster.SystemImages.Grafana,
-			"influxdb":                    cluster.SystemImages.Influxdb,
-			"tiller":                      cluster.SystemImages.Tiller,
 		},
 	})
 
@@ -1032,6 +1036,8 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"cloud_config": cluster.CloudProvider.CloudConfig,
 		},
 	})
+
+	d.Set("prefix_path", cluster.PrefixPath) // nolint
 
 	// computed values
 	certs := []interface{}{}

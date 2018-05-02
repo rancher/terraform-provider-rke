@@ -568,31 +568,6 @@ func resourceRKECluster() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
-						"dashboard": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"heapster": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"grafana": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"influxdb": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
-						"tiller": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
-						},
 					},
 				},
 			},
@@ -730,6 +705,12 @@ func resourceRKECluster() *schema.Resource {
 						},
 					},
 				},
+			},
+			"prefix_path": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Kubernetes directory path",
 			},
 			"ca_crt": {
 				Type:      schema.TypeString,

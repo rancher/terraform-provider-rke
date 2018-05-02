@@ -626,11 +626,6 @@ func TestParseResourceSystemImages(t *testing.T) {
 				PodInfraContainer:         "pod_infra_container",
 				Ingress:                   "ingress",
 				IngressBackend:            "ingress_backend",
-				Dashboard:                 "dashboard",
-				Heapster:                  "heapster",
-				Grafana:                   "grafana",
-				Influxdb:                  "influxdb",
-				Tiller:                    "tiller",
 			},
 		},
 	}
@@ -850,6 +845,13 @@ func TestParseResourceCloudProvider(t *testing.T) {
 	}
 }
 
+func TestParseResourcePrefixPath(t *testing.T) {
+	d := &dummyResourceData{values: map[string]interface{}{"prefix_path": "prefix_path"}}
+	prefixPath , err := parseResourcePrefixPath(d)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "prefix_path", prefixPath)
+}
+
 func TestClusterToState(t *testing.T) {
 
 	testcases := []struct {
@@ -1003,11 +1005,6 @@ func TestClusterToState(t *testing.T) {
 						PodInfraContainer:         "pod_infra_container",
 						Ingress:                   "ingress",
 						IngressBackend:            "ingress_backend",
-						Dashboard:                 "dashboard",
-						Heapster:                  "heapster",
-						Grafana:                   "grafana",
-						Influxdb:                  "influxdb",
-						Tiller:                    "tiller",
 					},
 					SSHKeyPath:   "ssh_key_path",
 					SSHAgentAuth: true,
@@ -1051,6 +1048,7 @@ func TestClusterToState(t *testing.T) {
 							"zone":   "your-zone",
 						},
 					},
+					PrefixPath: "prefix_path",
 				},
 				EtcdHosts: []*hosts.Host{
 					{
@@ -1256,11 +1254,6 @@ func TestClusterToState(t *testing.T) {
 						"pod_infra_container":         "pod_infra_container",
 						"ingress":                     "ingress",
 						"ingress_backend":             "ingress_backend",
-						"dashboard":                   "dashboard",
-						"heapster":                    "heapster",
-						"grafana":                     "grafana",
-						"influxdb":                    "influxdb",
-						"tiller":                      "tiller",
 					},
 				},
 				"ssh_key_path":   "ssh_key_path",
@@ -1311,6 +1304,7 @@ func TestClusterToState(t *testing.T) {
 						},
 					},
 				},
+				"prefix_path": "prefix_path",
 				"certificates": []interface{}{
 					map[string]interface{}{
 						"id":              "example",
