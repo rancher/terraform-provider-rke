@@ -9,6 +9,7 @@ import (
 
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/hosts"
+	"github.com/rancher/rke/pki"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 )
 
@@ -1035,11 +1036,18 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"provider":      cluster.Ingress.Provider,
 			"options":       cluster.Ingress.Options,
 			"node_selector": cluster.Ingress.NodeSelector,
-			"extra_args": cluster.Ingress.ExtraArgs,
+			"extra_args":    cluster.Ingress.ExtraArgs,
 		},
 	})
 
-	d.Set("cluster_name", cluster.ClusterName) // nolint
+	d.Set("cluster_name", cluster.ClusterName)      // nolint
+	d.Set("kube_admin_user", pki.KubeAdminCertName) // nolint
+
+	var apiServerURL = ""
+	if len(cluster.ControlPlaneHosts) > 0 {
+		apiServerURL = fmt.Sprintf("https://" + cluster.ControlPlaneHosts[0].Address + ":6443")
+	}
+	d.Set("api_server_url", apiServerURL) // nolint
 
 	d.Set("cloud_provider", []interface{}{ // nolint
 		map[string]interface{}{

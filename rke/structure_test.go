@@ -855,7 +855,7 @@ func TestParseResourceCloudProvider(t *testing.T) {
 
 func TestParseResourcePrefixPath(t *testing.T) {
 	d := &dummyResourceData{values: map[string]interface{}{"prefix_path": "prefix_path"}}
-	prefixPath , err := parseResourcePrefixPath(d)
+	prefixPath, err := parseResourcePrefixPath(d)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "prefix_path", prefixPath)
 }
@@ -1046,7 +1046,7 @@ func TestClusterToState(t *testing.T) {
 						NodeSelector: map[string]string{
 							"role": "worker",
 						},
-						ExtraArgs: map[string]string {
+						ExtraArgs: map[string]string{
 							"foo": "foo",
 							"bar": "bar",
 						},
@@ -1303,13 +1303,15 @@ func TestClusterToState(t *testing.T) {
 						"node_selector": map[string]string{
 							"role": "worker",
 						},
-						"extra_args": map[string]string {
+						"extra_args": map[string]string{
 							"foo": "foo",
 							"bar": "bar",
 						},
 					},
 				},
-				"cluster_name": "example",
+				"cluster_name":    "example",
+				"kube_admin_user": "kube-admin",
+				"api_server_url":  "https://192.2.0.1:6443",
 				"cloud_provider": []interface{}{
 					map[string]interface{}{
 						"name": "sakuracloud",

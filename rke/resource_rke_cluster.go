@@ -446,7 +446,7 @@ func resourceRKECluster() *schema.Resource {
 				MaxItems:    1,
 				Optional:    true,
 				Computed:    true,
-				Description: "List of images used internally for proxy, cert downlaod ,kubedns and more",
+				Description: "List of images used internally for proxy, cert download ,kubedns and more",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"etcd": {
@@ -618,7 +618,7 @@ func resourceRKECluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Kubernetes version to use (if kubernetes image is specifed, image version takes precedence)",
+				Description: "Kubernetes version to use (if kubernetes image is specified, image version takes precedence)",
 			},
 			"private_registries": {
 				Type:        schema.TypeList,
@@ -798,6 +798,14 @@ func resourceRKECluster() *schema.Resource {
 						},
 					},
 				},
+			},
+			"kube_admin_user": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"api_server_url": {
+				Type:     schema.TypeString,
+				Computed: true,
 			},
 			"cluster_domain": {
 				Type:     schema.TypeString,
