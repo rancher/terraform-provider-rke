@@ -8,6 +8,13 @@ resource rke_cluster "cluster" {
     },
   ]
 
+  ingress = {
+    provider = "nginx"
+    extra_args = {
+      enable-ssl-passthrough = ""
+    }
+  }
+
   addons = <<EOL
 ---
 kind: Namespace
