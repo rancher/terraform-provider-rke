@@ -50,6 +50,8 @@ EOL
     #ca_cert   = "${file("ca_cert")}"
     #cert      = "${file("cert")}"
     #key       = "${file("key")}"
+
+    # for etcd snapshots
     #snapshot  = false
     #retention = "24h"
     #creation  = "5m0s"
@@ -90,7 +92,7 @@ EOL
   # Network(CNI) - supported: flannel/calico/canal/weave
   #########################################################
 
-  # default: flannel
+  # default: canal
   network {
     plugin = "flannel"
 
