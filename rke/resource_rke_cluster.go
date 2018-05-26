@@ -441,6 +441,13 @@ func resourceRKECluster() *schema.Resource {
 				ForceNew:    true,
 				Description: "List of urls or paths for addons",
 			},
+			"addon_job_timeout": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validateIntegerInRange(1, 65535),
+				Description:  "Timeout in seconds for status check on addon deployment jobs",
+			},
 			"system_images": {
 				Type:        schema.TypeList,
 				MaxItems:    1,

@@ -558,6 +558,13 @@ func TestParseResourceAddonsInclude(t *testing.T) {
 	assert.EqualValues(t, expect, includes)
 }
 
+func TestParseResourceAddonJobTimeout(t *testing.T) {
+	d := &dummyResourceData{values: map[string]interface{}{"addon_job_timeout": 10}}
+	v, err := parseResourceAddonJobTimeout(d)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 10, v)
+}
+
 func TestParseResourceSystemImages(t *testing.T) {
 	testcases := []struct {
 		caseName     string
@@ -988,6 +995,7 @@ func TestClusterToState(t *testing.T) {
 						"https://example.com/addon1.yaml",
 						"https://example.com/addon2.yaml",
 					},
+					AddonJobTimeout: 10,
 					SystemImages: v3.RKESystemImages{
 						Etcd:                      "etcd",
 						Alpine:                    "alpine",
@@ -1240,6 +1248,7 @@ func TestClusterToState(t *testing.T) {
 					"https://example.com/addon1.yaml",
 					"https://example.com/addon2.yaml",
 				},
+				"addon_job_timeout": 10,
 				"system_images": []interface{}{
 					map[string]interface{}{
 						"etcd":                        "etcd",

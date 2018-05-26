@@ -148,6 +148,12 @@ func setAddonsFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d resour
 	}
 	rkeConfig.AddonsInclude = addonsInclude
 
+	var addonJobTimeout int
+	if addonJobTimeout, err = parseResourceAddonJobTimeout(d); err != nil {
+		return err
+	}
+	rkeConfig.AddonJobTimeout = addonJobTimeout
+
 	return nil
 }
 
@@ -650,6 +656,13 @@ func parseResourceAddonsInclude(d resourceData) ([]string, error) {
 	return []string{}, nil
 }
 
+func parseResourceAddonJobTimeout(d resourceData) (int, error) {
+	if v, ok := d.GetOk("addon_job_timeout"); ok {
+		return v.(int), nil
+	}
+	return 0, nil
+}
+
 func parseResourceSystemImages(d resourceData) (*v3.RKESystemImages, error) {
 	if rawList, ok := d.GetOk("system_images"); ok {
 		if rawImages, ok := rawList.([]interface{}); ok && len(rawImages) > 0 {
@@ -976,8 +989,9 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 		},
 	})
 
-	d.Set("addons", cluster.Addons)                // nolint
-	d.Set("addons_include", cluster.AddonsInclude) // nolint
+	d.Set("addons", cluster.Addons)                     // nolint
+	d.Set("addons_include", cluster.AddonsInclude)      // nolint
+	d.Set("addon_job_timeout", cluster.AddonJobTimeout) // nolint
 
 	d.Set("system_images", []interface{}{ // nolint
 		map[string]interface{}{
