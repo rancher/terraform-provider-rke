@@ -591,6 +591,53 @@ func resourceRKECluster() *schema.Resource {
 				Computed:    true,
 				Description: "SSH Agent Auth enable",
 			},
+			"bastion_host": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Bastion/Jump Host configuration",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"address": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Address of Bastion Host",
+						},
+						"port": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validateIntegerInRange(1, 65535),
+							Description:  "SSH Port of Bastion Host",
+						},
+						"user": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "SSH User to Bastion Host",
+						},
+						"ssh_agent_auth": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Computed:    true,
+							Description: "SSH Agent Auth enable",
+						},
+						"ssh_key": {
+							Type:        schema.TypeString,
+							Sensitive:   true,
+							Optional:    true,
+							Computed:    true,
+							Description: "SSH Private Key",
+						},
+						"ssh_key_path": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "SSH Private Key",
+						},
+					},
+				},
+			},
 			"authorization": {
 				Type:        schema.TypeList,
 				MaxItems:    1,

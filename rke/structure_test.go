@@ -661,6 +661,48 @@ func TestParseResourceSSHAgentAuth(t *testing.T) {
 	assert.EqualValues(t, true, auth)
 }
 
+func TestParseResourceBastionHost(t *testing.T) {
+
+	testcases := []struct {
+		caseName     string
+		resourceData map[string]interface{}
+		expectConfig *v3.BastionHost
+	}{
+		{
+			caseName: "all fields",
+			resourceData: map[string]interface{}{
+				"bastion_host": []interface{}{
+					map[string]interface{}{
+						"address":        "192.2.0.1",
+						"port":           22,
+						"user":           "rancher",
+						"ssh_agent_auth": true,
+						"ssh_key":        "ssh_key",
+						"ssh_key_path":   "ssh_key_path",
+					},
+				},
+			},
+			expectConfig: &v3.BastionHost{
+				Address:      "192.2.0.1",
+				Port:         "22",
+				User:         "rancher",
+				SSHAgentAuth: true,
+				SSHKey:       "ssh_key",
+				SSHKeyPath:   "ssh_key_path",
+			},
+		},
+	}
+
+	for _, testcase := range testcases {
+		t.Run(testcase.caseName, func(t *testing.T) {
+			d := &dummyResourceData{values: testcase.resourceData}
+			host, err := parseResourceBastionHost(d)
+			assert.NoError(t, err)
+			assert.EqualValues(t, testcase.expectConfig, host)
+		})
+	}
+}
+
 func TestParseResourceAuthorization(t *testing.T) {
 	testcases := []struct {
 		caseName     string
@@ -1024,6 +1066,14 @@ func TestClusterToState(t *testing.T) {
 					},
 					SSHKeyPath:   "ssh_key_path",
 					SSHAgentAuth: true,
+					BastionHost: v3.BastionHost{
+						Address:      "192.2.0.1",
+						Port:         "22",
+						User:         "rancher",
+						SSHAgentAuth: true,
+						SSHKey:       "ssh_key",
+						SSHKeyPath:   "ssh_key_path",
+					},
 					Authorization: v3.AuthzConfig{
 						Mode: "rbac",
 						Options: map[string]string{
@@ -1279,6 +1329,16 @@ func TestClusterToState(t *testing.T) {
 				},
 				"ssh_key_path":   "ssh_key_path",
 				"ssh_agent_auth": true,
+				"bastion_host": []interface{}{
+					map[string]interface{}{
+						"address":        "192.2.0.1",
+						"port":           22,
+						"user":           "rancher",
+						"ssh_agent_auth": true,
+						"ssh_key":        "ssh_key",
+						"ssh_key_path":   "ssh_key_path",
+					},
+				},
 				"authorization": []interface{}{
 					map[string]interface{}{
 						"mode": "rbac",
