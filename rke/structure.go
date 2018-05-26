@@ -369,16 +369,22 @@ func parseResourceETCDService(d resourceData) (*v3.ETCDService, error) {
 			}
 
 			valueMapping := map[string]*string{
-				"ca_cert": &etcd.CACert,
-				"cert":    &etcd.Cert,
-				"key":     &etcd.Key,
-				"path":    &etcd.Path,
+				"ca_cert":   &etcd.CACert,
+				"cert":      &etcd.Cert,
+				"key":       &etcd.Key,
+				"path":      &etcd.Path,
+				"retention": &etcd.Retention,
+				"creation":  &etcd.Creation,
 			}
 
 			for key, dest := range valueMapping {
 				if v, ok := rawMap[key]; ok {
 					*dest = v.(string)
 				}
+			}
+
+			if v, ok := rawMap["snapshot"]; ok {
+				etcd.Snapshot = v.(bool)
 			}
 
 			return etcd, nil
@@ -973,6 +979,9 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"cert":          cluster.Services.Etcd.Cert,
 			"key":           cluster.Services.Etcd.Key,
 			"path":          cluster.Services.Etcd.Path,
+			"snapshot":      cluster.Services.Etcd.Snapshot,
+			"retention":     cluster.Services.Etcd.Retention,
+			"creation":      cluster.Services.Etcd.Creation,
 		},
 	})
 
@@ -1077,12 +1086,14 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 
 	bastionHost := map[string]interface{}{}
 	bastionHost["address"] = cluster.BastionHost.Address
-	if port, err := strconv.Atoi(cluster.BastionHost.Port); err == nil {
-		if port > 0 {
-			bastionHost["port"] = port
+	if cluster.BastionHost.Port != "" {
+		if port, err := strconv.Atoi(cluster.BastionHost.Port); err == nil {
+			if port > 0 {
+				bastionHost["port"] = port
+			}
+		} else {
+			return err
 		}
-	} else {
-		return err
 	}
 	bastionHost["user"] = cluster.BastionHost.User
 	bastionHost["ssh_agent_auth"] = cluster.BastionHost.SSHAgentAuth

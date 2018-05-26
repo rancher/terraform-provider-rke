@@ -175,6 +175,24 @@ func resourceRKECluster() *schema.Resource {
 							Computed:    true,
 							Description: "External etcd prefix",
 						},
+						"snapshot": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Computed:    true,
+							Description: "Etcd Recurring snapshot Service",
+						},
+						"retention": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "Etcd snapshot Retention period",
+						},
+						"creation": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "Etcd snapshot Creation period",
+						},
 					},
 				},
 			},
@@ -594,6 +612,7 @@ func resourceRKECluster() *schema.Resource {
 			"bastion_host": {
 				Type:        schema.TypeList,
 				Optional:    true,
+				Computed:    true,
 				MaxItems:    1,
 				Description: "Bastion/Jump Host configuration",
 				Elem: &schema.Resource{
