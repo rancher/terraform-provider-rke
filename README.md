@@ -81,6 +81,7 @@ provider "kubernetes" {
   client_certificate     = "${rke_cluster.cluster.client_cert}"
   client_key             = "${rke_cluster.cluster.client_key}"
   cluster_ca_certificate = "${rke_cluster.cluster.ca_crt}"
+  # load_config_file = false
 }
 
 resource "kubernetes_namespace" "example" {
