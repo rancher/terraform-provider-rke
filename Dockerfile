@@ -11,7 +11,7 @@ WORKDIR /go/src/github.com/yamamoto-febc/terraform-provider-rke
 RUN make build
 ###
 
-FROM hashicorp/terraform:0.11.5
+FROM hashicorp/terraform:0.11.7
 MAINTAINER Kazumichi Yamamoto <yamamoto.febc@gmail.com>
 LABEL MAINTAINER 'Kazumichi Yamamoto <yamamoto.febc@gmail.com>'
 
