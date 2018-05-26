@@ -185,6 +185,9 @@ func TestParseResourceETCDService(t *testing.T) {
 						"cert":          "cert",
 						"key":           "key",
 						"path":          "path",
+						"snapshot":      true,
+						"retention":     "retention",
+						"creation":      "creation",
 					},
 				},
 			},
@@ -202,6 +205,9 @@ func TestParseResourceETCDService(t *testing.T) {
 				Cert:         "cert",
 				Key:          "key",
 				Path:         "path",
+				Snapshot:     true,
+				Retention:    "retention",
+				Creation:     "creation",
 			},
 		},
 	}
@@ -558,6 +564,13 @@ func TestParseResourceAddonsInclude(t *testing.T) {
 	assert.EqualValues(t, expect, includes)
 }
 
+func TestParseResourceAddonJobTimeout(t *testing.T) {
+	d := &dummyResourceData{values: map[string]interface{}{"addon_job_timeout": 10}}
+	v, err := parseResourceAddonJobTimeout(d)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 10, v)
+}
+
 func TestParseResourceSystemImages(t *testing.T) {
 	testcases := []struct {
 		caseName     string
@@ -652,6 +665,48 @@ func TestParseResourceSSHAgentAuth(t *testing.T) {
 	auth, err := parseResourceSSHAgentAuth(d)
 	assert.NoError(t, err)
 	assert.EqualValues(t, true, auth)
+}
+
+func TestParseResourceBastionHost(t *testing.T) {
+
+	testcases := []struct {
+		caseName     string
+		resourceData map[string]interface{}
+		expectConfig *v3.BastionHost
+	}{
+		{
+			caseName: "all fields",
+			resourceData: map[string]interface{}{
+				"bastion_host": []interface{}{
+					map[string]interface{}{
+						"address":        "192.2.0.1",
+						"port":           22,
+						"user":           "rancher",
+						"ssh_agent_auth": true,
+						"ssh_key":        "ssh_key",
+						"ssh_key_path":   "ssh_key_path",
+					},
+				},
+			},
+			expectConfig: &v3.BastionHost{
+				Address:      "192.2.0.1",
+				Port:         "22",
+				User:         "rancher",
+				SSHAgentAuth: true,
+				SSHKey:       "ssh_key",
+				SSHKeyPath:   "ssh_key_path",
+			},
+		},
+	}
+
+	for _, testcase := range testcases {
+		t.Run(testcase.caseName, func(t *testing.T) {
+			d := &dummyResourceData{values: testcase.resourceData}
+			host, err := parseResourceBastionHost(d)
+			assert.NoError(t, err)
+			assert.EqualValues(t, testcase.expectConfig, host)
+		})
+	}
 }
 
 func TestParseResourceAuthorization(t *testing.T) {
@@ -904,10 +959,13 @@ func TestClusterToState(t *testing.T) {
 								"https://ext1.example.com",
 								"https://ext2.example.com",
 							},
-							CACert: "ca_cert",
-							Cert:   "cert",
-							Key:    "key",
-							Path:   "path",
+							CACert:    "ca_cert",
+							Cert:      "cert",
+							Key:       "key",
+							Path:      "path",
+							Snapshot:  true,
+							Retention: "retention",
+							Creation:  "creation",
 						},
 						KubeAPI: v3.KubeAPIService{
 							BaseService: v3.BaseService{
@@ -988,6 +1046,7 @@ func TestClusterToState(t *testing.T) {
 						"https://example.com/addon1.yaml",
 						"https://example.com/addon2.yaml",
 					},
+					AddonJobTimeout: 10,
 					SystemImages: v3.RKESystemImages{
 						Etcd:                      "etcd",
 						Alpine:                    "alpine",
@@ -1016,6 +1075,14 @@ func TestClusterToState(t *testing.T) {
 					},
 					SSHKeyPath:   "ssh_key_path",
 					SSHAgentAuth: true,
+					BastionHost: v3.BastionHost{
+						Address:      "192.2.0.1",
+						Port:         "22",
+						User:         "rancher",
+						SSHAgentAuth: true,
+						SSHKey:       "ssh_key",
+						SSHKeyPath:   "ssh_key_path",
+					},
 					Authorization: v3.AuthzConfig{
 						Mode: "rbac",
 						Options: map[string]string{
@@ -1152,10 +1219,13 @@ func TestClusterToState(t *testing.T) {
 							"https://ext1.example.com",
 							"https://ext2.example.com",
 						},
-						"ca_cert": "ca_cert",
-						"cert":    "cert",
-						"key":     "key",
-						"path":    "path",
+						"ca_cert":   "ca_cert",
+						"cert":      "cert",
+						"key":       "key",
+						"path":      "path",
+						"snapshot":  true,
+						"retention": "retention",
+						"creation":  "creation",
 					},
 				},
 				"services_kube_api": []interface{}{
@@ -1240,6 +1310,7 @@ func TestClusterToState(t *testing.T) {
 					"https://example.com/addon1.yaml",
 					"https://example.com/addon2.yaml",
 				},
+				"addon_job_timeout": 10,
 				"system_images": []interface{}{
 					map[string]interface{}{
 						"etcd":                        "etcd",
@@ -1270,6 +1341,16 @@ func TestClusterToState(t *testing.T) {
 				},
 				"ssh_key_path":   "ssh_key_path",
 				"ssh_agent_auth": true,
+				"bastion_host": []interface{}{
+					map[string]interface{}{
+						"address":        "192.2.0.1",
+						"port":           22,
+						"user":           "rancher",
+						"ssh_agent_auth": true,
+						"ssh_key":        "ssh_key",
+						"ssh_key_path":   "ssh_key_path",
+					},
+				},
 				"authorization": []interface{}{
 					map[string]interface{}{
 						"mode": "rbac",

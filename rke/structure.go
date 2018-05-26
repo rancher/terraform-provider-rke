@@ -30,6 +30,7 @@ var rkeConfigBuilders = []func(rkeConfig *v3.RancherKubernetesEngineConfig, d re
 	setAddonsFromResource,
 	setSystemImagesFromResource,
 	setSSHSettingsFromResource,
+	setBastionHostFromResource,
 	setAuthorizationFromResource,
 	setMiscConfigFromResource,
 	setCloudProviderFromResource,
@@ -148,6 +149,12 @@ func setAddonsFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d resour
 	}
 	rkeConfig.AddonsInclude = addonsInclude
 
+	var addonJobTimeout int
+	if addonJobTimeout, err = parseResourceAddonJobTimeout(d); err != nil {
+		return err
+	}
+	rkeConfig.AddonJobTimeout = addonJobTimeout
+
 	return nil
 }
 
@@ -177,6 +184,18 @@ func setSSHSettingsFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d r
 	}
 	rkeConfig.SSHAgentAuth = sshAgentAuth
 
+	return nil
+}
+
+func setBastionHostFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d resourceData) error {
+	var err error
+	var host *v3.BastionHost
+	if host, err = parseResourceBastionHost(d); err != nil {
+		return err
+	}
+	if host != nil {
+		rkeConfig.BastionHost = *host
+	}
 	return nil
 }
 
@@ -350,16 +369,22 @@ func parseResourceETCDService(d resourceData) (*v3.ETCDService, error) {
 			}
 
 			valueMapping := map[string]*string{
-				"ca_cert": &etcd.CACert,
-				"cert":    &etcd.Cert,
-				"key":     &etcd.Key,
-				"path":    &etcd.Path,
+				"ca_cert":   &etcd.CACert,
+				"cert":      &etcd.Cert,
+				"key":       &etcd.Key,
+				"path":      &etcd.Path,
+				"retention": &etcd.Retention,
+				"creation":  &etcd.Creation,
 			}
 
 			for key, dest := range valueMapping {
 				if v, ok := rawMap[key]; ok {
 					*dest = v.(string)
 				}
+			}
+
+			if v, ok := rawMap["snapshot"]; ok {
+				etcd.Snapshot = v.(bool)
 			}
 
 			return etcd, nil
@@ -650,6 +675,13 @@ func parseResourceAddonsInclude(d resourceData) ([]string, error) {
 	return []string{}, nil
 }
 
+func parseResourceAddonJobTimeout(d resourceData) (int, error) {
+	if v, ok := d.GetOk("addon_job_timeout"); ok {
+		return v.(int), nil
+	}
+	return 0, nil
+}
+
 func parseResourceSystemImages(d resourceData) (*v3.RKESystemImages, error) {
 	if rawList, ok := d.GetOk("system_images"); ok {
 		if rawImages, ok := rawList.([]interface{}); ok && len(rawImages) > 0 {
@@ -708,6 +740,43 @@ func parseResourceSSHAgentAuth(d resourceData) (bool, error) {
 		return v.(bool), nil
 	}
 	return false, nil
+}
+
+func parseResourceBastionHost(d resourceData) (*v3.BastionHost, error) {
+	if rawList, ok := d.GetOk("bastion_host"); ok {
+		if rawHosts, ok := rawList.([]interface{}); ok && len(rawHosts) > 0 {
+			rawHost := rawHosts[0]
+			config := &v3.BastionHost{}
+
+			rawMap := rawHost.(map[string]interface{})
+			valueMapping := map[string]*string{
+				"address":      &config.Address,
+				"user":         &config.User,
+				"ssh_key":      &config.SSHKey,
+				"ssh_key_path": &config.SSHKeyPath,
+			}
+
+			for key, dest := range valueMapping {
+				if v, ok := rawMap[key]; ok {
+					*dest = v.(string)
+				}
+			}
+
+			if v, ok := rawMap["port"]; ok {
+				p := v.(int)
+				if p > 0 {
+					config.Port = fmt.Sprintf("%d", p)
+				}
+			}
+
+			if v, ok := rawMap["ssh_agent_auth"]; ok {
+				config.SSHAgentAuth = v.(bool)
+			}
+
+			return config, nil
+		}
+	}
+	return nil, nil
 }
 
 func parseResourceAuthorization(d resourceData) (*v3.AuthzConfig, error) {
@@ -910,6 +979,9 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"cert":          cluster.Services.Etcd.Cert,
 			"key":           cluster.Services.Etcd.Key,
 			"path":          cluster.Services.Etcd.Path,
+			"snapshot":      cluster.Services.Etcd.Snapshot,
+			"retention":     cluster.Services.Etcd.Retention,
+			"creation":      cluster.Services.Etcd.Creation,
 		},
 	})
 
@@ -976,8 +1048,9 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 		},
 	})
 
-	d.Set("addons", cluster.Addons)                // nolint
-	d.Set("addons_include", cluster.AddonsInclude) // nolint
+	d.Set("addons", cluster.Addons)                     // nolint
+	d.Set("addons_include", cluster.AddonsInclude)      // nolint
+	d.Set("addon_job_timeout", cluster.AddonJobTimeout) // nolint
 
 	d.Set("system_images", []interface{}{ // nolint
 		map[string]interface{}{
@@ -1010,6 +1083,23 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 
 	d.Set("ssh_key_path", cluster.SSHKeyPath)     // nolint
 	d.Set("ssh_agent_auth", cluster.SSHAgentAuth) // nolint
+
+	bastionHost := map[string]interface{}{}
+	bastionHost["address"] = cluster.BastionHost.Address
+	if cluster.BastionHost.Port != "" {
+		if port, err := strconv.Atoi(cluster.BastionHost.Port); err == nil {
+			if port > 0 {
+				bastionHost["port"] = port
+			}
+		} else {
+			return err
+		}
+	}
+	bastionHost["user"] = cluster.BastionHost.User
+	bastionHost["ssh_agent_auth"] = cluster.BastionHost.SSHAgentAuth
+	bastionHost["ssh_key"] = cluster.BastionHost.SSHKey
+	bastionHost["ssh_key_path"] = cluster.BastionHost.SSHKeyPath
+	d.Set("bastion_host", []interface{}{bastionHost}) // nolint
 
 	d.Set("authorization", []interface{}{ // nolint
 		map[string]interface{}{

@@ -2,21 +2,48 @@ package services
 
 import (
 	"fmt"
+	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"context"
 
 	etcdclient "github.com/coreos/etcd/client"
+	"github.com/docker/docker/api/types/container"
 	"github.com/pkg/errors"
 	"github.com/rancher/rke/docker"
 	"github.com/rancher/rke/hosts"
 	"github.com/rancher/rke/log"
+	"github.com/rancher/rke/pki"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/sirupsen/logrus"
 )
 
-func RunEtcdPlane(ctx context.Context, etcdHosts []*hosts.Host, etcdNodePlanMap map[string]v3.RKEConfigNodePlan, localConnDialerFactory hosts.DialerFactory, prsMap map[string]v3.PrivateRegistry, updateWorkersOnly bool, alpineImage string) error {
+const (
+	EtcdSnapshotPath = "/opt/rke/etcd-snapshots"
+	EtcdRestorePath  = "/opt/rke/etcd-snapshots-restore/"
+	EtcdDataDir      = "/var/lib/rancher/etcd/"
+)
+
+type EtcdSnapshot struct {
+	// Enable or disable snapshot creation
+	Snapshot bool
+	// Creation period of the etcd snapshots
+	Creation string
+	// Retention period of the etcd snapshots
+	Retention string
+}
+
+func RunEtcdPlane(
+	ctx context.Context,
+	etcdHosts []*hosts.Host,
+	etcdNodePlanMap map[string]v3.RKEConfigNodePlan,
+	localConnDialerFactory hosts.DialerFactory,
+	prsMap map[string]v3.PrivateRegistry,
+	updateWorkersOnly bool,
+	alpineImage string,
+	etcdSnapshot EtcdSnapshot) error {
 	log.Infof(ctx, "[%s] Building up etcd plane..", ETCDRole)
 	for _, host := range etcdHosts {
 		if updateWorkersOnly {
@@ -26,6 +53,11 @@ func RunEtcdPlane(ctx context.Context, etcdHosts []*hosts.Host, etcdNodePlanMap 
 		imageCfg, hostCfg, _ := GetProcessConfig(etcdProcess)
 		if err := docker.DoRunContainer(ctx, host.DClient, imageCfg, hostCfg, EtcdContainerName, host.Address, ETCDRole, prsMap); err != nil {
 			return err
+		}
+		if etcdSnapshot.Snapshot {
+			if err := RunEtcdSnapshotSave(ctx, host, prsMap, alpineImage, etcdSnapshot.Creation, etcdSnapshot.Retention, EtcdSnapshotContainerName, false); err != nil {
+				return err
+			}
 		}
 		if err := createLogLink(ctx, host, EtcdContainerName, ETCDRole, alpineImage, prsMap); err != nil {
 			return err
@@ -185,4 +217,91 @@ func IsEtcdMember(ctx context.Context, etcdHost *hosts.Host, etcdHosts []*hosts.
 		return false, listErr
 	}
 	return false, nil
+}
+
+func RunEtcdSnapshotSave(ctx context.Context, etcdHost *hosts.Host, prsMap map[string]v3.PrivateRegistry, etcdSnapshotImage string, creation, retention, name string, once bool) error {
+	log.Infof(ctx, "[etcd] Saving snapshot [%s] on host [%s]", name, etcdHost.Address)
+	imageCfg := &container.Config{
+		Cmd: []string{
+			"/opt/rke/rke-etcd-backup",
+			"rolling-backup",
+			"--cacert", pki.GetCertPath(pki.CACertName),
+			"--cert", pki.GetCertPath(pki.KubeNodeCertName),
+			"--key", pki.GetKeyPath(pki.KubeNodeCertName),
+			"--name", name,
+			"--endpoints=" + etcdHost.InternalAddress + ":2379",
+		},
+		Image: etcdSnapshotImage,
+	}
+	if once {
+		imageCfg.Cmd = append(imageCfg.Cmd, "--once")
+	}
+	if !once {
+		imageCfg.Cmd = append(imageCfg.Cmd, "--retention="+retention)
+		imageCfg.Cmd = append(imageCfg.Cmd, "--creation="+creation)
+	}
+	hostCfg := &container.HostConfig{
+		Binds: []string{
+			fmt.Sprintf("%s:/backup", EtcdSnapshotPath),
+			fmt.Sprintf("%s:/etc/kubernetes:z", path.Join(etcdHost.PrefixPath, "/etc/kubernetes"))},
+		NetworkMode: container.NetworkMode("host"),
+	}
+
+	if once {
+		if err := docker.DoRunContainer(ctx, etcdHost.DClient, imageCfg, hostCfg, EtcdSnapshotOnceContainerName, etcdHost.Address, ETCDRole, prsMap); err != nil {
+			return err
+		}
+		status, err := docker.WaitForContainer(ctx, etcdHost.DClient, etcdHost.Address, EtcdSnapshotOnceContainerName)
+		if status != 0 || err != nil {
+			return fmt.Errorf("Failed to take etcd snapshot exit code [%d]: %v", status, err)
+		}
+		return docker.RemoveContainer(ctx, etcdHost.DClient, etcdHost.Address, EtcdSnapshotOnceContainerName)
+	}
+	return docker.DoRunContainer(ctx, etcdHost.DClient, imageCfg, hostCfg, EtcdSnapshotContainerName, etcdHost.Address, ETCDRole, prsMap)
+}
+
+func RestoreEtcdSnapshot(ctx context.Context, etcdHost *hosts.Host, prsMap map[string]v3.PrivateRegistry, etcdRestoreImage, snapshotName, initCluster string) error {
+	log.Infof(ctx, "[etcd] Restoring [%s] snapshot on etcd host [%s]", snapshotName, etcdHost.Address)
+	nodeName := pki.GetEtcdCrtName(etcdHost.InternalAddress)
+	snapshotPath := filepath.Join(EtcdSnapshotPath, snapshotName)
+
+	imageCfg := &container.Config{
+		Cmd: []string{
+			"sh", "-c", strings.Join([]string{
+				"/usr/local/bin/etcdctl",
+				fmt.Sprintf("--endpoints=[%s:2379]", etcdHost.InternalAddress),
+				"--cacert", pki.GetCertPath(pki.CACertName),
+				"--cert", pki.GetCertPath(nodeName),
+				"--key", pki.GetKeyPath(nodeName),
+				"snapshot", "restore", snapshotPath,
+				"--data-dir=" + EtcdRestorePath,
+				"--name=etcd-" + etcdHost.HostnameOverride,
+				"--initial-cluster=" + initCluster,
+				"--initial-cluster-token=etcd-cluster-1",
+				"--initial-advertise-peer-urls=https://" + etcdHost.InternalAddress + ":2380",
+				"&& mv", EtcdRestorePath + "*", EtcdDataDir,
+				"&& rm -rf", EtcdRestorePath,
+			}, " "),
+		},
+		Env:   []string{"ETCDCTL_API=3"},
+		Image: etcdRestoreImage,
+	}
+	hostCfg := &container.HostConfig{
+		Binds: []string{
+			"/opt/rke/:/opt/rke/:z",
+			fmt.Sprintf("%s:/var/lib/rancher/etcd:z", path.Join(etcdHost.PrefixPath, "/var/lib/etcd")),
+			fmt.Sprintf("%s:/etc/kubernetes:z", path.Join(etcdHost.PrefixPath, "/etc/kubernetes"))},
+		NetworkMode: container.NetworkMode("host"),
+	}
+	if err := docker.DoRunContainer(ctx, etcdHost.DClient, imageCfg, hostCfg, EtcdRestoreContainerName, etcdHost.Address, ETCDRole, prsMap); err != nil {
+		return err
+	}
+	status, err := docker.WaitForContainer(ctx, etcdHost.DClient, etcdHost.Address, EtcdRestoreContainerName)
+	if err != nil {
+		return err
+	}
+	if status != 0 {
+		return fmt.Errorf("Failed to run etcd restore container, exit status is: %d", status)
+	}
+	return docker.RemoveContainer(ctx, etcdHost.DClient, etcdHost.Address, EtcdRestoreContainerName)
 }

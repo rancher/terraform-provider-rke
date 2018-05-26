@@ -175,6 +175,24 @@ func resourceRKECluster() *schema.Resource {
 							Computed:    true,
 							Description: "External etcd prefix",
 						},
+						"snapshot": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Computed:    true,
+							Description: "Etcd Recurring snapshot Service",
+						},
+						"retention": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "Etcd snapshot Retention period",
+						},
+						"creation": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "Etcd snapshot Creation period",
+						},
 					},
 				},
 			},
@@ -441,6 +459,13 @@ func resourceRKECluster() *schema.Resource {
 				ForceNew:    true,
 				Description: "List of urls or paths for addons",
 			},
+			"addon_job_timeout": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validateIntegerInRange(1, 65535),
+				Description:  "Timeout in seconds for status check on addon deployment jobs",
+			},
 			"system_images": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -583,6 +608,54 @@ func resourceRKECluster() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "SSH Agent Auth enable",
+			},
+			"bastion_host": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				MaxItems:    1,
+				Description: "Bastion/Jump Host configuration",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"address": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Address of Bastion Host",
+						},
+						"port": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validateIntegerInRange(1, 65535),
+							Description:  "SSH Port of Bastion Host",
+						},
+						"user": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "SSH User to Bastion Host",
+						},
+						"ssh_agent_auth": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Computed:    true,
+							Description: "SSH Agent Auth enable",
+						},
+						"ssh_key": {
+							Type:        schema.TypeString,
+							Sensitive:   true,
+							Optional:    true,
+							Computed:    true,
+							Description: "SSH Private Key",
+						},
+						"ssh_key_path": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "SSH Private Key",
+						},
+					},
+				},
 			},
 			"authorization": {
 				Type:        schema.TypeList,

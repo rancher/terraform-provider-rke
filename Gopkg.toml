@@ -36,7 +36,7 @@ ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp
 
 [[constraint]]
   name = "github.com/rancher/rke"
-  version = "0.1.6"
+  version = "0.1.7"
 
 [[override]]
   name = "k8s.io/api"
@@ -76,7 +76,11 @@ ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp
 
 [[override]]
   name = "github.com/rancher/types"
-  revision = "71878a13b6cb20eac2f160c8927bc570119618fb"
+  revision = "f08dc626d420185972a3bcf11504b81d7f2d37e0"
+
+[[override]]
+  name = "github.com/Microsoft/go-winio"
+  revision = "ab35fc04b6365e8fcb18e6e9e41ea4a02b10b175"
 
 [prune]
   go-tests = true
