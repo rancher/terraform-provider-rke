@@ -46,14 +46,17 @@ EOL
   ###############################################
   services_etcd {
     # if external etcd used
-    #path    = "/etcdcluster"
-    #ca_cert = "${file("ca_cert")}"
-    #cert    = "${file("cert")}"
-    #key     = "${file("key")}"
+    #path      = "/etcdcluster"
+    #ca_cert   = "${file("ca_cert")}"
+    #cert      = "${file("cert")}"
+    #key       = "${file("key")}"
+    #snapshot  = false
+    #retention = "24h"
+    #creation  = "5m0s"
   }
 
   services_kube_api {
-    service_cluster_ip_range = "10.42.0.0/1"
+    service_cluster_ip_range = "10.43.0.0/1"
     pod_security_policy      = false
 
     # add additional arguments to the kubernetes component
@@ -77,7 +80,6 @@ EOL
 
     # Optionally define additional volume binds to a service
     extra_binds = [
-      "/host/dev:/dev",
       "usr/libexec/kubernetes/kubelet-plugins:/usr/libexec/kubernetes/kubelet-plugins",
     ]
   }
@@ -153,6 +155,9 @@ EOL
     "https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/rook-cluster.yaml",
     "/path/to/manifest",
   ]
+
+  addon_job_timeout = 30
+
   ################################################
   # System Images
   ################################################
@@ -197,6 +202,12 @@ EOL
   ################################################
   ssh_key_path = "~/.ssh/test"
   ssh_agent_auth = false
+  #bastion_host = {
+  #  address      = "1.1.1.1"
+  #  user         = "ubuntu"
+  #  ssh_key_path = "~/.ssh/id_rsa"
+  #  port         = 2222
+  #}
 
   ################################################
   # Authorization
