@@ -41,26 +41,15 @@ const (
 	ProtocolUDP = "UDP"
 
 	FlannelNetworkPlugin = "flannel"
-	FlannelImage         = "flannel_image"
-	FlannelCNIImage      = "flannel_cni_image"
 	FlannelIface         = "flannel_iface"
 
-	CalicoNetworkPlugin    = "calico"
-	CalicoNodeImage        = "calico_node_image"
-	CalicoCNIImage         = "calico_cni_image"
-	CalicoControllersImage = "calico_controllers_image"
-	CalicoctlImage         = "calicoctl_image"
-	CalicoCloudProvider    = "calico_cloud_provider"
+	CalicoNetworkPlugin = "calico"
+	CalicoCloudProvider = "calico_cloud_provider"
 
 	CanalNetworkPlugin = "canal"
-	CanalNodeImage     = "canal_node_image"
-	CanalCNIImage      = "canal_cni_image"
-	CanalFlannelImage  = "canal_flannel_image"
 	CanalIface         = "canal_iface"
 
 	WeaveNetworkPlugin = "weave"
-	WeaveImage         = "weave_node_image"
-	WeaveCNIImage      = "weave_cni_image"
 
 	// List of map keys to be used with network templates
 
@@ -86,11 +75,12 @@ const (
 	ClusterCIDR = "ClusterCIDR"
 	// Images key names
 
-	Image            = "Image"
-	CNIImage         = "CNIImage"
-	NodeImage        = "NodeImage"
-	ControllersImage = "ControllersImage"
-	CanalFlannelImg  = "CanalFlannelImg"
+	Image              = "Image"
+	CNIImage           = "CNIImage"
+	NodeImage          = "NodeImage"
+	ControllersImage   = "ControllersImage"
+	CanalFlannelImg    = "CanalFlannelImg"
+	WeaveLoopbackImage = "WeaveLoopbackImage"
 
 	Calicoctl = "Calicoctl"
 
@@ -140,7 +130,7 @@ func (c *Cluster) doFlannelDeploy(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName)
+	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName, true)
 }
 
 func (c *Cluster) doCalicoDeploy(ctx context.Context) error {
@@ -158,7 +148,7 @@ func (c *Cluster) doCalicoDeploy(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName)
+	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName, true)
 }
 
 func (c *Cluster) doCanalDeploy(ctx context.Context) error {
@@ -180,21 +170,22 @@ func (c *Cluster) doCanalDeploy(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName)
+	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName, true)
 }
 
 func (c *Cluster) doWeaveDeploy(ctx context.Context) error {
 	weaveConfig := map[string]string{
-		ClusterCIDR: c.ClusterCIDR,
-		Image:       c.SystemImages.WeaveNode,
-		CNIImage:    c.SystemImages.WeaveCNI,
-		RBACConfig:  c.Authorization.Mode,
+		ClusterCIDR:        c.ClusterCIDR,
+		Image:              c.SystemImages.WeaveNode,
+		CNIImage:           c.SystemImages.WeaveCNI,
+		WeaveLoopbackImage: c.SystemImages.Alpine,
+		RBACConfig:         c.Authorization.Mode,
 	}
 	pluginYaml, err := c.getNetworkPluginManifest(weaveConfig)
 	if err != nil {
 		return err
 	}
-	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName)
+	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName, true)
 }
 
 func (c *Cluster) getNetworkPluginManifest(pluginConfig map[string]string) (string, error) {
@@ -231,10 +222,13 @@ func (c *Cluster) CheckClusterPorts(ctx context.Context, currentCluster *Cluster
 	if err := c.runServicePortChecks(ctx); err != nil {
 		return err
 	}
-	if c.K8sWrapTransport == nil {
+	// Skip kubeapi check if we are using custom k8s dialer or bastion/jump host
+	if c.K8sWrapTransport == nil && len(c.BastionHost.Address) == 0 {
 		if err := c.checkKubeAPIPort(ctx); err != nil {
 			return err
 		}
+	} else {
+		log.Infof(ctx, "[network] Skipping kubeapi port check")
 	}
 
 	return c.removeTCPPortListeners(ctx)
@@ -406,7 +400,6 @@ func (c *Cluster) runServicePortChecks(ctx context.Context) error {
 
 func checkPlaneTCPPortsFromHost(ctx context.Context, host *hosts.Host, portList []string, planeHosts []*hosts.Host, image string, prsMap map[string]v3.PrivateRegistry) error {
 	var hosts []string
-	var portCheckLogs []string
 	var containerStdout bytes.Buffer
 	var containerStderr bytes.Buffer
 
@@ -451,7 +444,7 @@ func checkPlaneTCPPortsFromHost(ctx context.Context, host *hosts.Host, portList 
 	if err := docker.RemoveContainer(ctx, host.DClient, host.Address, PortCheckContainer); err != nil {
 		return err
 	}
-	logrus.Debugf("[network] Length of portCheckLogs is [%d] on host: %s", len(portCheckLogs), host.Address)
+	logrus.Debugf("[network] Length of containerLog is [%d] on host: %s", len(containerLog), host.Address)
 	if len(containerLog) > 0 {
 		portCheckLogs := strings.Join(strings.Split(strings.TrimSpace(containerLog), "\n"), ", ")
 		return fmt.Errorf("[network] Port check for ports: [%s] failed on host: [%s]", portCheckLogs, host.Address)

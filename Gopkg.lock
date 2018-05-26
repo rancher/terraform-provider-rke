@@ -4,8 +4,7 @@
 [[projects]]
   name = "github.com/Microsoft/go-winio"
   packages = ["."]
-  revision = "7da180ee92d8bd8bb8c37fc560e673e6557c392f"
-  version = "v0.4.7"
+  revision = "ab35fc04b6365e8fcb18e6e9e41ea4a02b10b175"
 
 [[projects]]
   name = "github.com/PuerkitoBio/purell"
@@ -630,8 +629,8 @@
     "services",
     "templates"
   ]
-  revision = "501c10b2b71b959cf7e4b259636e9b7257b0e80e"
-  version = "v0.1.6"
+  revision = "d909253640f2f524fbe234f60085ccafa2b716a4"
+  version = "v0.1.7"
 
 [[projects]]
   name = "github.com/rancher/types"
@@ -639,7 +638,7 @@
     "apis/management.cattle.io/v3",
     "image"
   ]
-  revision = "71878a13b6cb20eac2f160c8927bc570119618fb"
+  revision = "f08dc626d420185972a3bcf11504b81d7f2d37e0"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -961,6 +960,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f7dcd2b2c84c66295ebd5faa0ab47d9f895c6041dda60f75210cf0fd1d79389a"
+  inputs-digest = "116b48ba80e1716ccdaf722a77da48498c8f96a8b0c88ae7a038e48d3cfd4bbb"
   solver-name = "gps-cdcl"
   solver-version = 1
