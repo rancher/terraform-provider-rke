@@ -58,6 +58,11 @@ resource rke_cluster "cluster" {
 * default k8s version: `v1.10.1-rancher1`
 * default network plugin: `canal`
 
+#### With cloud provider
+
+- [AWS(EC2)](examples/aws_ec2)
+- [DigitalOcean](examples/digitalocean)
+
 #### With Kubernetes provider 
 
 You can view an example of using RKE provider and [Kubernetes provider](https://www.terraform.io/docs/providers/kubernetes/index.html) together, [here](examples/with_kubernetes_provider/example.tf).
