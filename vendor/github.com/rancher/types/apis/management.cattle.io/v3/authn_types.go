@@ -35,6 +35,19 @@ type User struct {
 	Me                 bool     `json:"me,omitempty"`
 }
 
+// UserAttribute will have a CRD (and controller) generated for it, but will not be exposed in the API.
+type UserAttribute struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	UserName        string
+	GroupPrincipals map[string]Principals // the value is a []Principal, but code generator cannot handle slice as a value
+}
+
+type Principals struct {
+	Items []Principal
+}
+
 type Group struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -100,10 +113,10 @@ type GithubConfig struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	AuthConfig        `json:",inline" mapstructure:",squash"`
 
-	Hostname     string `json:"hostname,omitempty" norman:"default=github.com" norman:"noupdate"`
-	TLS          bool   `json:"tls,omitempty" norman:"notnullable,default=true" norman:"noupdate"`
-	ClientID     string `json:"clientId,omitempty" norman:"noupdate"`
-	ClientSecret string `json:"clientSecret,omitempty" norman:"noupdate,type=password"`
+	Hostname     string `json:"hostname,omitempty" norman:"default=github.com" norman:"required"`
+	TLS          bool   `json:"tls,omitempty" norman:"notnullable,default=true" norman:"required"`
+	ClientID     string `json:"clientId,omitempty" norman:"required"`
+	ClientSecret string `json:"clientSecret,omitempty" norman:"required,type=password"`
 }
 
 type GithubConfigTestOutput struct {
@@ -111,9 +124,33 @@ type GithubConfigTestOutput struct {
 }
 
 type GithubConfigApplyInput struct {
-	GithubConfig GithubConfig `json:"githubConfig, omitempty"`
+	GithubConfig GithubConfig `json:"githubConfig,omitempty"`
 	Code         string       `json:"code,omitempty"`
 	Enabled      bool         `json:"enabled,omitempty"`
+}
+
+type AzureADConfig struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	AuthConfig        `json:",inline" mapstructure:",squash"`
+
+	Endpoint          string `json:"endpoint,omitempty" norman:"default=https://login.microsoftonline.com/,required,notnullable"`
+	GraphEndpoint     string `json:"graphEndpoint,omitempty" norman:"required,notnullable"`
+	TokenEndpoint     string `json:"tokenEndpoint,omitempty" norman:"required,notnullable"`
+	AuthEndpoint      string `json:"authEndpoint,omitempty" norman:"required,notnullable"`
+	TenantID          string `json:"tenantId,omitempty" norman:"required,notnullable"`
+	ApplicationID     string `json:"applicationId,omitempty" norman:"required,notnullable"`
+	ApplicationSecret string `json:"applicationSecret,omitempty" norman:"required,notnullable,type=password"`
+	RancherURL        string `json:"rancherUrl,omitempty" norman:"required,notnullable"`
+}
+
+type AzureADConfigTestOutput struct {
+	RedirectURL string `json:"redirectUrl"`
+}
+
+type AzureADConfigApplyInput struct {
+	Config AzureADConfig `json:"config,omitempty"`
+	Code   string        `json:"code,omitempty"`
 }
 
 type ActiveDirectoryConfig struct {
@@ -141,31 +178,64 @@ type ActiveDirectoryConfig struct {
 	GroupNameAttribute          string   `json:"groupNameAttribute,omitempty"          norman:"default=name,required"`
 	GroupDNAttribute            string   `json:"groupDNAttribute,omitempty"            norman:"default=distinguishedName,required"`
 	GroupMemberUserAttribute    string   `json:"groupMemberUserAttribute,omitempty"    norman:"default=distinguishedName,required"`
-	GroupMemberMappingAttribute string   `json:"groupMemberMappingAttribute,omitempty"`
+	GroupMemberMappingAttribute string   `json:"groupMemberMappingAttribute,omitempty" norman:"default=member,required"`
 	ConnectionTimeout           int64    `json:"connectionTimeout,omitempty"           norman:"default=5000"`
 }
 
 type ActiveDirectoryTestAndApplyInput struct {
-	ActiveDirectoryConfig ActiveDirectoryConfig `json:"activeDirectoryConfig, omitempty"`
+	ActiveDirectoryConfig ActiveDirectoryConfig `json:"activeDirectoryConfig,omitempty"`
 	Username              string                `json:"username"`
 	Password              string                `json:"password"`
 	Enabled               bool                  `json:"enabled,omitempty"`
 }
 
-type AzureADConfig struct {
+type LdapConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	AuthConfig        `json:",inline" mapstructure:",squash"`
 
-	TenantID     string `json:"tenantId,omitempty"                          norman:"required"`
-	ClientID     string `json:"clientId,omitempty"                          norman:"required"`
-	Domain       string `json:"domain,omitempty"                            norman:"required"`
-	ClientSecret string `json:"clientSecret,omitempty"`
+	Servers                         []string `json:"servers,omitempty"                     norman:"type=array[string],notnullable,required"`
+	Port                            int64    `json:"port,omitempty"                        norman:"default=389,notnullable,required"`
+	TLS                             bool     `json:"tls,omitempty"                         norman:"default=false,notnullable,required"`
+	Certificate                     string   `json:"certificate,omitempty"`
+	ServiceAccountDistinguishedName string   `json:"serviceAccountDistinguishedName,omitempty"      norman:"required"`
+	ServiceAccountPassword          string   `json:"serviceAccountPassword,omitempty"      norman:"type=password,required"`
+	UserDisabledBitMask             int64    `json:"userDisabledBitMask,omitempty"`
+	UserSearchBase                  string   `json:"userSearchBase,omitempty"              norman:"notnullable,required"`
+	UserSearchAttribute             string   `json:"userSearchAttribute,omitempty"         norman:"default=uid|sn|givenName,notnullable,required"`
+	UserLoginAttribute              string   `json:"userLoginAttribute,omitempty"          norman:"default=uid,notnullable,required"`
+	UserObjectClass                 string   `json:"userObjectClass,omitempty"             norman:"default=inetOrgPerson,notnullable,required"`
+	UserNameAttribute               string   `json:"userNameAttribute,omitempty"           norman:"default=cn,notnullable,required"`
+	UserMemberAttribute             string   `json:"userMemberAttribute,omitempty"           norman:"default=memberOf,notnullable,required"`
+	UserEnabledAttribute            string   `json:"userEnabledAttribute,omitempty"`
+	GroupSearchBase                 string   `json:"groupSearchBase,omitempty"`
+	GroupSearchAttribute            string   `json:"groupSearchAttribute,omitempty"        norman:"default=cn,notnullable,required"`
+	GroupObjectClass                string   `json:"groupObjectClass,omitempty"            norman:"default=groupOfNames,notnullable,required"`
+	GroupNameAttribute              string   `json:"groupNameAttribute,omitempty"          norman:"default=cn,notnullable,required"`
+	GroupDNAttribute                string   `json:"groupDNAttribute,omitempty"            norman:"default=entryDN,notnullable"`
+	GroupMemberUserAttribute        string   `json:"groupMemberUserAttribute,omitempty"    norman:"default=entryDN,notnullable"`
+	GroupMemberMappingAttribute     string   `json:"groupMemberMappingAttribute,omitempty" norman:"default=member,notnullable,required"`
+	ConnectionTimeout               int64    `json:"connectionTimeout,omitempty"           norman:"default=1000,notnullable,required"`
 }
 
-type AzureADTestAndApplyInput struct {
-	AzureADConfig AzureADConfig `json:"azureAdConfig, omitempty"`
-	Username      string        `json:"username"`
-	Password      string        `json:"password"`
-	Enabled       bool          `json:"enabled,omitempty"`
+type LdapTestAndApplyInput struct {
+	LdapConfig `json:"ldapConfig,omitempty"`
+	Username   string `json:"username"`
+	Password   string `json:"password" norman:"type=password,required"`
+}
+
+type OpenLdapConfig struct {
+	LdapConfig `json:",inline" mapstructure:",squash"`
+}
+
+type OpenLdapTestAndApplyInput struct {
+	LdapTestAndApplyInput `json:",inline" mapstructure:",squash"`
+}
+
+type FreeIpaConfig struct {
+	LdapConfig `json:",inline" mapstructure:",squash"`
+}
+
+type FreeIpaTestAndApplyInput struct {
+	LdapTestAndApplyInput `json:",inline" mapstructure:",squash"`
 }

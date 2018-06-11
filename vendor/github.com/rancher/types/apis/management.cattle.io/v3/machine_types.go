@@ -166,7 +166,8 @@ type CustomConfig struct {
 	// Optional - Docker socket on the node that will be used in tunneling
 	DockerSocket string `yaml:"docker_socket" json:"dockerSocket,omitempty"`
 	// SSH Private Key
-	SSHKey string `yaml:"ssh_key" json:"sshKey,omitempty"`
+	SSHKey string            `yaml:"ssh_key" json:"sshKey,omitempty"`
+	Label  map[string]string `yaml:"label" json:"label,omitempty"`
 }
 
 type NodeSpec struct {
@@ -177,15 +178,16 @@ type NodeSpec struct {
 	Worker           bool   `json:"worker" norman:"noupdate"`
 	NodeTemplateName string `json:"nodeTemplateName,omitempty" norman:"type=reference[nodeTemplate],noupdate"`
 
-	NodePoolName           string            `json:"nodePoolName" norman:"type=reference[nodePool],nocreate,noupdate"`
-	CustomConfig           *CustomConfig     `json:"customConfig"`
-	Imported               bool              `json:"imported"`
-	Description            string            `json:"description,omitempty"`
-	DisplayName            string            `json:"displayName"`
-	RequestedHostname      string            `json:"requestedHostname,omitempty" norman:"type=dnsLabel,nullable,noupdate,required"`
-	InternalNodeSpec       v1.NodeSpec       `json:"internalNodeSpec"`
-	DesiredNodeLabels      map[string]string `json:"desiredNodeLabels,omitempty"`
-	DesiredNodeAnnotations map[string]string `json:"desiredNodeAnnotations,omitempty"`
+	NodePoolName             string            `json:"nodePoolName" norman:"type=reference[nodePool],nocreate,noupdate"`
+	CustomConfig             *CustomConfig     `json:"customConfig"`
+	Imported                 bool              `json:"imported"`
+	Description              string            `json:"description,omitempty"`
+	DisplayName              string            `json:"displayName"`
+	RequestedHostname        string            `json:"requestedHostname,omitempty" norman:"type=dnsLabel,nullable,noupdate,required"`
+	InternalNodeSpec         v1.NodeSpec       `json:"internalNodeSpec"`
+	DesiredNodeLabels        map[string]string `json:"desiredNodeLabels,omitempty"`
+	DesiredNodeAnnotations   map[string]string `json:"desiredNodeAnnotations,omitempty"`
+	DesiredNodeUnschedulable string            `json:"desiredNodeUnschedulable,omitempty"`
 }
 
 type NodeCommonParams struct {

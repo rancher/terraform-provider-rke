@@ -148,7 +148,6 @@ func SyncLabels(k8sClient *kubernetes.Clientset, nodeName string, toAddLabels, t
 func SyncTaints(k8sClient *kubernetes.Clientset, nodeName string, toAddTaints, toDelTaints []string) error {
 	updated := false
 	var err error
-	var node *v1.Node
 	for retries := 0; retries <= 5; retries++ {
 		if err = doSyncTaints(k8sClient, nodeName, toAddTaints, toDelTaints); err != nil {
 			time.Sleep(5 * time.Second)
@@ -158,7 +157,7 @@ func SyncTaints(k8sClient *kubernetes.Clientset, nodeName string, toAddTaints, t
 		break
 	}
 	if !updated {
-		return fmt.Errorf("Timeout waiting for node [%s] to be updated with new set of taints: %v", node.Name, err)
+		return fmt.Errorf("Timeout waiting for node [%s] to be updated with new set of taints: %v", nodeName, err)
 	}
 	return nil
 }
@@ -222,7 +221,11 @@ func doSyncTaints(k8sClient *kubernetes.Clientset, nodeName string, toAddTaints,
 	// Remove Taints from node
 	for i, taintStr := range toDelTaints {
 		if isTaintExist(toTaint(taintStr), node.Spec.Taints) {
-			node.Spec.Taints = append(node.Spec.Taints[:i], node.Spec.Taints[i+1:]...)
+			if len(node.Spec.Taints) == 1 {
+				node.Spec.Taints = []v1.Taint{}
+			} else {
+				node.Spec.Taints = append(node.Spec.Taints[:i], node.Spec.Taints[i+1:]...)
+			}
 		}
 	}
 

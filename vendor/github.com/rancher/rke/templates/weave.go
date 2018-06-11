@@ -96,6 +96,12 @@ items:
             seLinuxOptions: {}
           serviceAccountName: weave-net
           tolerations:
+            - key: "node-role.kubernetes.io/controlplane"
+              operator: "Exists"
+              effect: "NoSchedule"
+            - key: "node-role.kubernetes.io/etcd"
+              operator: "Exists"
+              effect: "NoExecute"
             - effect: NoExecute
               operator: Exists
           volumes:

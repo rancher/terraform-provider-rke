@@ -11,6 +11,7 @@ import (
 	"github.com/rancher/rke/k8s"
 	"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
+	"github.com/rancher/rke/services"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/client-go/kubernetes"
@@ -246,4 +247,49 @@ func fetchCertificatesFromEtcd(ctx context.Context, kubeCluster *Cluster) ([]byt
 	clientCert := cert.EncodeCertPEM(certificates[pki.KubeNodeCertName].Certificate)
 	clientkey := cert.EncodePrivateKeyPEM(certificates[pki.KubeNodeCertName].Key)
 	return clientCert, clientkey, nil
+}
+
+func (c *Cluster) SaveBackupCertificateBundle(ctx context.Context) error {
+	backupHosts := c.getBackupHosts()
+	var errgrp errgroup.Group
+
+	for _, host := range backupHosts {
+		runHost := host
+		errgrp.Go(func() error {
+			return pki.SaveBackupBundleOnHost(ctx, runHost, c.SystemImages.Alpine, services.EtcdSnapshotPath, c.PrivateRegistriesMap)
+		})
+	}
+	return errgrp.Wait()
+}
+
+func (c *Cluster) ExtractBackupCertificateBundle(ctx context.Context) error {
+	backupHosts := c.getBackupHosts()
+	var errgrp errgroup.Group
+	errList := []string{}
+	for _, host := range backupHosts {
+		runHost := host
+		errgrp.Go(func() error {
+			if err := pki.ExtractBackupBundleOnHost(ctx, runHost, c.SystemImages.Alpine, services.EtcdSnapshotPath, c.PrivateRegistriesMap); err != nil {
+				errList = append(errList, fmt.Errorf(
+					"Failed to extract certificate bundle on host [%s], please make sure etcd bundle exist in /opt/rke/etcd-snapshots/pki.bundle.tar.gz: %v", runHost.Address, err).Error())
+			}
+			return nil
+		})
+	}
+	errgrp.Wait()
+	if len(errList) == len(backupHosts) {
+		return fmt.Errorf(strings.Join(errList, ","))
+	}
+	return nil
+}
+
+func (c *Cluster) getBackupHosts() []*hosts.Host {
+	var backupHosts []*hosts.Host
+	if len(c.Services.Etcd.ExternalURLs) > 0 {
+		backupHosts = c.ControlPlaneHosts
+	} else {
+		// Save certificates on etcd and controlplane hosts
+		backupHosts = hosts.GetUniqueHostList(c.EtcdHosts, c.ControlPlaneHosts, nil)
+	}
+	return backupHosts
 }

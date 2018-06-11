@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/coreos/go-semver/semver"
 	ref "github.com/docker/distribution/reference"
@@ -24,6 +25,7 @@ import (
 
 const (
 	DockerRegistryURL = "docker.io"
+	RestartTimeout    = 30
 )
 
 var K8sDockerVersions = map[string][]string{
@@ -53,6 +55,14 @@ func DoRunContainer(ctx context.Context, dClient *client.Client, imageCfg *conta
 	}
 	// Check for upgrades
 	if container.State.Running {
+		// check if container is in a restarting loop
+		if container.State.Restarting {
+			logrus.Debugf("[%s] Container [%s] is in a restarting loop [%s]", plane, containerName, hostname)
+			restartTimeoutDuration := RestartTimeout * time.Second
+			if err := dClient.ContainerRestart(ctx, container.ID, &restartTimeoutDuration); err != nil {
+				return fmt.Errorf("Failed to start [%s] container on host [%s]: %v", containerName, hostname, err)
+			}
+		}
 		logrus.Debugf("[%s] Container [%s] is already running on host [%s]", plane, containerName, hostname)
 		isUpgradable, err := IsContainerUpgradable(ctx, dClient, imageCfg, containerName, hostname, plane)
 		if err != nil {
@@ -299,7 +309,8 @@ func IsContainerUpgradable(ctx context.Context, dClient *client.Client, imageCfg
 	}
 	if containerInspect.Config.Image != imageCfg.Image ||
 		!sliceEqualsIgnoreOrder(containerInspect.Config.Entrypoint, imageCfg.Entrypoint) ||
-		!sliceEqualsIgnoreOrder(containerInspect.Config.Cmd, imageCfg.Cmd) {
+		!sliceEqualsIgnoreOrder(containerInspect.Config.Cmd, imageCfg.Cmd) ||
+		!isContainerRKEEnvChanged(containerInspect.Config.Env, imageCfg.Env) {
 		logrus.Debugf("[%s] Container [%s] is eligible for upgrade on host [%s]", plane, containerName, hostname)
 		return true, nil
 	}
@@ -346,8 +357,8 @@ func ReadFileFromContainer(ctx context.Context, dClient *client.Client, hostname
 	return string(file), nil
 }
 
-func ReadContainerLogs(ctx context.Context, dClient *client.Client, containerName string) (io.ReadCloser, error) {
-	return dClient.ContainerLogs(ctx, containerName, types.ContainerLogsOptions{Follow: true, ShowStdout: true, ShowStderr: true, Timestamps: false})
+func ReadContainerLogs(ctx context.Context, dClient *client.Client, containerName string, follow bool, tail string) (io.ReadCloser, error) {
+	return dClient.ContainerLogs(ctx, containerName, types.ContainerLogsOptions{Follow: follow, ShowStdout: true, ShowStderr: true, Timestamps: false, Tail: tail})
 }
 
 func tryRegistryAuth(pr v3.PrivateRegistry) types.RequestPrivilegeFunc {
@@ -389,4 +400,22 @@ func convertToSemver(version string) (*semver.Version, error) {
 	}
 	compVersion[2] = "0"
 	return semver.NewVersion(strings.Join(compVersion, "."))
+}
+
+func isContainerRKEEnvChanged(containerEnv, imageConfigEnv []string) bool {
+	// remove PATH env from the container env
+	cleanedContainerEnv := getRKEEnvVars(containerEnv)
+	cleanedImageConfigEnv := getRKEEnvVars(imageConfigEnv)
+
+	return sliceEqualsIgnoreOrder(cleanedContainerEnv, cleanedImageConfigEnv)
+}
+
+func getRKEEnvVars(env []string) []string {
+	tmp := []string{}
+	for _, e := range env {
+		if strings.HasPrefix(e, "RKE_") {
+			tmp = append(tmp, e)
+		}
+	}
+	return tmp
 }
