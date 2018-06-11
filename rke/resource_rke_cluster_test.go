@@ -43,7 +43,7 @@ func TestAccResourceRKECluster(t *testing.T) {
 		CheckDestroy: testAccCheckRKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckSakuraCloudIconConfigBasic(nodeIP, nodeUser, nodeSSHKey),
+				Config: testAccCheckRKEConfigBasic(nodeIP, nodeUser, nodeSSHKey),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"rke_cluster.cluster", "nodes.#", "1"),
@@ -54,7 +54,7 @@ func TestAccResourceRKECluster(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccCheckSakuraCloudIconConfigUpdate(nodeIP, nodeUser, nodeSSHKey),
+				Config: testAccCheckRKEConfigUpdate(nodeIP, nodeUser, nodeSSHKey),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"rke_cluster.cluster", "nodes.#", "1"),
@@ -103,7 +103,7 @@ func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckSakuraCloudIconConfigBasic(ip, user, sshKey string) string {
+func testAccCheckRKEConfigBasic(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
   nodes = [
@@ -121,7 +121,7 @@ EOF
 
 }
 
-func testAccCheckSakuraCloudIconConfigUpdate(ip, user, sshKey string) string {
+func testAccCheckRKEConfigUpdate(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
   nodes = [

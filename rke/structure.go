@@ -273,27 +273,34 @@ func setCloudProviderFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d
 func parseResourceRKEConfigNode(d resourceData) ([]v3.RKEConfigNode, error) {
 	nodes := []v3.RKEConfigNode{}
 	if rawNodes, ok := d.GetOk("nodes"); ok {
+
 		nodeList := rawNodes.([]interface{})
 		for _, rawNode := range nodeList {
 			nodeValues := rawNode.(map[string]interface{})
 			node := v3.RKEConfigNode{}
 
-			valueMapping := map[string]*string{
-				"node_name":         &node.NodeName,
-				"address":           &node.Address,
-				"internal_address":  &node.InternalAddress,
-				"hostname_override": &node.HostnameOverride,
-				"user":              &node.User,
-				"docker_socket":     &node.DockerSocket,
-				"ssh_key":           &node.SSHKey,
-				"ssh_key_path":      &node.SSHKeyPath,
-			}
-
-			for key, dest := range valueMapping {
-				if v, ok := nodeValues[key]; ok {
-					*dest = v.(string)
-				}
-			}
+			applyMapToObj(&mapObjMapping{
+				source: nodeValues,
+				stringMapping: map[string]*string{
+					"node_name":         &node.NodeName,
+					"address":           &node.Address,
+					"internal_address":  &node.InternalAddress,
+					"hostname_override": &node.HostnameOverride,
+					"user":              &node.User,
+					"docker_socket":     &node.DockerSocket,
+					"ssh_key":           &node.SSHKey,
+					"ssh_key_path":      &node.SSHKeyPath,
+				},
+				boolMapping: map[string]*bool{
+					"ssh_agent_auth": &node.SSHAgentAuth,
+				},
+				listStrMapping: map[string]*[]string{
+					"role": &node.Role,
+				},
+				mapStrMapping: map[string]*map[string]string{
+					"labels": &node.Labels,
+				},
+			})
 
 			if v, ok := nodeValues["port"]; ok {
 				p := v.(int)
@@ -366,57 +373,31 @@ func parseResourceETCDService(d resourceData) (*v3.ETCDService, error) {
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
 			etcd := &v3.ETCDService{}
-
 			rawMap := rawService.(map[string]interface{})
-			if v, ok := rawMap["image"]; ok {
-				etcd.Image = v.(string)
-			}
 
-			if v, ok := rawMap["extra_args"]; ok {
-				extraArgs := map[string]string{}
-				args := v.(map[string]interface{})
-				for k, v := range args {
-					if v, ok := v.(string); ok {
-						extraArgs[k] = v
-					}
-				}
-				etcd.ExtraArgs = extraArgs
-			}
-
-			if v, ok := rawMap["extra_binds"]; ok {
-				extraBinds := []string{}
-				for _, e := range v.([]interface{}) {
-					extraBinds = append(extraBinds, e.(string))
-				}
-				etcd.ExtraBinds = extraBinds
-			}
-
-			if v, ok := rawMap["external_urls"]; ok {
-				externalURLs := []string{}
-				for _, e := range v.([]interface{}) {
-					externalURLs = append(externalURLs, e.(string))
-				}
-				etcd.ExternalURLs = externalURLs
-			}
-
-			valueMapping := map[string]*string{
-				"ca_cert":   &etcd.CACert,
-				"cert":      &etcd.Cert,
-				"key":       &etcd.Key,
-				"path":      &etcd.Path,
-				"retention": &etcd.Retention,
-				"creation":  &etcd.Creation,
-			}
-
-			for key, dest := range valueMapping {
-				if v, ok := rawMap[key]; ok {
-					*dest = v.(string)
-				}
-			}
-
-			if v, ok := rawMap["snapshot"]; ok {
-				etcd.Snapshot = v.(bool)
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"image":     &etcd.Image,
+					"ca_cert":   &etcd.CACert,
+					"cert":      &etcd.Cert,
+					"key":       &etcd.Key,
+					"path":      &etcd.Path,
+					"retention": &etcd.Retention,
+					"creation":  &etcd.Creation,
+				},
+				boolMapping: map[string]*bool{
+					"snapshot": &etcd.Snapshot,
+				},
+				mapStrMapping: map[string]*map[string]string{
+					"extra_args": &etcd.ExtraArgs,
+				},
+				listStrMapping: map[string]*[]string{
+					"extra_binds":   &etcd.ExtraBinds,
+					"extra_env":     &etcd.ExtraEnv,
+					"external_urls": &etcd.ExternalURLs,
+				},
+			})
 
 			return etcd, nil
 		}
@@ -430,38 +411,27 @@ func parseResourceKubeAPIService(d resourceData) (*v3.KubeAPIService, error) {
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
 			kubeAPI := &v3.KubeAPIService{}
-
 			rawMap := rawService.(map[string]interface{})
-			if v, ok := rawMap["image"]; ok {
-				kubeAPI.Image = v.(string)
-			}
 
-			if v, ok := rawMap["extra_args"]; ok {
-				extraArgs := map[string]string{}
-				args := v.(map[string]interface{})
-				for k, v := range args {
-					if v, ok := v.(string); ok {
-						extraArgs[k] = v
-					}
-				}
-				kubeAPI.ExtraArgs = extraArgs
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"image":                    &kubeAPI.Image,
+					"service_cluster_ip_range": &kubeAPI.ServiceClusterIPRange,
+					"service_node_port_range":  &kubeAPI.ServiceNodePortRange,
+				},
+				boolMapping: map[string]*bool{
+					"pod_security_policy": &kubeAPI.PodSecurityPolicy,
+				},
+				mapStrMapping: map[string]*map[string]string{
+					"extra_args": &kubeAPI.ExtraArgs,
+				},
+				listStrMapping: map[string]*[]string{
+					"extra_binds": &kubeAPI.ExtraBinds,
+					"extra_env":   &kubeAPI.ExtraEnv,
+				},
+			})
 
-			if v, ok := rawMap["extra_binds"]; ok {
-				extraBinds := []string{}
-				for _, e := range v.([]interface{}) {
-					extraBinds = append(extraBinds, e.(string))
-				}
-				kubeAPI.ExtraBinds = extraBinds
-			}
-
-			if v, ok := rawMap["service_cluster_ip_range"]; ok {
-				kubeAPI.ServiceClusterIPRange = v.(string)
-			}
-
-			if v, ok := rawMap["pod_security_policy"]; ok {
-				kubeAPI.PodSecurityPolicy = v.(bool)
-			}
 			return kubeAPI, nil
 		}
 	}
@@ -473,36 +443,24 @@ func parseResourceKubeControllerService(d resourceData) (*v3.KubeControllerServi
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
 			kubeController := &v3.KubeControllerService{}
-
 			rawMap := rawService.(map[string]interface{})
-			if v, ok := rawMap["image"]; ok {
-				kubeController.Image = v.(string)
-			}
 
-			if v, ok := rawMap["extra_args"]; ok {
-				extraArgs := map[string]string{}
-				args := v.(map[string]interface{})
-				for k, v := range args {
-					if v, ok := v.(string); ok {
-						extraArgs[k] = v
-					}
-				}
-				kubeController.ExtraArgs = extraArgs
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"image":                    &kubeController.Image,
+					"cluster_cidr":             &kubeController.ClusterCIDR,
+					"service_cluster_ip_range": &kubeController.ServiceClusterIPRange,
+				},
+				mapStrMapping: map[string]*map[string]string{
+					"extra_args": &kubeController.ExtraArgs,
+				},
+				listStrMapping: map[string]*[]string{
+					"extra_binds": &kubeController.ExtraBinds,
+					"extra_env":   &kubeController.ExtraEnv,
+				},
+			})
 
-			if v, ok := rawMap["extra_binds"]; ok {
-				extraBinds := []string{}
-				for _, e := range v.([]interface{}) {
-					extraBinds = append(extraBinds, e.(string))
-				}
-				kubeController.ExtraBinds = extraBinds
-			}
-			if v, ok := rawMap["cluster_cidr"]; ok {
-				kubeController.ClusterCIDR = v.(string)
-			}
-			if v, ok := rawMap["service_cluster_ip_range"]; ok {
-				kubeController.ServiceClusterIPRange = v.(string)
-			}
 			return kubeController, nil
 		}
 	}
@@ -514,30 +472,22 @@ func parseResourceSchedulerService(d resourceData) (*v3.SchedulerService, error)
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
 			scheduler := &v3.SchedulerService{}
-
 			rawMap := rawService.(map[string]interface{})
-			if v, ok := rawMap["image"]; ok {
-				scheduler.Image = v.(string)
-			}
 
-			if v, ok := rawMap["extra_args"]; ok {
-				extraArgs := map[string]string{}
-				args := v.(map[string]interface{})
-				for k, v := range args {
-					if v, ok := v.(string); ok {
-						extraArgs[k] = v
-					}
-				}
-				scheduler.ExtraArgs = extraArgs
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"image": &scheduler.Image,
+				},
+				mapStrMapping: map[string]*map[string]string{
+					"extra_args": &scheduler.ExtraArgs,
+				},
+				listStrMapping: map[string]*[]string{
+					"extra_binds": &scheduler.ExtraBinds,
+					"extra_env":   &scheduler.ExtraEnv,
+				},
+			})
 
-			if v, ok := rawMap["extra_binds"]; ok {
-				extraBinds := []string{}
-				for _, e := range v.([]interface{}) {
-					extraBinds = append(extraBinds, e.(string))
-				}
-				scheduler.ExtraBinds = extraBinds
-			}
 			return scheduler, nil
 		}
 	}
@@ -549,42 +499,28 @@ func parseResourceKubeletService(d resourceData) (*v3.KubeletService, error) {
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
 			kubelet := &v3.KubeletService{}
-
 			rawMap := rawService.(map[string]interface{})
-			if v, ok := rawMap["image"]; ok {
-				kubelet.Image = v.(string)
-			}
 
-			if v, ok := rawMap["extra_args"]; ok {
-				extraArgs := map[string]string{}
-				args := v.(map[string]interface{})
-				for k, v := range args {
-					if v, ok := v.(string); ok {
-						extraArgs[k] = v
-					}
-				}
-				kubelet.ExtraArgs = extraArgs
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"image":                 &kubelet.Image,
+					"cluster_domain":        &kubelet.ClusterDomain,
+					"infra_container_image": &kubelet.InfraContainerImage,
+					"cluster_dns_server":    &kubelet.ClusterDNSServer,
+				},
+				boolMapping: map[string]*bool{
+					"fail_swap_on": &kubelet.FailSwapOn,
+				},
+				mapStrMapping: map[string]*map[string]string{
+					"extra_args": &kubelet.ExtraArgs,
+				},
+				listStrMapping: map[string]*[]string{
+					"extra_binds": &kubelet.ExtraBinds,
+					"extra_env":   &kubelet.ExtraEnv,
+				},
+			})
 
-			if v, ok := rawMap["extra_binds"]; ok {
-				extraBinds := []string{}
-				for _, e := range v.([]interface{}) {
-					extraBinds = append(extraBinds, e.(string))
-				}
-				kubelet.ExtraBinds = extraBinds
-			}
-			if v, ok := rawMap["cluster_domain"]; ok {
-				kubelet.ClusterDomain = v.(string)
-			}
-			if v, ok := rawMap["infra_container_image"]; ok {
-				kubelet.InfraContainerImage = v.(string)
-			}
-			if v, ok := rawMap["cluster_dns_server"]; ok {
-				kubelet.ClusterDNSServer = v.(string)
-			}
-			if v, ok := rawMap["fail_swap_on"]; ok {
-				kubelet.FailSwapOn = v.(bool)
-			}
 			return kubelet, nil
 		}
 	}
@@ -596,30 +532,22 @@ func parseResourceKubeproxyService(d resourceData) (*v3.KubeproxyService, error)
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
 			kubeproxy := &v3.KubeproxyService{}
-
 			rawMap := rawService.(map[string]interface{})
-			if v, ok := rawMap["image"]; ok {
-				kubeproxy.Image = v.(string)
-			}
 
-			if v, ok := rawMap["extra_args"]; ok {
-				extraArgs := map[string]string{}
-				args := v.(map[string]interface{})
-				for k, v := range args {
-					if v, ok := v.(string); ok {
-						extraArgs[k] = v
-					}
-				}
-				kubeproxy.ExtraArgs = extraArgs
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"image": &kubeproxy.Image,
+				},
+				mapStrMapping: map[string]*map[string]string{
+					"extra_args": &kubeproxy.ExtraArgs,
+				},
+				listStrMapping: map[string]*[]string{
+					"extra_binds": &kubeproxy.ExtraBinds,
+					"extra_env":   &kubeproxy.ExtraEnv,
+				},
+			})
 
-			if v, ok := rawMap["extra_binds"]; ok {
-				extraBinds := []string{}
-				for _, e := range v.([]interface{}) {
-					extraBinds = append(extraBinds, e.(string))
-				}
-				kubeproxy.ExtraBinds = extraBinds
-			}
 			return kubeproxy, nil
 		}
 	}
@@ -631,22 +559,18 @@ func parseResourceNetwork(d resourceData) (*v3.NetworkConfig, error) {
 		if rawNetworks, ok := rawList.([]interface{}); ok && len(rawNetworks) > 0 {
 			rawNetwork := rawNetworks[0]
 			network := &v3.NetworkConfig{}
-
 			rawMap := rawNetwork.(map[string]interface{})
-			if v, ok := rawMap["plugin"]; ok {
-				network.Plugin = v.(string)
-			}
 
-			if v, ok := rawMap["options"]; ok {
-				options := map[string]string{}
-				values := v.(map[string]interface{})
-				for k, v := range values {
-					if v, ok := v.(string); ok {
-						options[k] = v
-					}
-				}
-				network.Options = options
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"plugin": &network.Plugin,
+				},
+				mapStrMapping: map[string]*map[string]string{
+					"options": &network.Options,
+				},
+			})
+
 			return network, nil
 		}
 	}
@@ -658,30 +582,21 @@ func parseResourceAuthentication(d resourceData) (*v3.AuthnConfig, error) {
 		if rawAuthns, ok := rawList.([]interface{}); ok && len(rawAuthns) > 0 {
 			rawAuthn := rawAuthns[0]
 			config := &v3.AuthnConfig{}
-
 			rawMap := rawAuthn.(map[string]interface{})
-			if v, ok := rawMap["strategy"]; ok {
-				config.Strategy = v.(string)
-			}
 
-			if v, ok := rawMap["options"]; ok {
-				options := map[string]string{}
-				values := v.(map[string]interface{})
-				for k, v := range values {
-					if v, ok := v.(string); ok {
-						options[k] = v
-					}
-				}
-				config.Options = options
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"strategy": &config.Strategy,
+				},
+				listStrMapping: map[string]*[]string{
+					"sans": &config.SANs,
+				},
+				mapStrMapping: map[string]*map[string]string{
+					"options": &config.Options,
+				},
+			})
 
-			if v, ok := rawMap["sans"]; ok {
-				sans := []string{}
-				for _, e := range v.([]interface{}) {
-					sans = append(sans, e.(string))
-				}
-				config.SANs = sans
-			}
 			return config, nil
 		}
 	}
@@ -720,38 +635,35 @@ func parseResourceSystemImages(d resourceData) (*v3.RKESystemImages, error) {
 			config := &v3.RKESystemImages{}
 			rawMap := rawImage.(map[string]interface{})
 
-			valueMapping := map[string]*string{
-				"etcd":                        &config.Etcd,
-				"alpine":                      &config.Alpine,
-				"nginx_proxy":                 &config.NginxProxy,
-				"cert_downloader":             &config.CertDownloader,
-				"kubernetes_services_sidecar": &config.KubernetesServicesSidecar,
-				"kube_dns":                    &config.KubeDNS,
-				"dnsmasq":                     &config.DNSmasq,
-				"kube_dns_sidecar":            &config.KubeDNSSidecar,
-				"kube_dns_autoscaler":         &config.KubeDNSAutoscaler,
-				"kubernetes":                  &config.Kubernetes,
-				"flannel":                     &config.Flannel,
-				"flannel_cni":                 &config.FlannelCNI,
-				"calico_node":                 &config.CalicoNode,
-				"calico_cni":                  &config.CalicoCNI,
-				"calico_controllers":          &config.CalicoControllers,
-				"calico_ctl":                  &config.CalicoCtl,
-				"canal_node":                  &config.CanalNode,
-				"canal_cni":                   &config.CanalCNI,
-				"canal_flannel":               &config.CanalFlannel,
-				"weave_node":                  &config.WeaveNode,
-				"weave_cni":                   &config.WeaveCNI,
-				"pod_infra_container":         &config.PodInfraContainer,
-				"ingress":                     &config.Ingress,
-				"ingress_backend":             &config.IngressBackend,
-			}
-
-			for key, dest := range valueMapping {
-				if v, ok := rawMap[key]; ok {
-					*dest = v.(string)
-				}
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"etcd":                        &config.Etcd,
+					"alpine":                      &config.Alpine,
+					"nginx_proxy":                 &config.NginxProxy,
+					"cert_downloader":             &config.CertDownloader,
+					"kubernetes_services_sidecar": &config.KubernetesServicesSidecar,
+					"kube_dns":                    &config.KubeDNS,
+					"dnsmasq":                     &config.DNSmasq,
+					"kube_dns_sidecar":            &config.KubeDNSSidecar,
+					"kube_dns_autoscaler":         &config.KubeDNSAutoscaler,
+					"kubernetes":                  &config.Kubernetes,
+					"flannel":                     &config.Flannel,
+					"flannel_cni":                 &config.FlannelCNI,
+					"calico_node":                 &config.CalicoNode,
+					"calico_cni":                  &config.CalicoCNI,
+					"calico_controllers":          &config.CalicoControllers,
+					"calico_ctl":                  &config.CalicoCtl,
+					"canal_node":                  &config.CanalNode,
+					"canal_cni":                   &config.CanalCNI,
+					"canal_flannel":               &config.CanalFlannel,
+					"weave_node":                  &config.WeaveNode,
+					"weave_cni":                   &config.WeaveCNI,
+					"pod_infra_container":         &config.PodInfraContainer,
+					"ingress":                     &config.Ingress,
+					"ingress_backend":             &config.IngressBackend,
+				},
+			})
 
 			return config, nil
 		}
@@ -780,28 +692,25 @@ func parseResourceBastionHost(d resourceData) (*v3.BastionHost, error) {
 			config := &v3.BastionHost{}
 
 			rawMap := rawHost.(map[string]interface{})
-			valueMapping := map[string]*string{
-				"address":      &config.Address,
-				"user":         &config.User,
-				"ssh_key":      &config.SSHKey,
-				"ssh_key_path": &config.SSHKeyPath,
-			}
 
-			for key, dest := range valueMapping {
-				if v, ok := rawMap[key]; ok {
-					*dest = v.(string)
-				}
-			}
+			applyMapToObj(&mapObjMapping{
+				source: rawMap,
+				stringMapping: map[string]*string{
+					"address":      &config.Address,
+					"user":         &config.User,
+					"ssh_key":      &config.SSHKey,
+					"ssh_key_path": &config.SSHKeyPath,
+				},
+				boolMapping: map[string]*bool{
+					"ssh_agent_auth": &config.SSHAgentAuth,
+				},
+			})
 
 			if v, ok := rawMap["port"]; ok {
 				p := v.(int)
 				if p > 0 {
 					config.Port = fmt.Sprintf("%d", p)
 				}
-			}
-
-			if v, ok := rawMap["ssh_agent_auth"]; ok {
-				config.SSHAgentAuth = v.(bool)
 			}
 
 			return config, nil
@@ -942,15 +851,331 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 				config.Name = v.(string)
 			}
 
-			if v, ok := rawMap["cloud_config"]; ok {
-				cc := map[string]string{}
-				values := v.(map[string]interface{})
-				for k, v := range values {
-					if v, ok := v.(string); ok {
-						cc[k] = v
+			/*
+				if v, ok := rawMap["cloud_config"]; ok {
+					cc := map[string]string{}
+					values := v.(map[string]interface{})
+					for k, v := range values {
+						if v, ok := v.(string); ok {
+							cc[k] = v
+						}
 					}
+					config.CloudConfig = cc
 				}
-				config.CloudConfig = cc
+			*/
+
+			if rawList, ok := rawMap["azure_cloud_config"]; ok {
+				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
+					rawConfig := rawCloudConfigs[0]
+					c := &v3.AzureCloudProvider{}
+
+					rawMap := rawConfig.(map[string]interface{})
+
+					applyMapToObj(&mapObjMapping{
+						source: rawMap,
+						stringMapping: map[string]*string{
+							"cloud":                         &c.Cloud,
+							"tenant_id":                     &c.TenantID,
+							"subscription_id":               &c.SubscriptionID,
+							"resource_group":                &c.ResourceGroup,
+							"location":                      &c.Location,
+							"vnet_name":                     &c.VnetName,
+							"vnet_resource_group":           &c.VnetResourceGroup,
+							"route_table_name":              &c.RouteTableName,
+							"primary_availability_set_name": &c.PrimaryAvailabilitySetName,
+							"vm_type":                       &c.VMType,
+							"primary_scale_set_name":        &c.PrimaryScaleSetName,
+							"aad_client_id":                 &c.AADClientID,
+							"aad_client_secret":             &c.AADClientSecret,
+							"aad_client_cert_path":          &c.AADClientCertPath,
+							"aad_client_cert_password":      &c.AADClientCertPassword,
+						},
+						intMapping: map[string]*int{
+							"cloud_provider_backoff_retries":   &c.CloudProviderBackoffRetries,
+							"cloud_provider_backoff_exponent":  &c.CloudProviderBackoffExponent,
+							"cloud_provider_backoff_duration":  &c.CloudProviderBackoffDuration,
+							"cloud_provider_backoff_jitter":    &c.CloudProviderBackoffJitter,
+							"cloud_provider_rate_limit_qps":    &c.CloudProviderRateLimitQPS,
+							"cloud_provider_rate_limit_bucket": &c.CloudProviderRateLimitBucket,
+							"maximum_load_balancer_rule_count": &c.MaximumLoadBalancerRuleCount,
+						},
+						boolMapping: map[string]*bool{
+							"cloud_provider_backoff":         &c.CloudProviderBackoff,
+							"cloud_provider_rate_limit":      &c.CloudProviderRateLimit,
+							"use_instance_metadata":          &c.UseInstanceMetadata,
+							"use_managed_identity_extension": &c.UseManagedIdentityExtension,
+						},
+					})
+
+					config.AzureCloudProvider = c
+				}
+			}
+
+			if rawList, ok := rawMap["vsphere_cloud_config"]; ok {
+				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
+					rawConfig := rawCloudConfigs[0]
+					c := &v3.VsphereCloudProvider{}
+
+					rawMap := rawConfig.(map[string]interface{})
+
+					// global
+					if rawList, ok := rawMap["global"]; ok {
+						if rawGlobals, ok := rawList.([]interface{}); ok && len(rawGlobals) > 0 {
+							rawGlobal := rawGlobals[0]
+							rawMap := rawGlobal.(map[string]interface{})
+							global := v3.GlobalVsphereOpts{}
+
+							applyMapToObj(&mapObjMapping{
+								source: rawMap,
+								stringMapping: map[string]*string{
+									"user":        &global.User,
+									"password":    &global.Password,
+									"server":      &global.VCenterIP,
+									"port":        &global.VCenterPort,
+									"datacenter":  &global.Datacenter,
+									"datacenters": &global.Datacenters,
+									"datastore":   &global.DefaultDatastore,
+									"working_dir": &global.WorkingDir,
+									"vm_uuid":     &global.VMUUID,
+									"vm_name":     &global.VMName,
+								},
+								intMapping: map[string]*int{
+									"soap_roundtrip_count": &global.RoundTripperCount,
+								},
+								boolMapping: map[string]*bool{
+									"insecure_flag": &global.InsecureFlag,
+								},
+							})
+
+							c.Global = global
+						}
+					}
+
+					// virtual_center
+					if rawList, ok := rawMap["virtual_center"]; ok {
+						if rawVCs, ok := rawList.([]interface{}); ok {
+							vcs := map[string]v3.VirtualCenterConfig{}
+							for _, rawVC := range rawVCs {
+								var server string
+								rawMap := rawVC.(map[string]interface{})
+								vc := v3.VirtualCenterConfig{}
+
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"server":      &server,
+										"user":        &vc.User,
+										"password":    &vc.Password,
+										"port":        &vc.VCenterPort,
+										"datacenters": &vc.Datacenters,
+									},
+									intMapping: map[string]*int{
+										"soap_roundtrip_count": &vc.RoundTripperCount,
+									},
+								})
+
+								vcs[server] = vc
+							}
+							c.VirtualCenter = vcs
+						}
+					}
+
+					// network
+					if rawList, ok := rawMap["network"]; ok {
+						if rawNetworks, ok := rawList.([]interface{}); ok && len(rawNetworks) > 0 {
+							rawNetwork := rawNetworks[0]
+							rawMap := rawNetwork.(map[string]interface{})
+							network := v3.NetworkVshpereOpts{}
+
+							applyMapToObj(&mapObjMapping{
+								source: rawMap,
+								stringMapping: map[string]*string{
+									"public_network": &network.PublicNetwork,
+								},
+							})
+
+							c.Network = network
+						}
+					}
+
+					// disk
+					if rawList, ok := rawMap["disk"]; ok {
+						if rawDisks, ok := rawList.([]interface{}); ok && len(rawDisks) > 0 {
+							rawDisk := rawDisks[0]
+							rawMap := rawDisk.(map[string]interface{})
+							disk := v3.DiskVsphereOpts{}
+
+							applyMapToObj(&mapObjMapping{
+								source: rawMap,
+								stringMapping: map[string]*string{
+									"scsi_controller_type": &disk.SCSIControllerType,
+								},
+							})
+
+							c.Disk = disk
+						}
+					}
+
+					// workspace
+					if rawList, ok := rawMap["workspace"]; ok {
+						if rawWSs, ok := rawList.([]interface{}); ok && len(rawWSs) > 0 {
+							rawWS := rawWSs[0]
+							rawMap := rawWS.(map[string]interface{})
+							ws := v3.WorkspaceVsphereOpts{}
+
+							applyMapToObj(&mapObjMapping{
+								source: rawMap,
+								stringMapping: map[string]*string{
+									"server":            &ws.VCenterIP,
+									"datacenter":        &ws.Datacenter,
+									"folder":            &ws.Folder,
+									"default_datastore": &ws.DefaultDatastore,
+									"resourcepool_path": &ws.ResourcePoolPath,
+								},
+							})
+
+							c.Workspace = ws
+						}
+					}
+
+					config.VsphereCloudProvider = c
+				}
+			}
+
+			if rawList, ok := rawMap["openstack_cloud_config"]; ok {
+				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
+					rawConfig := rawCloudConfigs[0]
+					c := &v3.OpenstackCloudProvider{}
+
+					rawMap := rawConfig.(map[string]interface{})
+
+					// global
+					if rawList, ok := rawMap["global"]; ok {
+						if rawGlobals, ok := rawList.([]interface{}); ok && len(rawGlobals) > 0 {
+							rawGlobal := rawGlobals[0]
+							rawMap := rawGlobal.(map[string]interface{})
+							global := v3.GlobalOpenstackOpts{}
+
+							applyMapToObj(&mapObjMapping{
+								source: rawMap,
+								stringMapping: map[string]*string{
+									"auth_url":    &global.AuthURL,
+									"username":    &global.Username,
+									"user_id":     &global.UserID,
+									"password":    &global.Password,
+									"tenant_id":   &global.TenantID,
+									"tenant_name": &global.TenantName,
+									"trust_id":    &global.TrustID,
+									"domain_id":   &global.DomainID,
+									"domain_name": &global.DomainName,
+									"region":      &global.Region,
+									"ca_file":     &global.CAFile,
+								},
+							})
+
+							c.Global = global
+						}
+					}
+
+					// load_balancer
+					if rawList, ok := rawMap["load_balancer"]; ok {
+						if rawLBs, ok := rawList.([]interface{}); ok && len(rawLBs) > 0 {
+							rawLB := rawLBs[0]
+							rawMap := rawLB.(map[string]interface{})
+							lb := v3.LoadBalancerOpenstackOpts{}
+
+							applyMapToObj(&mapObjMapping{
+								source: rawMap,
+								stringMapping: map[string]*string{
+									"lb_version":          &lb.LBVersion,
+									"subnet_id":           &lb.SubnetID,
+									"floating_network_id": &lb.FloatingNetworkID,
+									"lb_method":           &lb.LBMethod,
+									"lb_provider":         &lb.LBProvider,
+								},
+								boolMapping: map[string]*bool{
+									"use_octavia":            &lb.UseOctavia,
+									"create_monitor":         &lb.CreateMonitor,
+									"manage_security_groups": &lb.ManageSecurityGroups,
+								},
+								intMapping: map[string]*int{
+									"monitor_delay":       &lb.MonitorDelay,
+									"monitor_timeout":     &lb.MonitorTimeout,
+									"monitor_max_retries": &lb.MonitorMaxRetries,
+								},
+							})
+
+							c.LoadBalancer = lb
+						}
+					}
+
+					// block_storage
+					if rawList, ok := rawMap["block_storage"]; ok {
+						if rawBSs, ok := rawList.([]interface{}); ok && len(rawBSs) > 0 {
+							rawBS := rawBSs[0]
+							rawMap := rawBS.(map[string]interface{})
+							bs := v3.BlockStorageOpenstackOpts{}
+
+							applyMapToObj(&mapObjMapping{
+								source: rawMap,
+								stringMapping: map[string]*string{
+									"bs_version": &bs.BSVersion,
+								},
+								boolMapping: map[string]*bool{
+									"trust_device_path": &bs.TrustDevicePath,
+									"ignore_volume_az":  &bs.IgnoreVolumeAZ,
+								},
+							})
+
+							c.BlockStorage = bs
+						}
+					}
+
+					// route
+					if rawList, ok := rawMap["route"]; ok {
+						if rawRouters, ok := rawList.([]interface{}); ok && len(rawRouters) > 0 {
+							rawRouter := rawRouters[0]
+							rawMap := rawRouter.(map[string]interface{})
+							router := v3.RouteOpenstackOpts{}
+
+							applyMapToObj(&mapObjMapping{
+								source: rawMap,
+								stringMapping: map[string]*string{
+									"router_id": &router.RouterID,
+								},
+							})
+
+							c.Route = router
+						}
+					}
+
+					// metadata
+					if rawList, ok := rawMap["metadata"]; ok {
+						if rawMetadataList, ok := rawList.([]interface{}); ok && len(rawMetadataList) > 0 {
+							rawMetadata := rawMetadataList[0]
+							rawMap := rawMetadata.(map[string]interface{})
+							meta := v3.MetadataOpenstackOpts{}
+
+							applyMapToObj(&mapObjMapping{
+								source: rawMap,
+								stringMapping: map[string]*string{
+									"search_order": &meta.SearchOrder,
+								},
+								intMapping: map[string]*int{
+									"request_timeout": &meta.RequestTimeout,
+								},
+							})
+
+							c.Metadata = meta
+						}
+					}
+
+					config.OpenstackCloudProvider = c
+				}
+			}
+
+			if v, ok := rawMap["custom_cloud_config"]; ok {
+				config.CustomCloudProvider = v.(string)
 			}
 
 			return config, nil
@@ -1005,6 +1230,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"image":         cluster.Services.Etcd.Image,
 			"extra_args":    cluster.Services.Etcd.ExtraArgs,
 			"extra_binds":   cluster.Services.Etcd.ExtraBinds,
+			"extra_env":     cluster.Services.Etcd.ExtraEnv,
 			"external_urls": cluster.Services.Etcd.ExternalURLs,
 			"ca_cert":       cluster.Services.Etcd.CACert,
 			"cert":          cluster.Services.Etcd.Cert,
@@ -1021,7 +1247,9 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"image":                    cluster.Services.KubeAPI.Image,
 			"extra_args":               cluster.Services.KubeAPI.ExtraArgs,
 			"extra_binds":              cluster.Services.KubeAPI.ExtraBinds,
+			"extra_env":                cluster.Services.KubeAPI.ExtraEnv,
 			"service_cluster_ip_range": cluster.Services.KubeAPI.ServiceClusterIPRange,
+			"service_node_port_range":  cluster.Services.KubeAPI.ServiceNodePortRange,
 			"pod_security_policy":      cluster.Services.KubeAPI.PodSecurityPolicy,
 		},
 	})
@@ -1031,6 +1259,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"image":                    cluster.Services.KubeController.Image,
 			"extra_args":               cluster.Services.KubeController.ExtraArgs,
 			"extra_binds":              cluster.Services.KubeController.ExtraBinds,
+			"extra_env":                cluster.Services.KubeController.ExtraEnv,
 			"cluster_cidr":             cluster.Services.KubeController.ClusterCIDR,
 			"service_cluster_ip_range": cluster.Services.KubeController.ServiceClusterIPRange,
 		},
@@ -1041,6 +1270,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"image":       cluster.Services.Scheduler.Image,
 			"extra_args":  cluster.Services.Scheduler.ExtraArgs,
 			"extra_binds": cluster.Services.Scheduler.ExtraBinds,
+			"extra_env":   cluster.Services.Scheduler.ExtraEnv,
 		},
 	})
 
@@ -1049,6 +1279,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"image":                 cluster.Services.Kubelet.Image,
 			"extra_args":            cluster.Services.Kubelet.ExtraArgs,
 			"extra_binds":           cluster.Services.Kubelet.ExtraBinds,
+			"extra_env":             cluster.Services.Kubelet.ExtraEnv,
 			"cluster_domain":        cluster.Services.Kubelet.ClusterDomain,
 			"infra_container_image": cluster.Services.Kubelet.InfraContainerImage,
 			"cluster_dns_server":    cluster.Services.Kubelet.ClusterDNSServer,
@@ -1061,6 +1292,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"image":       cluster.Services.Kubeproxy.Image,
 			"extra_args":  cluster.Services.Kubeproxy.ExtraArgs,
 			"extra_binds": cluster.Services.Kubeproxy.ExtraBinds,
+			"extra_env":   cluster.Services.Kubeproxy.ExtraEnv,
 		},
 	})
 
@@ -1170,12 +1402,142 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 	}
 	d.Set("api_server_url", apiServerURL) // nolint
 
-	d.Set("cloud_provider", []interface{}{ // nolint
-		map[string]interface{}{
-			"name":         cluster.CloudProvider.Name,
-			"cloud_config": cluster.CloudProvider.CloudConfig,
-		},
-	})
+	cloudProvider := map[string]interface{}{
+		"name":                cluster.CloudProvider.Name,
+		"custom_cloud_config": cluster.CloudProvider.CustomCloudProvider,
+	}
+	if cp := cluster.CloudProvider.AzureCloudProvider; cp != nil {
+		acp := map[string]interface{}{}
+		acp["cloud"] = cp.Cloud
+		acp["tenant_id"] = cp.TenantID
+		acp["subscription_id"] = cp.SubscriptionID
+		acp["resource_group"] = cp.ResourceGroup
+		acp["location"] = cp.Location
+		acp["vnet_name"] = cp.VnetName
+		acp["vnet_resource_group"] = cp.VnetResourceGroup
+		acp["route_table_name"] = cp.RouteTableName
+		acp["primary_availability_set_name"] = cp.PrimaryAvailabilitySetName
+		acp["vm_type"] = cp.VMType
+		acp["primary_scale_set_name"] = cp.PrimaryScaleSetName
+		acp["aad_client_id"] = cp.AADClientID
+		acp["aad_client_secret"] = cp.AADClientSecret
+		acp["aad_client_cert_path"] = cp.AADClientCertPath
+		acp["aad_client_cert_password"] = cp.AADClientCertPassword
+		acp["cloud_provider_backoff"] = cp.CloudProviderBackoff
+		acp["cloud_provider_backoff_retries"] = cp.CloudProviderBackoffRetries
+		acp["cloud_provider_backoff_exponent"] = cp.CloudProviderBackoffExponent
+		acp["cloud_provider_backoff_duration"] = cp.CloudProviderBackoffDuration
+		acp["cloud_provider_backoff_jitter"] = cp.CloudProviderBackoffJitter
+		acp["cloud_provider_rate_limit"] = cp.CloudProviderRateLimit
+		acp["cloud_provider_rate_limit_qps"] = cp.CloudProviderRateLimitQPS
+		acp["cloud_provider_rate_limit_bucket"] = cp.CloudProviderRateLimitBucket
+		acp["use_instance_metadata"] = cp.UseInstanceMetadata
+		acp["use_managed_identity_extension"] = cp.UseManagedIdentityExtension
+		acp["maximum_load_balancer_rule_count"] = cp.MaximumLoadBalancerRuleCount
+
+		cloudProvider["azure_cloud_config"] = []interface{}{acp}
+	}
+
+	if cp := cluster.CloudProvider.VsphereCloudProvider; cp != nil {
+		vcp := map[string]interface{}{}
+
+		global := map[string]interface{}{}
+		global["user"] = cp.Global.User
+		global["password"] = cp.Global.Password
+		global["server"] = cp.Global.VCenterIP
+		global["port"] = cp.Global.VCenterPort
+		global["insecure_flag"] = cp.Global.InsecureFlag
+		global["datacenter"] = cp.Global.Datacenter
+		global["datacenters"] = cp.Global.Datacenters
+		global["datastore"] = cp.Global.DefaultDatastore
+		global["working_dir"] = cp.Global.WorkingDir
+		global["soap_roundtrip_count"] = cp.Global.RoundTripperCount
+		global["vm_uuid"] = cp.Global.VMUUID
+		global["vm_name"] = cp.Global.VMName
+		vcp["global"] = []interface{}{global}
+
+		var vcs []interface{}
+		for k, v := range cp.VirtualCenter {
+			vc := map[string]interface{}{}
+			vc["server"] = k
+			vc["user"] = v.User
+			vc["password"] = v.Password
+			vc["port"] = v.VCenterPort
+			vc["datacenters"] = v.Datacenters
+			vc["soap_roundtrip_count"] = v.RoundTripperCount
+			vcs = append(vcs, vc)
+		}
+		vcp["virtual_center"] = vcs
+
+		nw := map[string]interface{}{}
+		nw["public_network"] = cp.Network.PublicNetwork
+		vcp["network"] = []interface{}{nw}
+
+		disk := map[string]interface{}{}
+		disk["scsi_controller_type"] = cp.Disk.SCSIControllerType
+		vcp["disk"] = []interface{}{disk}
+
+		ws := map[string]interface{}{}
+		ws["server"] = cp.Workspace.VCenterIP
+		ws["datacenter"] = cp.Workspace.Datacenter
+		ws["folder"] = cp.Workspace.Folder
+		ws["default_datastore"] = cp.Workspace.DefaultDatastore
+		ws["resourcepool_path"] = cp.Workspace.ResourcePoolPath
+		vcp["workspace"] = []interface{}{ws}
+
+		cloudProvider["vsphere_cloud_config"] = []interface{}{vcp}
+	}
+
+	if cp := cluster.CloudProvider.OpenstackCloudProvider; cp != nil {
+		ocp := map[string]interface{}{}
+
+		global := map[string]interface{}{}
+		global["auth_url"] = cp.Global.AuthURL
+		global["username"] = cp.Global.Username
+		global["user_id"] = cp.Global.UserID
+		global["password"] = cp.Global.Password
+		global["tenant_id"] = cp.Global.TenantID
+		global["tenant_name"] = cp.Global.TenantName
+		global["trust_id"] = cp.Global.TrustID
+		global["domain_id"] = cp.Global.DomainID
+		global["domain_name"] = cp.Global.DomainName
+		global["region"] = cp.Global.Region
+		global["ca_file"] = cp.Global.CAFile
+		ocp["global"] = []interface{}{global}
+
+		lb := map[string]interface{}{}
+		lb["lb_version"] = cp.LoadBalancer.LBVersion
+		lb["use_octavia"] = cp.LoadBalancer.UseOctavia
+		lb["subnet_id"] = cp.LoadBalancer.SubnetID
+		lb["floating_network_id"] = cp.LoadBalancer.FloatingNetworkID
+		lb["lb_method"] = cp.LoadBalancer.LBMethod
+		lb["lb_provider"] = cp.LoadBalancer.LBProvider
+		lb["create_monitor"] = cp.LoadBalancer.CreateMonitor
+		lb["monitor_delay"] = cp.LoadBalancer.MonitorDelay
+		lb["monitor_timeout"] = cp.LoadBalancer.MonitorTimeout
+		lb["monitor_max_retries"] = cp.LoadBalancer.MonitorMaxRetries
+		lb["manage_security_groups"] = cp.LoadBalancer.ManageSecurityGroups
+		ocp["load_balancer"] = []interface{}{lb}
+
+		bs := map[string]interface{}{}
+		bs["bs_version"] = cp.BlockStorage.BSVersion
+		bs["trust_device_path"] = cp.BlockStorage.TrustDevicePath
+		bs["ignore_volume_az"] = cp.BlockStorage.IgnoreVolumeAZ
+		ocp["block_storage"] = []interface{}{bs}
+
+		ro := map[string]interface{}{}
+		ro["router_id"] = cp.Route.RouterID
+		ocp["route"] = []interface{}{ro}
+
+		meta := map[string]interface{}{}
+		meta["search_order"] = cp.Metadata.SearchOrder
+		meta["request_timeout"] = cp.Metadata.RequestTimeout
+		ocp["metadata"] = []interface{}{meta}
+
+		cloudProvider["openstack_cloud_config"] = []interface{}{ocp}
+	}
+
+	d.Set("cloud_provider", []interface{}{cloudProvider}) // nolint
 
 	d.Set("prefix_path", cluster.PrefixPath) // nolint
 
