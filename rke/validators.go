@@ -24,6 +24,10 @@ func validateIntegerInRange(min, max int) schema.SchemaValidateFunc {
 
 func validateStringInWord(allowWords []string) schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
+		if v.(string) == "" {
+			return
+		}
+
 		var found bool
 		for _, t := range allowWords {
 			if v.(string) == t {

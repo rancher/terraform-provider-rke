@@ -66,10 +66,20 @@ func resourceRKECluster() *schema.Resource {
 							Description: "Internal address that will be used for components communication",
 						},
 						"role": {
-							Type:        schema.TypeList,
-							Elem:        &schema.Schema{Type: schema.TypeString},
-							Required:    true,
-							Description: "Node role in kubernetes cluster (controlplane, worker, or etcd)",
+							Type:          schema.TypeList,
+							Elem:          &schema.Schema{Type: schema.TypeString},
+							Optional:      true,
+							// cannot use ConflictsWith in this context. see https://github.com/terraform-providers/terraform-provider-google/pull/1062
+							// ConflictsWith: []string{"roles"},
+							Description:   "Node role in kubernetes cluster [controlplane/worker/etcd])",
+						},
+						"roles": {
+							Type:          schema.TypeString,
+							Optional:      true,
+							// cannot use ConflictsWith in this context. see https://github.com/terraform-providers/terraform-provider-google/pull/1062
+							// ConflictsWith: []string{"role"},
+							Deprecated:    "roles is a workaround when a role can not be specified in list",
+							Description:   "Node role in kubernetes cluster [controlplane/worker/etcd], specified by a comma-separated string",
 						},
 						"hostname_override": {
 							Type:        schema.TypeString,

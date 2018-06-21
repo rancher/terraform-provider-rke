@@ -90,6 +90,7 @@ func TestParseResourceRKEConfigNode(t *testing.T) {
 		caseName     string
 		resourceData map[string]interface{}
 		expectNodes  []v3.RKEConfigNode
+		expectErrStr string
 	}{
 		{
 			caseName: "minimum fields",
@@ -105,6 +106,71 @@ func TestParseResourceRKEConfigNode(t *testing.T) {
 				{
 					Address: "192.2.0.1",
 					Role:    []string{"etcd"},
+				},
+			},
+		},
+		{
+			caseName: "with both role and roles",
+			resourceData: map[string]interface{}{
+				"nodes": []interface{}{
+					map[string]interface{}{
+						"address": "192.2.0.1",
+						"role":    []interface{}{"etcd"},
+						"roles":   "etcd",
+					},
+				},
+			},
+			expectErrStr: "cannot specify both role and roles for a node",
+		},
+		{
+			caseName: "without both role and roles",
+			resourceData: map[string]interface{}{
+				"nodes": []interface{}{
+					map[string]interface{}{
+						"address": "192.2.0.1",
+					},
+				},
+			},
+			expectErrStr: "either role or roles is required",
+		},
+		{
+			caseName: "invalid role",
+			resourceData: map[string]interface{}{
+				"nodes": []interface{}{
+					map[string]interface{}{
+						"address": "192.2.0.1",
+						"role":    []interface{}{"xxx"},
+					},
+				},
+			},
+			expectErrStr: `"role" must be one of [controlplane/etcd/worker]`,
+		},
+		{
+			caseName: "invalid roles",
+			resourceData: map[string]interface{}{
+				"nodes": []interface{}{
+					map[string]interface{}{
+						"address": "192.2.0.1",
+						"roles":   "xxx",
+					},
+				},
+			},
+			expectErrStr: `"role" must be one of [controlplane/etcd/worker]`,
+		},
+		{
+			caseName: "use roles attr",
+			resourceData: map[string]interface{}{
+				"nodes": []interface{}{
+					map[string]interface{}{
+						"address": "192.2.0.1",
+						"roles":   "controlplane,worker,etcd",
+					},
+				},
+			},
+			expectNodes: []v3.RKEConfigNode{
+				{
+					Address: "192.2.0.1",
+					Role:    []string{"controlplane", "worker", "etcd"},
 				},
 			},
 		},
@@ -157,8 +223,13 @@ func TestParseResourceRKEConfigNode(t *testing.T) {
 		t.Run(testcase.caseName, func(t *testing.T) {
 			d := &dummyResourceData{values: testcase.resourceData}
 			nodes, err := parseResourceRKEConfigNode(d)
-			assert.NoError(t, err)
-			assert.EqualValues(t, testcase.expectNodes, nodes)
+			if testcase.expectErrStr == "" {
+				assert.NoError(t, err)
+				assert.EqualValues(t, testcase.expectNodes, nodes)
+			} else {
+				assert.Error(t, err)
+				assert.EqualError(t, err, testcase.expectErrStr)
+			}
 		})
 	}
 }
