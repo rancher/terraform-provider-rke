@@ -6,6 +6,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/hosts"
@@ -301,10 +302,40 @@ func parseResourceRKEConfigNode(d resourceData) ([]v3.RKEConfigNode, error) {
 				}
 			}
 
-			if rawRoles, ok := nodeValues["role"]; ok {
+			// validate role and roles
+			roleValidateFunc := validateStringInWord([]string{"controlplane", "etcd", "worker"})
+			rawRole, hasRole := nodeValues["role"]
+			rawRoles, hasRoles := nodeValues["roles"]
+
+			if !hasRole && !hasRoles {
+				return nil, fmt.Errorf("either role or roles is required")
+			}
+			if hasRole && hasRoles {
+				if len(rawRole.([]interface{})) > 0 && len(rawRoles.(string)) > 0 {
+					return nil, fmt.Errorf("cannot specify both role and roles for a node")
+				}
+			}
+
+			if hasRole && len(rawRole.([]interface{})) > 0 {
 				roles := []string{}
-				for _, e := range rawRoles.([]interface{}) {
-					roles = append(roles, e.(string))
+				for _, e := range rawRole.([]interface{}) {
+					strRole := e.(string)
+					if _, errs := roleValidateFunc(strRole, "role"); len(errs) > 0 {
+						return nil, errs[0]
+					}
+					roles = append(roles, strRole)
+				}
+				node.Role = roles
+			}
+
+			if hasRoles && len(rawRoles.(string)) > 0 {
+				roles := []string{}
+				for _, e := range strings.Split(rawRoles.(string), ",") {
+					strRole := strings.TrimSpace(e)
+					if _, errs := roleValidateFunc(strRole, "role"); len(errs) > 0 {
+						return nil, errs[0]
+					}
+					roles = append(roles, strRole)
 				}
 				node.Role = roles
 			}

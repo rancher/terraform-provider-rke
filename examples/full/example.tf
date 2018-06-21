@@ -31,7 +31,11 @@ EOL
     {
       address           = "example.com"
       user              = "ubuntu"
-      role              = ["role"]
+
+      role              = ["controlplane","etcd","worker"]
+      # or
+      # roles             = "controlplane,etcd,worker"
+
       hostname_override = "node3"
       internal_address  = "192.168.1.6"
 
