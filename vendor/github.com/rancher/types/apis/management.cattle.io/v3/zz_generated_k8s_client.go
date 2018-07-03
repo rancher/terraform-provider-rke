@@ -39,9 +39,11 @@ type Interface interface {
 	PrincipalsGetter
 	UsersGetter
 	AuthConfigsGetter
+	LdapConfigsGetter
 	TokensGetter
 	DynamicSchemasGetter
 	PreferencesGetter
+	UserAttributesGetter
 	ProjectNetworkPoliciesGetter
 	ClusterLoggingsGetter
 	ProjectLoggingsGetter
@@ -56,8 +58,7 @@ type Interface interface {
 	PipelineExecutionsGetter
 	PipelineExecutionLogsGetter
 	SourceCodeRepositoriesGetter
-	GlobalComposeConfigsGetter
-	ClusterComposeConfigsGetter
+	ComposeConfigsGetter
 }
 
 type Client struct {
@@ -89,9 +90,11 @@ type Client struct {
 	principalControllers                               map[string]PrincipalController
 	userControllers                                    map[string]UserController
 	authConfigControllers                              map[string]AuthConfigController
+	ldapConfigControllers                              map[string]LdapConfigController
 	tokenControllers                                   map[string]TokenController
 	dynamicSchemaControllers                           map[string]DynamicSchemaController
 	preferenceControllers                              map[string]PreferenceController
+	userAttributeControllers                           map[string]UserAttributeController
 	projectNetworkPolicyControllers                    map[string]ProjectNetworkPolicyController
 	clusterLoggingControllers                          map[string]ClusterLoggingController
 	projectLoggingControllers                          map[string]ProjectLoggingController
@@ -106,8 +109,7 @@ type Client struct {
 	pipelineExecutionControllers                       map[string]PipelineExecutionController
 	pipelineExecutionLogControllers                    map[string]PipelineExecutionLogController
 	sourceCodeRepositoryControllers                    map[string]SourceCodeRepositoryController
-	globalComposeConfigControllers                     map[string]GlobalComposeConfigController
-	clusterComposeConfigControllers                    map[string]ClusterComposeConfigController
+	composeConfigControllers                           map[string]ComposeConfigController
 }
 
 func NewForConfig(config rest.Config) (Interface, error) {
@@ -148,9 +150,11 @@ func NewForConfig(config rest.Config) (Interface, error) {
 		principalControllers:                               map[string]PrincipalController{},
 		userControllers:                                    map[string]UserController{},
 		authConfigControllers:                              map[string]AuthConfigController{},
+		ldapConfigControllers:                              map[string]LdapConfigController{},
 		tokenControllers:                                   map[string]TokenController{},
 		dynamicSchemaControllers:                           map[string]DynamicSchemaController{},
 		preferenceControllers:                              map[string]PreferenceController{},
+		userAttributeControllers:                           map[string]UserAttributeController{},
 		projectNetworkPolicyControllers:                    map[string]ProjectNetworkPolicyController{},
 		clusterLoggingControllers:                          map[string]ClusterLoggingController{},
 		projectLoggingControllers:                          map[string]ProjectLoggingController{},
@@ -165,8 +169,7 @@ func NewForConfig(config rest.Config) (Interface, error) {
 		pipelineExecutionControllers:                       map[string]PipelineExecutionController{},
 		pipelineExecutionLogControllers:                    map[string]PipelineExecutionLogController{},
 		sourceCodeRepositoryControllers:                    map[string]SourceCodeRepositoryController{},
-		globalComposeConfigControllers:                     map[string]GlobalComposeConfigController{},
-		clusterComposeConfigControllers:                    map[string]ClusterComposeConfigController{},
+		composeConfigControllers:                           map[string]ComposeConfigController{},
 	}, nil
 }
 
@@ -494,6 +497,19 @@ func (c *Client) AuthConfigs(namespace string) AuthConfigInterface {
 	}
 }
 
+type LdapConfigsGetter interface {
+	LdapConfigs(namespace string) LdapConfigInterface
+}
+
+func (c *Client) LdapConfigs(namespace string) LdapConfigInterface {
+	objectClient := objectclient.NewObjectClient(namespace, c.restClient, &LdapConfigResource, LdapConfigGroupVersionKind, ldapConfigFactory{})
+	return &ldapConfigClient{
+		ns:           namespace,
+		client:       c,
+		objectClient: objectClient,
+	}
+}
+
 type TokensGetter interface {
 	Tokens(namespace string) TokenInterface
 }
@@ -527,6 +543,19 @@ type PreferencesGetter interface {
 func (c *Client) Preferences(namespace string) PreferenceInterface {
 	objectClient := objectclient.NewObjectClient(namespace, c.restClient, &PreferenceResource, PreferenceGroupVersionKind, preferenceFactory{})
 	return &preferenceClient{
+		ns:           namespace,
+		client:       c,
+		objectClient: objectClient,
+	}
+}
+
+type UserAttributesGetter interface {
+	UserAttributes(namespace string) UserAttributeInterface
+}
+
+func (c *Client) UserAttributes(namespace string) UserAttributeInterface {
+	objectClient := objectclient.NewObjectClient(namespace, c.restClient, &UserAttributeResource, UserAttributeGroupVersionKind, userAttributeFactory{})
+	return &userAttributeClient{
 		ns:           namespace,
 		client:       c,
 		objectClient: objectClient,
@@ -715,26 +744,13 @@ func (c *Client) SourceCodeRepositories(namespace string) SourceCodeRepositoryIn
 	}
 }
 
-type GlobalComposeConfigsGetter interface {
-	GlobalComposeConfigs(namespace string) GlobalComposeConfigInterface
+type ComposeConfigsGetter interface {
+	ComposeConfigs(namespace string) ComposeConfigInterface
 }
 
-func (c *Client) GlobalComposeConfigs(namespace string) GlobalComposeConfigInterface {
-	objectClient := objectclient.NewObjectClient(namespace, c.restClient, &GlobalComposeConfigResource, GlobalComposeConfigGroupVersionKind, globalComposeConfigFactory{})
-	return &globalComposeConfigClient{
-		ns:           namespace,
-		client:       c,
-		objectClient: objectClient,
-	}
-}
-
-type ClusterComposeConfigsGetter interface {
-	ClusterComposeConfigs(namespace string) ClusterComposeConfigInterface
-}
-
-func (c *Client) ClusterComposeConfigs(namespace string) ClusterComposeConfigInterface {
-	objectClient := objectclient.NewObjectClient(namespace, c.restClient, &ClusterComposeConfigResource, ClusterComposeConfigGroupVersionKind, clusterComposeConfigFactory{})
-	return &clusterComposeConfigClient{
+func (c *Client) ComposeConfigs(namespace string) ComposeConfigInterface {
+	objectClient := objectclient.NewObjectClient(namespace, c.restClient, &ComposeConfigResource, ComposeConfigGroupVersionKind, composeConfigFactory{})
+	return &composeConfigClient{
 		ns:           namespace,
 		client:       c,
 		objectClient: objectClient,

@@ -81,12 +81,15 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&UserList{},
 		&AuthConfig{},
 		&AuthConfigList{},
+		&LdapConfig{},
+		&LdapConfigList{},
 		&Token{},
 		&TokenList{},
 		&DynamicSchema{},
 		&DynamicSchemaList{},
 		&Preference{},
 		&PreferenceList{},
+		&UserAttribute{},
 		&ProjectNetworkPolicy{},
 		&ProjectNetworkPolicyList{},
 		&ClusterLogging{},
@@ -115,10 +118,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&PipelineExecutionLogList{},
 		&SourceCodeRepository{},
 		&SourceCodeRepositoryList{},
-		&GlobalComposeConfig{},
-		&GlobalComposeConfigList{},
-		&ClusterComposeConfig{},
-		&ClusterComposeConfigList{},
+		&ComposeConfig{},
+		&ComposeConfigList{},
 	)
 	return nil
 }

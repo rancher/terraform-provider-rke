@@ -22,7 +22,7 @@ const (
 	K8sVersion       = "1.8"
 )
 
-func (h *Host) TunnelUp(ctx context.Context, dialerFactory DialerFactory) error {
+func (h *Host) TunnelUp(ctx context.Context, dialerFactory DialerFactory, clusterPrefixPath string) error {
 	if h.DClient != nil {
 		return nil
 	}
@@ -37,7 +37,11 @@ func (h *Host) TunnelUp(ctx context.Context, dialerFactory DialerFactory) error 
 	if err != nil {
 		return fmt.Errorf("Can't initiate NewClient: %v", err)
 	}
-	return checkDockerVersion(ctx, h)
+	if err := checkDockerVersion(ctx, h); err != nil {
+		return err
+	}
+	h.PrefixPath = GetPrefixPath(h.DockerInfo.OperatingSystem, clusterPrefixPath)
+	return nil
 }
 
 func (h *Host) TunnelUpLocal(ctx context.Context) error {
@@ -114,8 +118,20 @@ func getSSHConfig(username, sshPrivateKeyString string, useAgentAuth bool) (*ssh
 
 func privateKeyPath(sshKeyPath string) string {
 	if sshKeyPath[:2] == "~/" {
-		sshKeyPath = filepath.Join(os.Getenv("HOME"), sshKeyPath[2:])
+		sshKeyPath = filepath.Join(userHome(), sshKeyPath[2:])
 	}
 	buff, _ := ioutil.ReadFile(sshKeyPath)
 	return string(buff)
+}
+
+func userHome() string {
+	if home := os.Getenv("HOME"); home != "" {
+		return home
+	}
+	homeDrive := os.Getenv("HOMEDRIVE")
+	homePath := os.Getenv("HOMEPATH")
+	if homeDrive != "" && homePath != "" {
+		return homeDrive + homePath
+	}
+	return os.Getenv("USERPROFILE")
 }

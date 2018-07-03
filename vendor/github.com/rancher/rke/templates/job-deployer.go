@@ -14,6 +14,13 @@ spec:
     metadata:
        name: pi
     spec:
+        tolerations:
+        - key: node-role.kubernetes.io/controlplane
+          operator: Exists
+          effect: NoSchedule
+        - key: node-role.kubernetes.io/etcd
+          operator: Exists
+          effect: NoExecute
         hostNetwork: true
         serviceAccountName: rke-job-deployer
         nodeName: {{$nodeName}}

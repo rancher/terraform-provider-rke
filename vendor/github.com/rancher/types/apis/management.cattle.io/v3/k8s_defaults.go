@@ -3,7 +3,7 @@ package v3
 import "github.com/rancher/types/image"
 
 const (
-	DefaultK8s = "v1.10.1-rancher2-1"
+	DefaultK8s = "v1.10.3-rancher2-1"
 )
 
 var (
@@ -236,18 +236,49 @@ var (
 			Ingress:                   m("rancher/nginx-ingress-controller:0.10.2-rancher3"),
 			IngressBackend:            m("k8s.gcr.io/defaultbackend:1.4"),
 		},
+		"v1.10.3-rancher2-1": {
+			Etcd:                      m("quay.io/coreos/etcd:v3.1.12"),
+			Kubernetes:                m("rancher/hyperkube:v1.10.3-rancher2"),
+			Alpine:                    m("rancher/rke-tools:v0.1.10"),
+			NginxProxy:                m("rancher/rke-tools:v0.1.10"),
+			CertDownloader:            m("rancher/rke-tools:v0.1.10"),
+			KubernetesServicesSidecar: m("rancher/rke-tools:v0.1.10"),
+			KubeDNS:                   m("gcr.io/google_containers/k8s-dns-kube-dns-amd64:1.14.8"),
+			DNSmasq:                   m("gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.8"),
+			KubeDNSSidecar:            m("gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.8"),
+			KubeDNSAutoscaler:         m("gcr.io/google_containers/cluster-proportional-autoscaler-amd64:1.0.0"),
+			Flannel:                   m("quay.io/coreos/flannel:v0.9.1"),
+			FlannelCNI:                m("quay.io/coreos/flannel-cni:v0.2.0"),
+			CalicoNode:                m("quay.io/calico/node:v3.1.1"),
+			CalicoCNI:                 m("quay.io/calico/cni:v3.1.1"),
+			CalicoCtl:                 m("quay.io/calico/ctl:v2.0.0"),
+			CanalNode:                 m("quay.io/calico/node:v3.1.1"),
+			CanalCNI:                  m("quay.io/calico/cni:v3.1.1"),
+			CanalFlannel:              m("quay.io/coreos/flannel:v0.9.1"),
+			WeaveNode:                 m("weaveworks/weave-kube:2.1.2"),
+			WeaveCNI:                  m("weaveworks/weave-npc:2.1.2"),
+			PodInfraContainer:         m("gcr.io/google_containers/pause-amd64:3.1"),
+			Ingress:                   m("rancher/nginx-ingress-controller:0.10.2-rancher3"),
+			IngressBackend:            m("k8s.gcr.io/defaultbackend:1.4"),
+		},
 	}
 
 	// K8sVersionServiceOptions - service options per k8s version
 	K8sVersionServiceOptions = map[string]KubernetesServicesOptions{
 		"v1.10": {
 			KubeAPI: map[string]string{
-				"tls-cipher-suites": "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
-				"feature-gates":     "MountPropagation=false",
+				"tls-cipher-suites":        "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+				"feature-gates":            "MountPropagation=false",
+				"endpoint-reconciler-type": "lease",
 			},
 			Kubelet: map[string]string{
 				"tls-cipher-suites": "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
 				"feature-gates":     "MountPropagation=false",
+			},
+		},
+		"v1.9": {
+			KubeAPI: map[string]string{
+				"endpoint-reconciler-type": "lease",
 			},
 		},
 	}
@@ -269,7 +300,7 @@ var (
 			PluginsDocker: m("plugins/docker:17.12"),
 		},
 		LoggingSystemImages: LoggingSystemImages{
-			Fluentd:                       m("rancher/fluentd:v0.1.7"),
+			Fluentd:                       m("rancher/fluentd:v0.1.8"),
 			FluentdHelper:                 m("rancher/fluentd-helper:v0.1.2"),
 			LogAggregatorFlexVolumeDriver: m("rancher/log-aggregator:v0.1.3"),
 			Elaticsearch:                  m("quay.io/pires/docker-elasticsearch-kubernetes:5.6.2"),
