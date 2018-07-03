@@ -22,6 +22,9 @@ func Provider() terraform.ResourceProvider {
 		ResourcesMap: map[string]*schema.Resource{
 			"rke_cluster": resourceRKECluster(),
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"rke_node_parameter": dataSourceRKENodeParameter(),
+		},
 		ConfigureFunc: providerConfigure,
 	}
 }

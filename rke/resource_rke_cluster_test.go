@@ -74,6 +74,40 @@ func TestAccResourceRKECluster(t *testing.T) {
 	})
 }
 
+func TestAccResourceRKEClusterWithNodeParameter(t *testing.T) {
+	if ip, ok := os.LookupEnv(envRKENodeAddr); ok {
+		nodeIP = ip
+	}
+	if user, ok := os.LookupEnv(envRKENodeUser); ok {
+		nodeUser = user
+	}
+	if key, ok := os.LookupEnv(envRKENodeSSHKey); ok {
+		nodeSSHKey = key
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckRKEClusterDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccCheckRKEConfigWithNodesConfBasic(nodeIP, nodeUser, nodeSSHKey),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
+				),
+			},
+			{
+				Config: testAccCheckRKEConfigWithNodesConfUpdate(nodeIP, nodeUser, nodeSSHKey),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr(
+						"rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
+				),
+			},
+		},
+	})
+}
+
 func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
@@ -138,6 +172,47 @@ EOF
       }
     },
   ]
+}
+	`, ip, user, sshKey)
+
+}
+
+func testAccCheckRKEConfigWithNodesConfBasic(ip, user, sshKey string) string {
+	return fmt.Sprintf(`	
+data rke_node_parameter "node" {
+    address = "%s"
+    user    = "%s"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = <<EOF
+%s
+EOF
+}
+
+resource rke_cluster "cluster" {
+  nodes_conf = ["${data.rke_node_parameter.node.json}"]
+}
+	`, ip, user, sshKey)
+
+}
+
+func testAccCheckRKEConfigWithNodesConfUpdate(ip, user, sshKey string) string {
+	return fmt.Sprintf(`	
+data rke_node_parameter "node" {
+    address = "%s"
+    user    = "%s"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = <<EOF
+%s
+EOF
+
+    labels = {
+      foo = "foo"
+      bar = "bar"
+    }
+}
+
+resource rke_cluster "cluster" {
+  nodes_conf = ["${data.rke_node_parameter.node.json}"]
 }
 	`, ip, user, sshKey)
 

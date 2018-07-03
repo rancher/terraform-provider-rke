@@ -222,7 +222,86 @@ func TestParseResourceRKEConfigNode(t *testing.T) {
 	for _, testcase := range testcases {
 		t.Run(testcase.caseName, func(t *testing.T) {
 			d := &dummyResourceData{values: testcase.resourceData}
-			nodes, err := parseResourceRKEConfigNode(d)
+			nodes, err := parseResourceRKEConfigNodes(d)
+			if testcase.expectErrStr == "" {
+				assert.NoError(t, err)
+				assert.EqualValues(t, testcase.expectNodes, nodes)
+			} else {
+				assert.Error(t, err)
+				assert.EqualError(t, err, testcase.expectErrStr)
+			}
+		})
+	}
+}
+
+const (
+	nodeJSON = `{
+	  "address": "192.2.0.1",
+      "role": ["controlplane", "worker", "etcd"]
+	}`
+	nodeYAML = `---
+address: 192.2.0.2
+role:
+- controlplane
+- worker
+- etcd
+`
+)
+
+func TestParseResourceRKEConfigNodesConf(t *testing.T) {
+
+	testcases := []struct {
+		caseName     string
+		resourceData map[string]interface{}
+		expectNodes  []v3.RKEConfigNode
+		expectErrStr string
+	}{
+		{
+			caseName: "JSON",
+			resourceData: map[string]interface{}{
+				"nodes_conf": []interface{}{nodeJSON},
+			},
+			expectNodes: []v3.RKEConfigNode{
+				{
+					Address: "192.2.0.1",
+					Role:    []string{"controlplane", "worker", "etcd"},
+				},
+			},
+		},
+		{
+			caseName: "YAML",
+			resourceData: map[string]interface{}{
+				"nodes_conf": []interface{}{nodeYAML},
+			},
+			expectNodes: []v3.RKEConfigNode{
+				{
+					Address: "192.2.0.2",
+					Role:    []string{"controlplane", "worker", "etcd"},
+				},
+			},
+		},
+		{
+			caseName: "both JSON and YAML",
+			resourceData: map[string]interface{}{
+				"nodes_conf": []interface{}{nodeJSON, nodeYAML},
+			},
+			expectNodes: []v3.RKEConfigNode{
+				{
+					Address: "192.2.0.1",
+					Role:    []string{"controlplane", "worker", "etcd"},
+				},
+				{
+					Address: "192.2.0.2",
+					Role:    []string{"controlplane", "worker", "etcd"},
+				},
+			},
+		},
+	}
+
+	for _, testcase := range testcases {
+		t.Run(testcase.caseName, func(t *testing.T) {
+			d := &dummyResourceData{values: testcase.resourceData}
+			nodes, err := parseResourceRKEConfigNodesConf(d)
 			if testcase.expectErrStr == "" {
 				assert.NoError(t, err)
 				assert.EqualValues(t, testcase.expectNodes, nodes)
@@ -1244,25 +1323,6 @@ func TestClusterToState(t *testing.T) {
 			caseName: "all fields",
 			cluster: &cluster.Cluster{
 				RancherKubernetesEngineConfig: v3.RancherKubernetesEngineConfig{
-					Nodes: []v3.RKEConfigNode{
-						{
-							NodeName:         "node_name",
-							Address:          "192.2.0.1",
-							Port:             "22",
-							InternalAddress:  "192.2.0.2",
-							Role:             []string{"role1", "role2"},
-							HostnameOverride: "hostname_override",
-							User:             "rancher",
-							DockerSocket:     "/var/run/docker.sock",
-							SSHAgentAuth:     true,
-							SSHKey:           "ssh_key",
-							SSHKeyPath:       "ssh_key_path",
-							Labels: map[string]string{
-								"foo": "foo",
-								"bar": "bar",
-							},
-						},
-					},
 					Services: v3.RKEConfigServices{
 						Etcd: v3.ETCDService{
 							BaseService: v3.BaseService{
@@ -1615,25 +1675,6 @@ func TestClusterToState(t *testing.T) {
 				ClusterDNSServer: "192.2.0.1",
 			},
 			state: map[string]interface{}{
-				"nodes": []interface{}{
-					map[string]interface{}{
-						"node_name":         "node_name",
-						"address":           "192.2.0.1",
-						"port":              22,
-						"internal_address":  "192.2.0.2",
-						"role":              []string{"role1", "role2"},
-						"hostname_override": "hostname_override",
-						"user":              "rancher",
-						"docker_socket":     "/var/run/docker.sock",
-						"ssh_agent_auth":    true,
-						"ssh_key":           "ssh_key",
-						"ssh_key_path":      "ssh_key_path",
-						"labels": map[string]string{
-							"foo": "foo",
-							"bar": "bar",
-						},
-					},
-				},
 				"services_etcd": []interface{}{
 					map[string]interface{}{
 						"image": "etcd:latest",

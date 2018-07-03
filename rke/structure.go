@@ -3,6 +3,7 @@ package rke
 import (
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	"github.com/rancher/rke/hosts"
 	"github.com/rancher/rke/pki"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
+	"gopkg.in/yaml.v2"
 )
 
 type resourceData interface {
@@ -50,10 +52,31 @@ func parseResourceRKEConfig(d resourceData) (*v3.RancherKubernetesEngineConfig, 
 }
 
 func setNodesFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d resourceData) error {
-	nodes, err := parseResourceRKEConfigNode(d)
-	if err != nil {
-		return err
+
+	rawNodes, _ := d.GetOk("nodes")
+	rawNodesConf, _ := d.GetOk("nodes_conf")
+
+	nodesOK := rawNodes != nil && len(rawNodes.([]interface{})) > 0
+	nodesConfOK := rawNodesConf != nil && len(rawNodesConf.([]interface{})) > 0
+
+	var nodes []v3.RKEConfigNode
+	var err error
+
+	switch {
+	case nodesOK && nodesConfOK:
+		return fmt.Errorf("cannot specify both %q and %q", "nodes", "nodes_conf")
+	case nodesOK:
+		if nodes, err = parseResourceRKEConfigNodes(d); err != nil {
+			return err
+		}
+	case nodesConfOK:
+		if nodes, err = parseResourceRKEConfigNodesConf(d); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("either %q or %q is required", "nodes", "nodes_conf")
 	}
+
 	if len(nodes) > 0 {
 		rkeConfig.Nodes = nodes
 	}
@@ -270,96 +293,132 @@ func setCloudProviderFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d
 	return nil
 }
 
-func parseResourceRKEConfigNode(d resourceData) ([]v3.RKEConfigNode, error) {
+func parseResourceRKEConfigNodes(d resourceData) ([]v3.RKEConfigNode, error) {
 	nodes := []v3.RKEConfigNode{}
 	if rawNodes, ok := d.GetOk("nodes"); ok {
 
 		nodeList := rawNodes.([]interface{})
 		for _, rawNode := range nodeList {
 			nodeValues := rawNode.(map[string]interface{})
-			node := v3.RKEConfigNode{}
 
-			applyMapToObj(&mapObjMapping{
-				source: nodeValues,
-				stringMapping: map[string]*string{
-					"node_name":         &node.NodeName,
-					"address":           &node.Address,
-					"internal_address":  &node.InternalAddress,
-					"hostname_override": &node.HostnameOverride,
-					"user":              &node.User,
-					"docker_socket":     &node.DockerSocket,
-					"ssh_key":           &node.SSHKey,
-					"ssh_key_path":      &node.SSHKeyPath,
-				},
-				boolMapping: map[string]*bool{
-					"ssh_agent_auth": &node.SSHAgentAuth,
-				},
-				listStrMapping: map[string]*[]string{
-					"role": &node.Role,
-				},
-				mapStrMapping: map[string]*map[string]string{
-					"labels": &node.Labels,
-				},
-			})
-
-			if v, ok := nodeValues["port"]; ok {
-				p := v.(int)
-				if p > 0 {
-					node.Port = fmt.Sprintf("%d", p)
-				}
+			node, err := parseResourceRKEConfigNode(nodeValues)
+			if err != nil {
+				return nil, err
 			}
 
-			// validate role and roles
-			roleValidateFunc := validateStringInWord([]string{"controlplane", "etcd", "worker"})
-			rawRole, hasRole := nodeValues["role"]
-			rawRoles, hasRoles := nodeValues["roles"]
+			nodes = append(nodes, node)
+		}
+	}
+	return nodes, nil
+}
 
-			if !hasRole && !hasRoles {
-				return nil, fmt.Errorf("either role or roles is required")
+func parseResourceRKEConfigNode(nodeValues map[string]interface{}) (v3.RKEConfigNode, error) {
+	node := v3.RKEConfigNode{}
+
+	applyMapToObj(&mapObjMapping{
+		source: nodeValues,
+		stringMapping: map[string]*string{
+			"node_name":         &node.NodeName,
+			"address":           &node.Address,
+			"internal_address":  &node.InternalAddress,
+			"hostname_override": &node.HostnameOverride,
+			"user":              &node.User,
+			"docker_socket":     &node.DockerSocket,
+			"ssh_key":           &node.SSHKey,
+			"ssh_key_path":      &node.SSHKeyPath,
+		},
+		boolMapping: map[string]*bool{
+			"ssh_agent_auth": &node.SSHAgentAuth,
+		},
+		listStrMapping: map[string]*[]string{
+			"role": &node.Role,
+		},
+		mapStrMapping: map[string]*map[string]string{
+			"labels": &node.Labels,
+		},
+	})
+
+	if v, ok := nodeValues["port"]; ok {
+		p := v.(int)
+		if p > 0 {
+			node.Port = fmt.Sprintf("%d", p)
+		}
+	}
+
+	// validate role and roles
+	roleValidateFunc := validateStringInWord([]string{"controlplane", "etcd", "worker"})
+	rawRole, hasRole := nodeValues["role"]
+	rawRoles, hasRoles := nodeValues["roles"]
+
+	if !hasRole && !hasRoles {
+		return node, fmt.Errorf("either role or roles is required")
+	}
+	if hasRole && hasRoles {
+		if len(rawRole.([]interface{})) > 0 && len(rawRoles.(string)) > 0 {
+			return node, fmt.Errorf("cannot specify both role and roles for a node")
+		}
+	}
+
+	if hasRole && len(rawRole.([]interface{})) > 0 {
+		roles := []string{}
+		for _, e := range rawRole.([]interface{}) {
+			strRole := e.(string)
+			if _, errs := roleValidateFunc(strRole, "role"); len(errs) > 0 {
+				return node, errs[0]
 			}
-			if hasRole && hasRoles {
-				if len(rawRole.([]interface{})) > 0 && len(rawRoles.(string)) > 0 {
-					return nil, fmt.Errorf("cannot specify both role and roles for a node")
-				}
+			roles = append(roles, strRole)
+		}
+		node.Role = roles
+	}
+
+	if hasRoles && len(rawRoles.(string)) > 0 {
+		roles := []string{}
+		for _, e := range strings.Split(rawRoles.(string), ",") {
+			strRole := strings.TrimSpace(e)
+			if _, errs := roleValidateFunc(strRole, "role"); len(errs) > 0 {
+				return node, errs[0]
+			}
+			roles = append(roles, strRole)
+		}
+		node.Role = roles
+	}
+
+	if v, ok := nodeValues["ssh_agent_auth"]; ok {
+		node.SSHAgentAuth = v.(bool)
+	}
+
+	if v, ok := nodeValues["labels"]; ok {
+		nodeLabels := map[string]string{}
+		labels := v.(map[string]interface{})
+		for k, v := range labels {
+			if v, ok := v.(string); ok {
+				nodeLabels[k] = v
+			}
+		}
+		node.Labels = nodeLabels
+	}
+
+	return node, nil
+}
+
+func parseResourceRKEConfigNodesConf(d resourceData) ([]v3.RKEConfigNode, error) {
+	nodes := []v3.RKEConfigNode{}
+	if rawNodes, ok := d.GetOk("nodes_conf"); ok {
+
+		nodeList := rawNodes.([]interface{})
+		for _, rawNode := range nodeList {
+
+			var node v3.RKEConfigNode
+			var err error
+
+			nodeConf := []byte(rawNode.(string))
+
+			if err = json.Unmarshal(nodeConf, &node); err != nil {
+				err = yaml.Unmarshal(nodeConf, &node)
 			}
 
-			if hasRole && len(rawRole.([]interface{})) > 0 {
-				roles := []string{}
-				for _, e := range rawRole.([]interface{}) {
-					strRole := e.(string)
-					if _, errs := roleValidateFunc(strRole, "role"); len(errs) > 0 {
-						return nil, errs[0]
-					}
-					roles = append(roles, strRole)
-				}
-				node.Role = roles
-			}
-
-			if hasRoles && len(rawRoles.(string)) > 0 {
-				roles := []string{}
-				for _, e := range strings.Split(rawRoles.(string), ",") {
-					strRole := strings.TrimSpace(e)
-					if _, errs := roleValidateFunc(strRole, "role"); len(errs) > 0 {
-						return nil, errs[0]
-					}
-					roles = append(roles, strRole)
-				}
-				node.Role = roles
-			}
-
-			if v, ok := nodeValues["ssh_agent_auth"]; ok {
-				node.SSHAgentAuth = v.(bool)
-			}
-
-			if v, ok := nodeValues["labels"]; ok {
-				nodeLabels := map[string]string{}
-				labels := v.(map[string]interface{})
-				for k, v := range labels {
-					if v, ok := v.(string); ok {
-						nodeLabels[k] = v
-					}
-				}
-				node.Labels = nodeLabels
+			if err != nil {
+				return nil, err
 			}
 
 			nodes = append(nodes, node)
@@ -1197,32 +1256,6 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 		d.SetId("")
 		return nil
 	}
-
-	// node
-	nodes := []interface{}{}
-	for _, node := range cluster.Nodes {
-		n := map[string]interface{}{}
-		n["node_name"] = node.NodeName
-		n["address"] = node.Address
-		if port, err := strconv.Atoi(node.Port); err == nil {
-			if port > 0 {
-				n["port"] = port
-			}
-		} else {
-			return err
-		}
-		n["internal_address"] = node.InternalAddress
-		n["role"] = node.Role
-		n["hostname_override"] = node.HostnameOverride
-		n["user"] = node.User
-		n["docker_socket"] = node.DockerSocket
-		n["ssh_agent_auth"] = node.SSHAgentAuth
-		n["ssh_key"] = node.SSHKey
-		n["ssh_key_path"] = node.SSHKeyPath
-		n["labels"] = node.Labels
-		nodes = append(nodes, n)
-	}
-	d.Set("nodes", nodes) // nolint
 
 	// services
 	d.Set("services_etcd", []interface{}{ // nolint
