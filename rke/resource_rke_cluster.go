@@ -1527,6 +1527,10 @@ func resourceRKEClusterUp(d *schema.ResourceData, meta interface{}) error {
 func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
 	currentCluster, err := readClusterState(d)
 	if err != nil {
+		if _, ok := err.(*nodeUnreachableError); ok {
+			d.SetId("")
+			return nil
+		}
 		return wrapErrWithRKEOutputs(err)
 	}
 	return wrapErrWithRKEOutputs(clusterToState(currentCluster, d))
@@ -1534,7 +1538,9 @@ func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
 	if err := clusterRemove(d); err != nil {
-		return wrapErrWithRKEOutputs(err)
+		if _, ok := err.(*nodeUnreachableError); !ok {
+			return wrapErrWithRKEOutputs(err)
+		}
 	}
 	d.SetId("")
 	return nil
@@ -1609,7 +1615,7 @@ func realClusterUp( // nolint: gocyclo
 
 	err = kubeCluster.TunnelHosts(ctx, false)
 	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
+		return APIURL, caCrt, clientCert, clientKey, newNodeUnreachableError(err)
 	}
 
 	currentCluster, err := kubeCluster.GetClusterState(ctx)
@@ -1718,7 +1724,7 @@ func realClusterRemove(
 
 	err = kubeCluster.TunnelHosts(ctx, false)
 	if err != nil {
-		return err
+		return newNodeUnreachableError(err)
 	}
 
 	log.Infof(ctx, "Starting Cluster removal")
@@ -1796,7 +1802,7 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 
 	err = kubeCluster.TunnelHosts(ctx, false)
 	if err != nil {
-		return nil, err
+		return nil, newNodeUnreachableError(err)
 	}
 
 	return kubeCluster.GetClusterState(ctx)
@@ -1846,4 +1852,16 @@ func createTempDir() (string, error) {
 		return "", err
 	}
 	return tempDir, nil
+}
+
+type nodeUnreachableError struct {
+	actual error
+}
+
+func newNodeUnreachableError(actual error) *nodeUnreachableError {
+	return &nodeUnreachableError{actual: actual}
+}
+
+func (n *nodeUnreachableError) Error() string {
+	return n.actual.Error()
 }
