@@ -1519,22 +1519,22 @@ func resourceRKECluster() *schema.Resource {
 
 func resourceRKEClusterUp(d *schema.ResourceData, meta interface{}) error {
 	if err := clusterUp(d); err != nil {
-		return err
+		return wrapErrWithRKEOutputs(err)
 	}
-	return resourceRKEClusterRead(d, meta)
+	return wrapErrWithRKEOutputs(resourceRKEClusterRead(d, meta))
 }
 
 func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
 	currentCluster, err := readClusterState(d)
 	if err != nil {
-		return nil
+		return wrapErrWithRKEOutputs(err)
 	}
-	return clusterToState(currentCluster, d)
+	return wrapErrWithRKEOutputs(clusterToState(currentCluster, d))
 }
 
 func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
 	if err := clusterRemove(d); err != nil {
-		return err
+		return wrapErrWithRKEOutputs(err)
 	}
 	d.SetId("")
 	return nil
