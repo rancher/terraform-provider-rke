@@ -49,7 +49,7 @@ func BuildRKEConfigNodePlan(ctx context.Context, myCluster *Cluster, host *hosts
 	// Everybody gets a sidecar and a kubelet..
 	processes[services.SidekickContainerName] = myCluster.BuildSidecarProcess()
 	processes[services.KubeletContainerName] = myCluster.BuildKubeletProcess(host, prefixPath)
-	processes[services.KubeproxyContainerName] = myCluster.BuildKubeProxyProcess(prefixPath)
+	processes[services.KubeproxyContainerName] = myCluster.BuildKubeProxyProcess(host, prefixPath)
 
 	portChecks = append(portChecks, BuildPortChecksFromPortList(host, WorkerPortList, ProtocolTCP)...)
 	// Do we need an nginxProxy for this one ?
@@ -124,6 +124,11 @@ func (c *Cluster) BuildKubeAPIProcess(prefixPath string) v3.Process {
 		"kubelet-client-certificate":      pki.GetCertPath(pki.KubeAPICertName),
 		"kubelet-client-key":              pki.GetKeyPath(pki.KubeAPICertName),
 		"service-account-key-file":        pki.GetKeyPath(pki.KubeAPICertName),
+		"etcd-cafile":                     etcdCAClientCert,
+		"etcd-certfile":                   etcdClientCert,
+		"etcd-keyfile":                    etcdClientKey,
+		"etcd-servers":                    etcdConnectionString,
+		"etcd-prefix":                     etcdPathPrefix,
 	}
 	if len(c.CloudProvider.Name) > 0 && c.CloudProvider.Name != aws.AWSCloudProviderName {
 		CommandArgs["cloud-config"] = CloudConfigPath
@@ -143,14 +148,6 @@ func (c *Cluster) BuildKubeAPIProcess(prefixPath string) v3.Process {
 	// check api server count for k8s v1.8
 	if getTagMajorVersion(c.Version) == "v1.8" {
 		CommandArgs["apiserver-count"] = strconv.Itoa(len(c.ControlPlaneHosts))
-	}
-
-	args := []string{
-		"--etcd-cafile=" + etcdCAClientCert,
-		"--etcd-certfile=" + etcdClientCert,
-		"--etcd-keyfile=" + etcdClientKey,
-		"--etcd-servers=" + etcdConnectionString,
-		"--etcd-prefix=" + etcdPathPrefix,
 	}
 
 	if c.Authorization.Mode == services.RBACAuthorizationMode {
@@ -190,7 +187,6 @@ func (c *Cluster) BuildKubeAPIProcess(prefixPath string) v3.Process {
 	return v3.Process{
 		Name:                    services.KubeAPIContainerName,
 		Command:                 Command,
-		Args:                    args,
 		VolumesFrom:             VolumesFrom,
 		Binds:                   Binds,
 		Env:                     getUniqStringList(c.Services.KubeAPI.ExtraEnv),
@@ -362,8 +358,8 @@ func (c *Cluster) BuildKubeletProcess(host *hosts.Host, prefixPath string) v3.Pr
 		"/run:/run:rprivate",
 		fmt.Sprintf("%s:/etc/ceph", path.Join(prefixPath, "/etc/ceph")),
 		"/dev:/host/dev:rprivate",
-		fmt.Sprintf("%s:/var/log/containers:z", path.Join(prefixPath, "/var/log/containers")),
-		fmt.Sprintf("%s:/var/log/pods:z", path.Join(prefixPath, "/var/log/pods")),
+		"/var/log/containers:/var/log/containers:z",
+		"/var/log/pods:/var/log/pods:z",
 		"/usr:/host/usr:ro",
 		"/etc:/host/etc:ro",
 	}
@@ -405,15 +401,17 @@ func (c *Cluster) BuildKubeletProcess(host *hosts.Host, prefixPath string) v3.Pr
 	}
 }
 
-func (c *Cluster) BuildKubeProxyProcess(prefixPath string) v3.Process {
+func (c *Cluster) BuildKubeProxyProcess(host *hosts.Host, prefixPath string) v3.Process {
 	Command := []string{
 		"/opt/rke/entrypoint.sh",
 		"kube-proxy",
 	}
 
 	CommandArgs := map[string]string{
-		"v": "2",
+		"cluster-cidr": c.ClusterCIDR,
+		"v":            "2",
 		"healthz-bind-address": "0.0.0.0",
+		"hostname-override":    host.HostnameOverride,
 		"kubeconfig":           pki.GetConfigPath(pki.KubeProxyCertName),
 	}
 
