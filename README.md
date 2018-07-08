@@ -9,7 +9,7 @@ Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kube
 #### Compatible Versions
 
 - Terraform: v0.11+
-- RKE: v0.1.8-rc12 (Kubernetes 1.8, 1.9 and 1.10)
+- RKE: v0.1.8 (Kubernetes 1.8, 1.9 and 1.10)
 
 ## Installation
 
@@ -20,15 +20,7 @@ Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kube
 
 ### Target Node Requirements
 
-It is same as the [requirements of RKE](https://github.com/rancher/rke/blob/master/README.md#requirements)
-
-> #### Requirements of RKE
->
-> - Docker versions `1.11.2` up to `1.13.1` and `17.03.x` are validated for Kubernetes versions 1.8, 1.9 and 1.10
-> - OpenSSH 7.0+ must be installed on each node for stream local forwarding to work.
-> - The SSH user used for node access must be a member of the `docker` group:
-> - Ports 6443, 2379, and 2380 should be opened between cluster nodes.
-> - Swap disabled on worker nodes.
+It is same as the [requirements of RKE](https://github.com/rancher/rke/blob/master/README.md#requirements).  
 
 ### Examples
 
@@ -41,7 +33,6 @@ resource rke_cluster "cluster" {
       address = "1.2.3.4"
       user    = "rancher"
       role    = ["controlplane", "worker", "etcd"]
-      ssh_key = "${file("~/.ssh/id_rsa")}"
     },
   ]
 }
@@ -55,7 +46,7 @@ resource rke_cluster "cluster" {
 //}
 ```
 
-* default k8s version: `v1.10.1-rancher1`
+* default k8s version: `v1.10.3-rancher2`
 * default network plugin: `canal`
 
 #### Dynamic multiple nodes example
@@ -95,7 +86,7 @@ resource rke_cluster "cluster" {
 
 #### With Kubernetes provider 
 
-You can view an example of using RKE provider and [Kubernetes provider](https://www.terraform.io/docs/providers/kubernetes/index.html) together, [here](examples/with_kubernetes_provider/example.tf).
+You can use RKE provider and [Kubernetes provider](https://www.terraform.io/docs/providers/kubernetes/index.html) together.
 
 ```hcl
 resource rke_cluster "cluster" {
