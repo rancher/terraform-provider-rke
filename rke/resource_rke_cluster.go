@@ -430,7 +430,6 @@ func resourceRKECluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				ForceNew:    true,
 				Description: "YAML manifest for user provided addons to be deployed on the cluster",
 			},
 			"addons_include": {
@@ -438,7 +437,6 @@ func resourceRKECluster() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Optional:    true,
 				Computed:    true,
-				ForceNew:    true,
 				Description: "List of urls or paths for addons",
 			},
 			"addon_job_timeout": {
