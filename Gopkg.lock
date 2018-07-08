@@ -377,7 +377,7 @@
     "hcldec",
     "hclparse"
   ]
-  revision = "6558d83419b8415adbcc4df88fd6c8b56fbbaf5f"
+  revision = "1718a963e6321c0d8b663ca3f2224be366d59905"
 
 [[projects]]
   branch = "master"
@@ -639,6 +639,7 @@
     "templates"
   ]
   revision = "d155cc8e7626773ed4ba19c7ea532011424ef70c"
+  version = "v0.1.8"
 
 [[projects]]
   name = "github.com/rancher/types"
@@ -970,6 +971,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "92b56a733b3b4b971da9cbf238c54463aaf21961032f72fa93b9da4b65d14000"
+  inputs-digest = "afffc883aed27dc81228fbc1707d0dc4e3b7ea65be0f3c59c6821bce77822476"
   solver-name = "gps-cdcl"
   solver-version = 1
