@@ -36,31 +36,32 @@ ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp
 
 [[constraint]]
   name = "github.com/rancher/rke"
-  version = "0.1.8"
+  revision = "2e82c18d4b6fe3afbb3970cbf518b5c0a811bcaa"
+  #version = "0.1.9-rc1"
 
 [[override]]
   name = "k8s.io/api"
-  version = "kubernetes-1.8.3"
+  version = "kubernetes-1.10.5"
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.8.3"
+  version = "kubernetes-1.10.5"
 
 [[override]]
   name = "k8s.io/apiserver"
-  version = "kubernetes-1.8.3"
+  version = "kubernetes-1.10.5"
 
 [[override]]
   name = "k8s.io/apiextensions-apiserver"
-  version = "kubernetes-1.8.3"
+  version = "kubernetes-1.10.5"
 
 [[override]]
   name = "k8s.io/client-go"
-  version = "v5.0.0"
+  version = "v7.0.0"
 
 [[override]]
   name = "k8s.io/kubernetes"
-  version = "1.8.3"
+  version = "1.10.5"
 
 [[override]]
   name = "github.com/docker/distribution"
@@ -72,11 +73,11 @@ ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp
 
 [[override]]
   name = "github.com/rancher/norman"
-  revision = "ff60298f31f081b06d198815b4c178a578664f7d"
+  revision = "57e8282a33f04091e30df7700bd328f3205c1189"
 
 [[override]]
   name = "github.com/rancher/types"
-  revision = "e68cd7ed66e08a066db9175d7af2288ed5c1844c"
+  revision = "15d6dfa2d0222ca90b39f825d7fce0799865b580"
 
 [[override]]
   name = "github.com/Microsoft/go-winio"
