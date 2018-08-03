@@ -62,6 +62,8 @@ func TestAccResourceRKECluster(t *testing.T) {
 						"rke_cluster.cluster", "nodes.0.address", nodeIP),
 					resource.TestMatchResourceAttr(
 						"rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
+					resource.TestMatchResourceAttr(
+						"rke_cluster.cluster", "rke_cluster_yaml", regexp.MustCompile(".+")), // should be not empty
 					resource.TestCheckResourceAttr(
 						"rke_cluster.cluster", "nodes.0.labels.%", "2"),
 					resource.TestCheckResourceAttr(
