@@ -44,6 +44,22 @@ resource rke_cluster "cluster" {
 //  filename = "${path.root}/kube_config_cluster.yml"
 //  content = "${rke_cluster.cluster.kube_config_yaml}"
 //}
+
+###############################################################################
+# If you need cluster.yml for using rke, please uncomment follows.
+###############################################################################
+//resource "local_file" "rke_cluster_yaml" {
+//  filename = "${path.root}/cluster.yml"
+//  content = "${rke_cluster.cluster.rke_cluster_yaml}"
+//}
+
+###############################################################################
+# You can also use an output.
+###############################################################################
+// output "rke_cluster_yaml" {
+//  sensitive = true
+//  value = "${rke_cluster.cluster.rke_cluster_yaml}"
+//}
 ```
 
 * default k8s version: `v1.10.3-rancher2`

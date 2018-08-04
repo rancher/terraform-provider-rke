@@ -1366,6 +1366,10 @@ func resourceRKECluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"rke_cluster_yaml": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"certificates": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -1569,7 +1573,7 @@ func clusterUp(d *schema.ResourceData) error {
 	}
 
 	// set keys to resourceData
-	return setRKEClusterKeys(d, apiURL, caCrt, clientCert, clientKey, tempDir)
+	return setRKEClusterKeys(d, apiURL, caCrt, clientCert, clientKey, tempDir, rkeConfig)
 }
 
 func clusterRemove(d *schema.ResourceData) error {
@@ -1735,7 +1739,7 @@ func realClusterRemove(
 	return nil
 }
 
-func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, clientKey string, configDir string) error {
+func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, clientKey string, configDir string, rkeConfig *v3.RancherKubernetesEngineConfig) error {
 
 	parsedURL, err := url.Parse(apiURL)
 	if err != nil {
@@ -1752,6 +1756,12 @@ func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, client
 	if kubeConfig != "" {
 		d.Set("kube_config_yaml", kubeConfig) // nolint
 	}
+
+	yamlRkeConfig, err := yaml.Marshal(*rkeConfig)
+	if err != nil {
+		return err
+	}
+	d.Set("rke_cluster_yaml", string(yamlRkeConfig)) // nolint
 
 	d.SetId(parsedURL.Hostname())
 	return nil
