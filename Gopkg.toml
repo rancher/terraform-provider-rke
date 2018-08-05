@@ -73,11 +73,11 @@ ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp
 
 [[override]]
   name = "github.com/rancher/norman"
-  revision = "57e8282a33f04091e30df7700bd328f3205c1189"
+  revision = "c032c4611f2eec1652ef37d254f0e8ccf90c80aa"
 
 [[override]]
   name = "github.com/rancher/types"
-  revision = "15d6dfa2d0222ca90b39f825d7fce0799865b580"
+  revision = "42c4836915c23ee2da3918421ba0593879caad6c"
 
 [[override]]
   name = "github.com/Microsoft/go-winio"

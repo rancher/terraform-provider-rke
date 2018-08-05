@@ -574,6 +574,11 @@ func resourceRKECluster() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
+						"metrics_server": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -633,6 +638,29 @@ func resourceRKECluster() *schema.Resource {
 							Optional:    true,
 							Computed:    true,
 							Description: "SSH Private Key",
+						},
+					},
+				},
+			},
+			"monitoring": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				MaxItems:    1,
+				Description: "Monitoring Config",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"providers": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "Monitoring server provider",
+						},
+						"options": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Computed:    true,
+							Description: "Metrics server options",
 						},
 					},
 				},

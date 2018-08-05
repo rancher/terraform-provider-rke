@@ -52,6 +52,7 @@
     "aws/signer/v4",
     "internal/sdkio",
     "internal/sdkrand",
+    "internal/sdkuri",
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/eventstream",
@@ -64,8 +65,8 @@
     "service/s3",
     "service/sts"
   ]
-  revision = "16cb9f62f8a8b7af4f38725567f5ce762e1d562b"
-  version = "v1.14.21"
+  revision = "f70339bb6af843c8ab1974381b3f4fcaee2b1a41"
+  version = "v1.15.5"
 
 [[projects]]
   branch = "master"
@@ -94,8 +95,8 @@
     "pkg/types",
     "version"
   ]
-  revision = "33245c6b5b49130ca99280408fadfab01aac0e48"
-  version = "v3.3.8"
+  revision = "fca8add78a9d926166eb739b8e4a124434025ba3"
+  version = "v3.3.9"
 
 [[projects]]
   name = "github.com/coreos/go-semver"
@@ -148,8 +149,8 @@
     "sockets",
     "tlsconfig"
   ]
-  revision = "3ede32e2033de7505e6500d6c868c2b9ed9f169d"
-  version = "v0.3.0"
+  revision = "7395e3f8aa162843a74ed6d48e79627d9792ac55"
+  version = "v0.4.0"
 
 [[projects]]
   name = "github.com/docker/go-units"
@@ -172,8 +173,8 @@
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "06f5f3d67269ccec1fe5fe4134ba6e982984f7f5"
-  version = "v1.37.0"
+  revision = "358ee7663966325963d4e8b2e1fbd570c5195153"
+  version = "v1.38.1"
 
 [[projects]]
   name = "github.com/gogo/protobuf"
@@ -181,8 +182,8 @@
     "proto",
     "sortkeys"
   ]
-  revision = "1adfc126b41513cc696b209667c8656ea7aac67c"
-  version = "v1.0.0"
+  revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -222,7 +223,7 @@
   branch = "master"
   name = "github.com/hashicorp/errwrap"
   packages = ["."]
-  revision = "7554cd9344cec97297fa6649b055a8c98c2a1e55"
+  revision = "d6c0cd88035724dd42e0f335ae30161c20575ecc"
 
 [[projects]]
   branch = "master"
@@ -237,19 +238,19 @@
     ".",
     "helper/url"
   ]
-  revision = "3f60ec5cfbb2a39731571b9ddae54b303bb0a969"
+  revision = "a33f09ce9feed989941a4dfe08b3890a0f8aceb9"
 
 [[projects]]
   branch = "master"
   name = "github.com/hashicorp/go-hclog"
   packages = ["."]
-  revision = "69ff559dc25f3b435631604f573a5fa1efdb6433"
+  revision = "ff2cf002a8dd750586d91dddd4470c341f981fe1"
 
 [[projects]]
   branch = "master"
   name = "github.com/hashicorp/go-multierror"
   packages = ["."]
-  revision = "b7773ae218740a7be65057fc60b366a49b538a44"
+  revision = "3d5d8f294aa03d8e98859feac328afbdf1ae0703"
 
 [[projects]]
   branch = "master"
@@ -273,7 +274,7 @@
   branch = "master"
   name = "github.com/hashicorp/go-version"
   packages = ["."]
-  revision = "23480c0665776210b5fbbac6eaaee40e3e6a96b7"
+  revision = "270f2f71b1ee587f3b609f00f422b76a6b28f348"
 
 [[projects]]
   branch = "master"
@@ -311,7 +312,7 @@
     "hcldec",
     "hclparse"
   ]
-  revision = "1718a963e6321c0d8b663ca3f2224be366d59905"
+  revision = "77c0b55a597ce9ff855c699dba2a99c1632690e1"
 
 [[projects]]
   branch = "master"
@@ -377,8 +378,8 @@
 [[projects]]
   name = "github.com/imdario/mergo"
   packages = ["."]
-  revision = "9316a62528ac99aaecb4e47eadd6dc8aa6533d58"
-  version = "v0.3.5"
+  revision = "9f23e2d6bd2a77f959b2bf6acdbefd708a83a4a4"
+  version = "v0.3.6"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
@@ -419,7 +420,7 @@
   branch = "master"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
-  revision = "3864e76763d94a6df2f9960b16a20a33da9f9a66"
+  revision = "58046073cbffe2f25d425fe1331102f55cf719de"
 
 [[projects]]
   branch = "master"
@@ -443,7 +444,7 @@
   branch = "master"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
-  revision = "bb74f1db0675b241733089d5a1faa5dd8b0ef57b"
+  revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
 
 [[projects]]
   branch = "master"
@@ -520,9 +521,10 @@
     "types",
     "types/convert",
     "types/definition",
-    "types/slice"
+    "types/slice",
+    "types/values"
   ]
-  revision = "57e8282a33f04091e30df7700bd328f3205c1189"
+  revision = "c032c4611f2eec1652ef37d254f0e8ccf90c80aa"
 
 [[projects]]
   name = "github.com/rancher/rke"
@@ -552,13 +554,13 @@
     "apis/management.cattle.io/v3",
     "image"
   ]
-  revision = "15d6dfa2d0222ca90b39f825d7fce0799865b580"
+  revision = "42c4836915c23ee2da3918421ba0593879caad6c"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
   packages = ["."]
-  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
-  version = "v1.0.5"
+  revision = "3e01752db0189b9157070a0e1668a620f9a85da2"
+  version = "v1.0.6"
 
 [[projects]]
   name = "github.com/spf13/pflag"
@@ -601,7 +603,7 @@
     "cty/json",
     "cty/set"
   ]
-  revision = "3ccef1ae92b0ac73b92d86f274f0ff781e2d9b3b"
+  revision = "02bd58e97b5759d478019c5a6333edbfdfed16a0"
 
 [[projects]]
   branch = "master"
@@ -626,7 +628,7 @@
     "ssh/agent",
     "ssh/terminal"
   ]
-  revision = "a49355c7e3f8fe157a85be2f77e6e269a0f89602"
+  revision = "56440b844dfe139a8ac053f4ecac0b20b79058f4"
 
 [[projects]]
   branch = "master"
@@ -645,7 +647,7 @@
     "proxy",
     "trace"
   ]
-  revision = "32a936f46389aa10549d60bd7833e54b01685d09"
+  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
 
 [[projects]]
   branch = "master"
@@ -660,7 +662,7 @@
     "unix",
     "windows"
   ]
-  revision = "3c6ecd8f22c6f40fbeec94c000a069d7d87c7624"
+  revision = "0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -693,7 +695,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "8b2cc369ab52e0003a878865c9372afdd6ca5c5a"
+  revision = "daca94659cb50e9f37c1b834680f2e46358f10b0"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -713,7 +715,9 @@
     "internal",
     "internal/backoff",
     "internal/channelz",
+    "internal/envconfig",
     "internal/grpcrand",
+    "internal/transport",
     "keepalive",
     "metadata",
     "naming",
@@ -723,11 +727,10 @@
     "resolver/passthrough",
     "stats",
     "status",
-    "tap",
-    "transport"
+    "tap"
   ]
-  revision = "168a6198bcb0ef175f7dacec0b8691fc141dc9b8"
-  version = "v1.13.0"
+  revision = "32fb0ac620c32ba40a4626ddf94d90d12cce3455"
+  version = "v1.14.0"
 
 [[projects]]
   name = "gopkg.in/inf.v0"
@@ -887,6 +890,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4261373e1e5a51e3aa47bef86864a4e75624d1d80dc34bb9a152c7899cf5d0c1"
+  inputs-digest = "ba570bc23e4616ab3d120d816cc60d5ed138919d0662da9612b7f3b702d7a840"
   solver-name = "gps-cdcl"
   solver-version = 1
