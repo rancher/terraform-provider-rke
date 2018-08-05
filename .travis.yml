@@ -5,4 +5,4 @@ install:
   - make tools
 
 script:
-  - make test build-x
+  - make lint test build-x

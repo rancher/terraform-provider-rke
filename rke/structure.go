@@ -905,13 +905,13 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 			rawProvider := rawProviders[0]
 			config := &v3.CloudProvider{}
 
-			rawMap := rawProvider.(map[string]interface{})
-			if v, ok := rawMap["name"]; ok {
+			rawProviderMap := rawProvider.(map[string]interface{})
+			if v, ok := rawProviderMap["name"]; ok {
 				config.Name = v.(string)
 			}
 
 			/*
-				if v, ok := rawMap["cloud_config"]; ok {
+				if v, ok := rawProviderMap["cloud_config"]; ok {
 					cc := map[string]string{}
 					values := v.(map[string]interface{})
 					for k, v := range values {
@@ -923,7 +923,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 				}
 			*/
 
-			if rawList, ok := rawMap["azure_cloud_config"]; ok {
+			if rawList, ok := rawProviderMap["azure_cloud_config"]; ok {
 				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
 					rawConfig := rawCloudConfigs[0]
 					c := &v3.AzureCloudProvider{}
@@ -970,15 +970,15 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 				}
 			}
 
-			if rawList, ok := rawMap["vsphere_cloud_config"]; ok {
+			if rawList, ok := rawProviderMap["vsphere_cloud_config"]; ok {
 				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
 					rawConfig := rawCloudConfigs[0]
 					c := &v3.VsphereCloudProvider{}
 
-					rawMap := rawConfig.(map[string]interface{})
+					rawVSphereConfigMap := rawConfig.(map[string]interface{})
 
 					// global
-					if rawList, ok := rawMap["global"]; ok {
+					if rawList, ok := rawVSphereConfigMap["global"]; ok {
 						if rawGlobals, ok := rawList.([]interface{}); ok && len(rawGlobals) > 0 {
 							rawGlobal := rawGlobals[0]
 							rawMap := rawGlobal.(map[string]interface{})
@@ -1011,7 +1011,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					}
 
 					// virtual_center
-					if rawList, ok := rawMap["virtual_center"]; ok {
+					if rawList, ok := rawVSphereConfigMap["virtual_center"]; ok {
 						if rawVCs, ok := rawList.([]interface{}); ok {
 							vcs := map[string]v3.VirtualCenterConfig{}
 							for _, rawVC := range rawVCs {
@@ -1040,7 +1040,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					}
 
 					// network
-					if rawList, ok := rawMap["network"]; ok {
+					if rawList, ok := rawVSphereConfigMap["network"]; ok {
 						if rawNetworks, ok := rawList.([]interface{}); ok && len(rawNetworks) > 0 {
 							rawNetwork := rawNetworks[0]
 							rawMap := rawNetwork.(map[string]interface{})
@@ -1058,7 +1058,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					}
 
 					// disk
-					if rawList, ok := rawMap["disk"]; ok {
+					if rawList, ok := rawVSphereConfigMap["disk"]; ok {
 						if rawDisks, ok := rawList.([]interface{}); ok && len(rawDisks) > 0 {
 							rawDisk := rawDisks[0]
 							rawMap := rawDisk.(map[string]interface{})
@@ -1076,7 +1076,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					}
 
 					// workspace
-					if rawList, ok := rawMap["workspace"]; ok {
+					if rawList, ok := rawVSphereConfigMap["workspace"]; ok {
 						if rawWSs, ok := rawList.([]interface{}); ok && len(rawWSs) > 0 {
 							rawWS := rawWSs[0]
 							rawMap := rawWS.(map[string]interface{})
@@ -1101,15 +1101,15 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 				}
 			}
 
-			if rawList, ok := rawMap["openstack_cloud_config"]; ok {
+			if rawList, ok := rawProviderMap["openstack_cloud_config"]; ok {
 				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
 					rawConfig := rawCloudConfigs[0]
 					c := &v3.OpenstackCloudProvider{}
 
-					rawMap := rawConfig.(map[string]interface{})
+					rawOpenStackConfigMap := rawConfig.(map[string]interface{})
 
 					// global
-					if rawList, ok := rawMap["global"]; ok {
+					if rawList, ok := rawOpenStackConfigMap["global"]; ok {
 						if rawGlobals, ok := rawList.([]interface{}); ok && len(rawGlobals) > 0 {
 							rawGlobal := rawGlobals[0]
 							rawMap := rawGlobal.(map[string]interface{})
@@ -1137,7 +1137,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					}
 
 					// load_balancer
-					if rawList, ok := rawMap["load_balancer"]; ok {
+					if rawList, ok := rawOpenStackConfigMap["load_balancer"]; ok {
 						if rawLBs, ok := rawList.([]interface{}); ok && len(rawLBs) > 0 {
 							rawLB := rawLBs[0]
 							rawMap := rawLB.(map[string]interface{})
@@ -1169,7 +1169,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					}
 
 					// block_storage
-					if rawList, ok := rawMap["block_storage"]; ok {
+					if rawList, ok := rawOpenStackConfigMap["block_storage"]; ok {
 						if rawBSs, ok := rawList.([]interface{}); ok && len(rawBSs) > 0 {
 							rawBS := rawBSs[0]
 							rawMap := rawBS.(map[string]interface{})
@@ -1191,7 +1191,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					}
 
 					// route
-					if rawList, ok := rawMap["route"]; ok {
+					if rawList, ok := rawOpenStackConfigMap["route"]; ok {
 						if rawRouters, ok := rawList.([]interface{}); ok && len(rawRouters) > 0 {
 							rawRouter := rawRouters[0]
 							rawMap := rawRouter.(map[string]interface{})
@@ -1209,7 +1209,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					}
 
 					// metadata
-					if rawList, ok := rawMap["metadata"]; ok {
+					if rawList, ok := rawOpenStackConfigMap["metadata"]; ok {
 						if rawMetadataList, ok := rawList.([]interface{}); ok && len(rawMetadataList) > 0 {
 							rawMetadata := rawMetadataList[0]
 							rawMap := rawMetadata.(map[string]interface{})
@@ -1233,7 +1233,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 				}
 			}
 
-			if v, ok := rawMap["custom_cloud_config"]; ok {
+			if v, ok := rawProviderMap["custom_cloud_config"]; ok {
 				config.CustomCloudProvider = v.(string)
 			}
 

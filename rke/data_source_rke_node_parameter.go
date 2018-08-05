@@ -42,14 +42,14 @@ func resourceRKENodeParameterRead(d *schema.ResourceData, _ interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("yaml", string(strYAML))
+	d.Set("yaml", string(strYAML)) // nolint
 
 	// to JSON
 	strJSON, err := json.Marshal(&node)
 	if err != nil {
 		return err
 	}
-	d.Set("json", string(strJSON))
+	d.Set("json", string(strJSON)) // nolint
 
 	d.SetId(d.Get("address").(string))
 	return nil
