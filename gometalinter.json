@@ -1,6 +1,5 @@
 {
   "Skip": ["vendor"],
-  "Cyclo": 15,
-  "Disable": ["gas", "maligned"],
-  "Deadline": "2m"
+  "Disable": ["gas", "maligned", "gocyclo", "gosec"],
+  "Deadline": "5m"
 }
