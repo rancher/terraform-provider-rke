@@ -389,8 +389,8 @@
 [[projects]]
   name = "github.com/json-iterator/go"
   packages = ["."]
-  revision = "ab8a2e0c74be9d3be70b3184d9acc634935ded82"
-  version = "1.1.4"
+  revision = "1624edc4454b8682399def8740d46db5e4362ba4"
+  version = "1.1.5"
 
 [[projects]]
   name = "github.com/mattn/go-colorable"
@@ -546,7 +546,8 @@
     "services",
     "templates"
   ]
-  revision = "2e82c18d4b6fe3afbb3970cbf518b5c0a811bcaa"
+  revision = "de617da4702c28e5794ef6a1f76a47a1e4cfa160"
+  version = "v0.1.9-rc9"
 
 [[projects]]
   name = "github.com/rancher/types"
@@ -662,7 +663,7 @@
     "unix",
     "windows"
   ]
-  revision = "0ffbfd41fbef8ffcf9b62b0b0aa3a5873ed7a4fe"
+  revision = "34b17bdb430002e9db9ae7ddc8480b9fa05edc22"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -890,6 +891,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ba570bc23e4616ab3d120d816cc60d5ed138919d0662da9612b7f3b702d7a840"
+  inputs-digest = "0de09c4b2bf5a9a212d634de97b52e9a64b74c0d4fd022d049939286094a9df9"
   solver-name = "gps-cdcl"
   solver-version = 1

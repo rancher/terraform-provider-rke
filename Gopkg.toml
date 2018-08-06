@@ -36,8 +36,7 @@ ignored = ["github.com/yamamoto-febc/terraform-provider-rke/github.com/hashicorp
 
 [[constraint]]
   name = "github.com/rancher/rke"
-  revision = "2e82c18d4b6fe3afbb3970cbf518b5c0a811bcaa"
-  #version = "0.1.9-rc1"
+  version = "0.1.9-rc9"
 
 [[override]]
   name = "k8s.io/api"

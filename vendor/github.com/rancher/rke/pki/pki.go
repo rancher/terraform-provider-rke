@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/docker/docker/api/types/container"
@@ -43,7 +44,7 @@ func GenerateRKECerts(ctx context.Context, rkeConfig v3.RancherKubernetesEngineC
 	certs := make(map[string]CertificatePKI)
 	// generate CA certificate and key
 	log.Infof(ctx, "[certificates] Generating CA kubernetes certificates")
-	caCrt, caKey, err := generateCACertAndKey()
+	caCrt, caKey, err := GenerateCACertAndKey(CACertName)
 	if err != nil {
 		return nil, err
 	}
@@ -54,6 +55,7 @@ func GenerateRKECerts(ctx context.Context, rkeConfig v3.RancherKubernetesEngineC
 	kubernetesServiceIP, err := GetKubernetesServiceIP(rkeConfig.Services.KubeAPI.ServiceClusterIPRange)
 	clusterDomain := rkeConfig.Services.Kubelet.ClusterDomain
 	cpHosts := hosts.NodesToHosts(rkeConfig.Nodes, controlRole)
+	etcdHosts := hosts.NodesToHosts(rkeConfig.Nodes, etcdRole)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get Kubernetes Service IP: %v", err)
 	}
@@ -88,7 +90,6 @@ func GenerateRKECerts(ctx context.Context, rkeConfig v3.RancherKubernetesEngineC
 	}
 	certs[KubeProxyCertName] = ToCertObject(KubeProxyCertName, "", "", kubeProxyCrt, kubeProxyKey)
 
-	// generate Kubelet certificate and key
 	log.Infof(ctx, "[certificates] Generating Node certificate")
 	nodeCrt, nodeKey, err := GenerateSignedCertAndKey(caCrt, caKey, false, KubeNodeCommonName, nil, nil, []string{KubeNodeOrganizationName})
 	if err != nil {
@@ -139,7 +140,6 @@ func GenerateRKECerts(ctx context.Context, rkeConfig v3.RancherKubernetesEngineC
 		}
 		certs[EtcdClientCACertName] = ToCertObject(EtcdClientCACertName, "", "", caCert[0], nil)
 	}
-	etcdHosts := hosts.NodesToHosts(rkeConfig.Nodes, etcdRole)
 	etcdAltNames := GetAltNames(etcdHosts, clusterDomain, kubernetesServiceIP, []string{})
 	for _, host := range etcdHosts {
 		log.Infof(ctx, "[certificates] Generating etcd-%s certificate and key", host.InternalAddress)
@@ -150,6 +150,22 @@ func GenerateRKECerts(ctx context.Context, rkeConfig v3.RancherKubernetesEngineC
 		etcdName := GetEtcdCrtName(host.InternalAddress)
 		certs[etcdName] = ToCertObject(etcdName, "", "", etcdCrt, etcdKey)
 	}
+
+	// generate request header client CA certificate and key
+	log.Infof(ctx, "[certificates] Generating Kubernetes API server aggregation layer requestheader client CA certificates")
+	requestHeaderCACrt, requestHeaderCAKey, err := GenerateCACertAndKey(RequestHeaderCACertName)
+	if err != nil {
+		return nil, err
+	}
+	certs[RequestHeaderCACertName] = ToCertObject(RequestHeaderCACertName, "", "", requestHeaderCACrt, requestHeaderCAKey)
+
+	//generate API server proxy client key and certs
+	log.Infof(ctx, "[certificates] Generating Kubernetes API server proxy client certificates")
+	apiserverProxyClientCrt, apiserverProxyClientKey, err := GenerateSignedCertAndKey(requestHeaderCACrt, requestHeaderCAKey, true, APIProxyClientCertName, nil, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	certs[APIProxyClientCertName] = ToCertObject(APIProxyClientCertName, "", "", apiserverProxyClientCrt, apiserverProxyClientKey)
 
 	return certs, nil
 }
@@ -218,7 +234,7 @@ func SaveBackupBundleOnHost(ctx context.Context, host *hosts.Host, alpineSystemI
 		Cmd: []string{
 			"sh",
 			"-c",
-			fmt.Sprintf("if [ -d %s ] && [ \"$(ls -A %s)\" ]; then tar czvf %s %s;fi", path.Join(host.PrefixPath, TempCertPath), path.Join(host.PrefixPath, TempCertPath), BundleCertPath, path.Join(host.PrefixPath, TempCertPath)),
+			fmt.Sprintf("if [ -d %s ] && [ \"$(ls -A %s)\" ]; then tar czvf %s %s;fi", TempCertPath, TempCertPath, BundleCertPath, TempCertPath),
 		},
 		Image: alpineSystemImage,
 	}
@@ -240,16 +256,21 @@ func SaveBackupBundleOnHost(ctx context.Context, host *hosts.Host, alpineSystemI
 	if status != 0 {
 		return fmt.Errorf("Failed to run certificate bundle compress, exit status is: %d", status)
 	}
+	log.Infof(ctx, "[certificates] successfully saved certificate bundle [%s/pki.bundle.tar.gz] on host [%s]", etcdSnapshotPath, host.Address)
 	return docker.RemoveContainer(ctx, host.DClient, host.Address, BundleCertContainer)
 }
 
 func ExtractBackupBundleOnHost(ctx context.Context, host *hosts.Host, alpineSystemImage, etcdSnapshotPath string, prsMap map[string]v3.PrivateRegistry) error {
-	fullTempCertPath := path.Join(host.PrefixPath, TempCertPath)
 	imageCfg := &container.Config{
 		Cmd: []string{
 			"sh",
 			"-c",
-			fmt.Sprintf("mkdir -p /etc/kubernetes/.tmp/; tar xzvf %s -C %s --strip-components %d", BundleCertPath, fullTempCertPath, len(strings.Split(fullTempCertPath, "/"))-1),
+			fmt.Sprintf(
+				"mkdir -p %s; tar xzvf %s -C %s --strip-components %d",
+				TempCertPath,
+				BundleCertPath,
+				TempCertPath,
+				len(strings.Split(filepath.Clean(TempCertPath), "/"))-1),
 		},
 		Image: alpineSystemImage,
 	}
@@ -269,7 +290,16 @@ func ExtractBackupBundleOnHost(ctx context.Context, host *hosts.Host, alpineSyst
 		return err
 	}
 	if status != 0 {
-		return fmt.Errorf("Failed to run certificate bundle extract, exit status is: %d", status)
+		containerLog, err := docker.GetContainerLogsStdoutStderr(ctx, host.DClient, BundleCertContainer, "5", false)
+		if err != nil {
+			return err
+		}
+		// removing the container in case of an error too
+		if err := docker.RemoveContainer(ctx, host.DClient, host.Address, BundleCertContainer); err != nil {
+			return err
+		}
+		return fmt.Errorf("Failed to run certificate bundle extract, exit status is: %d, container logs: %s", status, containerLog)
 	}
+	log.Infof(ctx, "[certificates] successfully extracted certificate bundle on host [%s] to backup path [%s]", host.Address, TempCertPath)
 	return docker.RemoveContainer(ctx, host.DClient, host.Address, BundleCertContainer)
 }
