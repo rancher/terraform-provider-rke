@@ -644,13 +644,13 @@ func resourceRKECluster() *schema.Resource {
 			},
 			"monitoring": {
 				Type:        schema.TypeList,
+				MaxItems:    1,
 				Optional:    true,
 				Computed:    true,
-				MaxItems:    1,
 				Description: "Monitoring Config",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"providers": {
+						"provider": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true,
