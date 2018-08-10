@@ -1,8 +1,12 @@
 package v3
 
 import (
+	"github.com/rancher/norman/condition"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+const UserConditionInitialRolesPopulated condition.Cond = "InitialRolesPopulated"
 
 type Token struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -26,14 +30,38 @@ type User struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	DisplayName        string   `json:"displayName,omitempty"`
-	Description        string   `json:"description"`
-	Username           string   `json:"username,omitempty"`
-	Password           string   `json:"password,omitempty" norman:"writeOnly,noupdate"`
-	MustChangePassword bool     `json:"mustChangePassword,omitempty"`
-	PrincipalIDs       []string `json:"principalIds,omitempty" norman:"type=array[reference[principal]]"`
-	Me                 bool     `json:"me,omitempty"`
+	DisplayName        string     `json:"displayName,omitempty"`
+	Description        string     `json:"description"`
+	Username           string     `json:"username,omitempty"`
+	Password           string     `json:"password,omitempty" norman:"writeOnly,noupdate"`
+	MustChangePassword bool       `json:"mustChangePassword,omitempty"`
+	PrincipalIDs       []string   `json:"principalIds,omitempty" norman:"type=array[reference[principal]]"`
+	Me                 bool       `json:"me,omitempty"`
+	Enabled            *bool      `json:"enabled,omitempty" norman:"default=true"`
+	Spec               UserSpec   `json:"spec,omitempty"`
+	Status             UserStatus `json:"status"`
 }
+
+type UserStatus struct {
+	Conditions []UserCondition `json:"conditions"`
+}
+
+type UserCondition struct {
+	// Type of user condition.
+	Type string `json:"type"`
+	// Status of the condition, one of True, False, Unknown.
+	Status v1.ConditionStatus `json:"status"`
+	// The last time this condition was updated.
+	LastUpdateTime string `json:"lastUpdateTime,omitempty"`
+	// Last time the condition transitioned from one status to another.
+	LastTransitionTime string `json:"lastTransitionTime,omitempty"`
+	// The reason for the condition's last transition.
+	Reason string `json:"reason,omitempty"`
+	// Human-readable message indicating details about last transition
+	Message string `json:"message,omitempty"`
+}
+
+type UserSpec struct{}
 
 // UserAttribute will have a CRD (and controller) generated for it, but will not be exposed in the API.
 type UserAttribute struct {
@@ -158,28 +186,29 @@ type ActiveDirectoryConfig struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	AuthConfig        `json:",inline" mapstructure:",squash"`
 
-	Servers                     []string `json:"servers,omitempty"                     norman:"type=array[string],required"`
-	Port                        int64    `json:"port,omitempty"                        norman:"default=389"`
-	TLS                         bool     `json:"tls,omitempty"                         norman:"default=false"`
-	Certificate                 string   `json:"certificate,omitempty"`
-	DefaultLoginDomain          string   `json:"defaultLoginDomain,omitempty"`
-	ServiceAccountUsername      string   `json:"serviceAccountUsername,omitempty"      norman:"required"`
-	ServiceAccountPassword      string   `json:"serviceAccountPassword,omitempty"      norman:"type=password,required"`
-	UserDisabledBitMask         int64    `json:"userDisabledBitMask,omitempty"         norman:"default=2"`
-	UserSearchBase              string   `json:"userSearchBase,omitempty"              norman:"required"`
-	UserSearchAttribute         string   `json:"userSearchAttribute,omitempty"         norman:"default=sAMAccountName|sn|givenName,required"`
-	UserLoginAttribute          string   `json:"userLoginAttribute,omitempty"          norman:"default=sAMAccountName,required"`
-	UserObjectClass             string   `json:"userObjectClass,omitempty"             norman:"default=person,required"`
-	UserNameAttribute           string   `json:"userNameAttribute,omitempty"           norman:"default=name,required"`
-	UserEnabledAttribute        string   `json:"userEnabledAttribute,omitempty"        norman:"default=userAccountControl,required"`
-	GroupSearchBase             string   `json:"groupSearchBase,omitempty"`
-	GroupSearchAttribute        string   `json:"groupSearchAttribute,omitempty"        norman:"default=sAMAccountName,required"`
-	GroupObjectClass            string   `json:"groupObjectClass,omitempty"            norman:"default=group,required"`
-	GroupNameAttribute          string   `json:"groupNameAttribute,omitempty"          norman:"default=name,required"`
-	GroupDNAttribute            string   `json:"groupDNAttribute,omitempty"            norman:"default=distinguishedName,required"`
-	GroupMemberUserAttribute    string   `json:"groupMemberUserAttribute,omitempty"    norman:"default=distinguishedName,required"`
-	GroupMemberMappingAttribute string   `json:"groupMemberMappingAttribute,omitempty" norman:"default=member,required"`
-	ConnectionTimeout           int64    `json:"connectionTimeout,omitempty"           norman:"default=5000"`
+	Servers                      []string `json:"servers,omitempty"                     norman:"type=array[string],required"`
+	Port                         int64    `json:"port,omitempty"                        norman:"default=389"`
+	TLS                          bool     `json:"tls,omitempty"                         norman:"default=false"`
+	Certificate                  string   `json:"certificate,omitempty"`
+	DefaultLoginDomain           string   `json:"defaultLoginDomain,omitempty"`
+	ServiceAccountUsername       string   `json:"serviceAccountUsername,omitempty"      norman:"required"`
+	ServiceAccountPassword       string   `json:"serviceAccountPassword,omitempty"      norman:"type=password,required"`
+	UserDisabledBitMask          int64    `json:"userDisabledBitMask,omitempty"         norman:"default=2"`
+	UserSearchBase               string   `json:"userSearchBase,omitempty"              norman:"required"`
+	UserSearchAttribute          string   `json:"userSearchAttribute,omitempty"         norman:"default=sAMAccountName|sn|givenName,required"`
+	UserLoginAttribute           string   `json:"userLoginAttribute,omitempty"          norman:"default=sAMAccountName,required"`
+	UserObjectClass              string   `json:"userObjectClass,omitempty"             norman:"default=person,required"`
+	UserNameAttribute            string   `json:"userNameAttribute,omitempty"           norman:"default=name,required"`
+	UserEnabledAttribute         string   `json:"userEnabledAttribute,omitempty"        norman:"default=userAccountControl,required"`
+	GroupSearchBase              string   `json:"groupSearchBase,omitempty"`
+	GroupSearchAttribute         string   `json:"groupSearchAttribute,omitempty"        norman:"default=sAMAccountName,required"`
+	GroupObjectClass             string   `json:"groupObjectClass,omitempty"            norman:"default=group,required"`
+	GroupNameAttribute           string   `json:"groupNameAttribute,omitempty"          norman:"default=name,required"`
+	GroupDNAttribute             string   `json:"groupDNAttribute,omitempty"            norman:"default=distinguishedName,required"`
+	GroupMemberUserAttribute     string   `json:"groupMemberUserAttribute,omitempty"    norman:"default=distinguishedName,required"`
+	GroupMemberMappingAttribute  string   `json:"groupMemberMappingAttribute,omitempty" norman:"default=member,required"`
+	ConnectionTimeout            int64    `json:"connectionTimeout,omitempty"           norman:"default=5000,notnullable,required"`
+	NestedGroupMembershipEnabled *bool    `json:"nestedGroupMembershipEnabled,omitempty" norman:"default=false"`
 }
 
 type ActiveDirectoryTestAndApplyInput struct {
@@ -215,7 +244,8 @@ type LdapConfig struct {
 	GroupDNAttribute                string   `json:"groupDNAttribute,omitempty"            norman:"default=entryDN,notnullable"`
 	GroupMemberUserAttribute        string   `json:"groupMemberUserAttribute,omitempty"    norman:"default=entryDN,notnullable"`
 	GroupMemberMappingAttribute     string   `json:"groupMemberMappingAttribute,omitempty" norman:"default=member,notnullable,required"`
-	ConnectionTimeout               int64    `json:"connectionTimeout,omitempty"           norman:"default=1000,notnullable,required"`
+	ConnectionTimeout               int64    `json:"connectionTimeout,omitempty"           norman:"default=5000,notnullable,required"`
+	NestedGroupMembershipEnabled    bool     `json:"nestedGroupMembershipEnabled"    norman:"default=false"`
 }
 
 type LdapTestAndApplyInput struct {
@@ -238,4 +268,35 @@ type FreeIpaConfig struct {
 
 type FreeIpaTestAndApplyInput struct {
 	LdapTestAndApplyInput `json:",inline" mapstructure:",squash"`
+}
+
+type SamlConfig struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	AuthConfig        `json:",inline" mapstructure:",squash"`
+
+	IDPMetadataContent string `json:"idpMetadataContent" norman:"required"`
+	SpCert             string `json:"spCert"             norman:"required"`
+	SpKey              string `json:"spKey"              norman:"required"`
+	GroupsField        string `json:"groupsField"        norman:"required"`
+	DisplayNameField   string `json:"displayNameField"   norman:"required"`
+	UserNameField      string `json:"userNameField"      norman:"required"`
+	UIDField           string `json:"uidField"           norman:"required"`
+	RancherAPIHost     string `json:"rancherApiHost"     norman:"required"`
+}
+
+type SamlConfigTestInput struct {
+	FinalRedirectURL string `json:"finalRedirectUrl"`
+}
+
+type SamlConfigTestOutput struct {
+	IdpRedirectURL string `json:"idpRedirectUrl"`
+}
+
+type PingConfig struct {
+	SamlConfig `json:",inline" mapstructure:",squash"`
+}
+
+type ADFSConfig struct {
+	SamlConfig `json:",inline" mapstructure:",squash"`
 }

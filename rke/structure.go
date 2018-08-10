@@ -34,6 +34,7 @@ var rkeConfigBuilders = []func(rkeConfig *v3.RancherKubernetesEngineConfig, d re
 	setSystemImagesFromResource,
 	setSSHSettingsFromResource,
 	setBastionHostFromResource,
+	setMonitoringFromResource,
 	setAuthorizationFromResource,
 	setMiscConfigFromResource,
 	setCloudProviderFromResource,
@@ -219,6 +220,18 @@ func setBastionHostFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d r
 	}
 	if host != nil {
 		rkeConfig.BastionHost = *host
+	}
+	return nil
+}
+
+func setMonitoringFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d resourceData) error {
+	var err error
+	var monitoring *v3.MonitoringConfig
+	if monitoring, err = parseResourceMonitoring(d); err != nil {
+		return err
+	}
+	if monitoring != nil {
+		rkeConfig.Monitoring = *monitoring
 	}
 	return nil
 }
@@ -721,6 +734,7 @@ func parseResourceSystemImages(d resourceData) (*v3.RKESystemImages, error) {
 					"pod_infra_container":         &config.PodInfraContainer,
 					"ingress":                     &config.Ingress,
 					"ingress_backend":             &config.IngressBackend,
+					"metrics_server":              &config.MetricsServer,
 				},
 			})
 
@@ -772,6 +786,33 @@ func parseResourceBastionHost(d resourceData) (*v3.BastionHost, error) {
 				}
 			}
 
+			return config, nil
+		}
+	}
+	return nil, nil
+}
+
+func parseResourceMonitoring(d resourceData) (*v3.MonitoringConfig, error) {
+	if rawList, ok := d.GetOk("monitoring"); ok {
+		if rawMonitorings, ok := rawList.([]interface{}); ok && len(rawMonitorings) > 0 {
+			rawMonitoring := rawMonitorings[0]
+			config := &v3.MonitoringConfig{}
+
+			rawMap := rawMonitoring.(map[string]interface{})
+			if v, ok := rawMap["provider"]; ok {
+				config.Provider = v.(string)
+			}
+
+			if v, ok := rawMap["options"]; ok {
+				options := map[string]string{}
+				values := v.(map[string]interface{})
+				for k, v := range values {
+					if v, ok := v.(string); ok {
+						options[k] = v
+					}
+				}
+				config.Options = options
+			}
 			return config, nil
 		}
 	}
@@ -1374,6 +1415,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"pod_infra_container":         cluster.SystemImages.PodInfraContainer,
 			"ingress":                     cluster.SystemImages.Ingress,
 			"ingress_backend":             cluster.SystemImages.IngressBackend,
+			"metrics_server":              cluster.SystemImages.MetricsServer,
 		},
 	})
 
@@ -1396,6 +1438,13 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 	bastionHost["ssh_key"] = cluster.BastionHost.SSHKey
 	bastionHost["ssh_key_path"] = cluster.BastionHost.SSHKeyPath
 	d.Set("bastion_host", []interface{}{bastionHost}) // nolint
+
+	d.Set("monitoring", []interface{}{ // nolint
+		map[string]interface{}{
+			"provider": cluster.Monitoring.Provider,
+			"options":  cluster.Monitoring.Options,
+		},
+	})
 
 	d.Set("authorization", []interface{}{ // nolint
 		map[string]interface{}{

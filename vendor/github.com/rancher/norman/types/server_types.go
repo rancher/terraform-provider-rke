@@ -12,13 +12,14 @@ type ValuesMap struct {
 }
 
 type RawResource struct {
-	ID          string                 `json:"id,omitempty" yaml:"id,omitempty"`
-	Type        string                 `json:"type,omitempty" yaml:"type,omitempty"`
-	Schema      *Schema                `json:"-" yaml:"-"`
-	Links       map[string]string      `json:"links" yaml:"links"`
-	Actions     map[string]string      `json:"actions" yaml:"actions"`
-	Values      map[string]interface{} `json:",inline"`
-	ActionLinks bool                   `json:"-"`
+	ID           string                 `json:"id,omitempty" yaml:"id,omitempty"`
+	Type         string                 `json:"type,omitempty" yaml:"type,omitempty"`
+	Schema       *Schema                `json:"-" yaml:"-"`
+	Links        map[string]string      `json:"links,omitempty" yaml:"links,omitempty"`
+	Actions      map[string]string      `json:"actions,omitempty" yaml:"actions,omitempty"`
+	Values       map[string]interface{} `json:",inline" yaml:",inline"`
+	ActionLinks  bool                   `json:"-" yaml:"-"`
+	DropReadOnly bool                   `json:"-" yaml:"-"`
 }
 
 func (r *RawResource) AddAction(apiContext *APIContext, name string) {
@@ -26,32 +27,49 @@ func (r *RawResource) AddAction(apiContext *APIContext, name string) {
 }
 
 func (r *RawResource) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r.ToMap())
+}
+
+func (r *RawResource) ToMap() map[string]interface{} {
 	data := map[string]interface{}{}
 	for k, v := range r.Values {
 		data[k] = v
 	}
-	if r.ID != "" {
+
+	if r.ID != "" && !r.DropReadOnly {
 		data["id"] = r.ID
 	}
 
-	data["type"] = r.Type
-	data["baseType"] = r.Schema.BaseType
-	data["links"] = r.Links
-	if r.ActionLinks {
-		data["actionLinks"] = r.Actions
-	} else {
-		data["actions"] = r.Actions
+	if r.Type != "" && !r.DropReadOnly {
+		data["type"] = r.Type
 	}
-	return json.Marshal(data)
+	if r.Schema.BaseType != "" && !r.DropReadOnly {
+		data["baseType"] = r.Schema.BaseType
+	}
+
+	if len(r.Links) > 0 && !r.DropReadOnly {
+		data["links"] = r.Links
+	}
+
+	if len(r.Actions) > 0 && !r.DropReadOnly {
+		if r.ActionLinks {
+			data["actionLinks"] = r.Actions
+		} else {
+			data["actions"] = r.Actions
+		}
+	}
+	return data
 }
 
 type ActionHandler func(actionName string, action *Action, request *APIContext) error
 
 type RequestHandler func(request *APIContext, next RequestHandler) error
 
-type QueryFilter func(opts *QueryOptions, data []map[string]interface{}) []map[string]interface{}
+type QueryFilter func(opts *QueryOptions, schema *Schema, data []map[string]interface{}) []map[string]interface{}
 
 type Validator func(request *APIContext, schema *Schema, data map[string]interface{}) error
+
+type InputFormatter func(request *APIContext, schema *Schema, data map[string]interface{}, create bool) error
 
 type Formatter func(request *APIContext, resource *RawResource)
 
@@ -74,6 +92,9 @@ type AccessControl interface {
 	CanGet(apiContext *APIContext, schema *Schema) error
 	CanUpdate(apiContext *APIContext, obj map[string]interface{}, schema *Schema) error
 	CanDelete(apiContext *APIContext, obj map[string]interface{}, schema *Schema) error
+	// CanDo function should not yet be used if a corresponding specific method exists. It has been added to
+	// satisfy a specific usecase for the short term until full-blown dynamic RBAC can be implemented.
+	CanDo(apiGroup, resource, verb string, apiContext *APIContext, obj map[string]interface{}, schema *Schema) error
 
 	Filter(apiContext *APIContext, schema *Schema, obj map[string]interface{}, context map[string]string) map[string]interface{}
 	FilterList(apiContext *APIContext, schema *Schema, obj []map[string]interface{}, context map[string]string) []map[string]interface{}
@@ -95,11 +116,10 @@ type APIContext struct {
 	ResponseWriter              ResponseWriter
 	QueryFilter                 QueryFilter
 	SubContextAttributeProvider SubContextAttributeProvider
-	//QueryOptions                *QueryOptions
-	URLBuilder    URLBuilder
-	AccessControl AccessControl
-	SubContext    map[string]string
-	//Attributes    map[string]interface{}
+	URLBuilder                  URLBuilder
+	AccessControl               AccessControl
+	SubContext                  map[string]string
+	Pagination                  *Pagination
 
 	Request  *http.Request
 	Response http.ResponseWriter
@@ -122,29 +142,33 @@ func GetAPIContext(ctx context.Context) *APIContext {
 	return apiContext
 }
 
+func (r *APIContext) Option(key string) string {
+	return r.Query.Get("_" + key)
+}
+
 func (r *APIContext) WriteResponse(code int, obj interface{}) {
 	r.ResponseWriter.Write(r, code, obj)
 }
 
-func (r *APIContext) FilterList(opts *QueryOptions, obj []map[string]interface{}) []map[string]interface{} {
-	return r.QueryFilter(opts, obj)
+func (r *APIContext) FilterList(opts *QueryOptions, schema *Schema, obj []map[string]interface{}) []map[string]interface{} {
+	return r.QueryFilter(opts, schema, obj)
 }
 
-func (r *APIContext) FilterObject(opts *QueryOptions, obj map[string]interface{}) map[string]interface{} {
+func (r *APIContext) FilterObject(opts *QueryOptions, schema *Schema, obj map[string]interface{}) map[string]interface{} {
 	opts.Pagination = nil
-	result := r.QueryFilter(opts, []map[string]interface{}{obj})
+	result := r.QueryFilter(opts, schema, []map[string]interface{}{obj})
 	if len(result) == 0 {
 		return nil
 	}
 	return result[0]
 }
 
-func (r *APIContext) Filter(opts *QueryOptions, obj interface{}) interface{} {
+func (r *APIContext) Filter(opts *QueryOptions, schema *Schema, obj interface{}) interface{} {
 	switch v := obj.(type) {
 	case []map[string]interface{}:
-		return r.FilterList(opts, v)
+		return r.FilterList(opts, schema, v)
 	case map[string]interface{}:
-		return r.FilterObject(opts, v)
+		return r.FilterObject(opts, schema, v)
 	}
 
 	return nil

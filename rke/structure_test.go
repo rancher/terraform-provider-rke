@@ -770,11 +770,7 @@ func TestParseResourceSystemImages(t *testing.T) {
 						"pod_infra_container":         "pod_infra_container",
 						"ingress":                     "ingress",
 						"ingress_backend":             "ingress_backend",
-						"dashboard":                   "dashboard",
-						"heapster":                    "heapster",
-						"grafana":                     "grafana",
-						"influxdb":                    "influxdb",
-						"tiller":                      "tiller",
+						"metrics_server":              "metrics_server",
 					},
 				},
 			},
@@ -803,6 +799,7 @@ func TestParseResourceSystemImages(t *testing.T) {
 				PodInfraContainer:         "pod_infra_container",
 				Ingress:                   "ingress",
 				IngressBackend:            "ingress_backend",
+				MetricsServer:             "metrics_server",
 			},
 		},
 	}
@@ -869,6 +866,45 @@ func TestParseResourceBastionHost(t *testing.T) {
 			host, err := parseResourceBastionHost(d)
 			assert.NoError(t, err)
 			assert.EqualValues(t, testcase.expectConfig, host)
+		})
+	}
+}
+
+func TestParseResourceMonitoring(t *testing.T) {
+	testcases := []struct {
+		caseName     string
+		resourceData map[string]interface{}
+		expectConfig *v3.MonitoringConfig
+	}{
+		{
+			caseName: "all fields",
+			resourceData: map[string]interface{}{
+				"monitoring": []interface{}{
+					map[string]interface{}{
+						"provider": "provider",
+						"options": map[string]interface{}{
+							"foo": "foo",
+							"bar": "bar",
+						},
+					},
+				},
+			},
+			expectConfig: &v3.MonitoringConfig{
+				Provider: "provider",
+				Options: map[string]string{
+					"foo": "foo",
+					"bar": "bar",
+				},
+			},
+		},
+	}
+
+	for _, testcase := range testcases {
+		t.Run(testcase.caseName, func(t *testing.T) {
+			d := &dummyResourceData{values: testcase.resourceData}
+			config, err := parseResourceMonitoring(d)
+			assert.NoError(t, err)
+			assert.EqualValues(t, testcase.expectConfig, config)
 		})
 	}
 }
@@ -1457,6 +1493,7 @@ func TestClusterToState(t *testing.T) {
 						PodInfraContainer:         "pod_infra_container",
 						Ingress:                   "ingress",
 						IngressBackend:            "ingress_backend",
+						MetricsServer:             "metrics_server",
 					},
 					SSHKeyPath:   "ssh_key_path",
 					SSHAgentAuth: true,
@@ -1467,6 +1504,13 @@ func TestClusterToState(t *testing.T) {
 						SSHAgentAuth: true,
 						SSHKey:       "ssh_key",
 						SSHKeyPath:   "ssh_key_path",
+					},
+					Monitoring: v3.MonitoringConfig{
+						Provider: "provider",
+						Options: map[string]string{
+							"foo": "bar",
+							"bar": "foo",
+						},
 					},
 					Authorization: v3.AuthzConfig{
 						Mode: "rbac",
@@ -1812,6 +1856,7 @@ func TestClusterToState(t *testing.T) {
 						"pod_infra_container":         "pod_infra_container",
 						"ingress":                     "ingress",
 						"ingress_backend":             "ingress_backend",
+						"metrics_server":              "metrics_server",
 					},
 				},
 				"ssh_key_path":   "ssh_key_path",
@@ -1824,6 +1869,15 @@ func TestClusterToState(t *testing.T) {
 						"ssh_agent_auth": true,
 						"ssh_key":        "ssh_key",
 						"ssh_key_path":   "ssh_key_path",
+					},
+				},
+				"monitoring": []interface{}{
+					map[string]interface{}{
+						"provider": "provider",
+						"options": map[string]string{
+							"foo": "bar",
+							"bar": "foo",
+						},
 					},
 				},
 				"authorization": []interface{}{
