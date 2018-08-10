@@ -9,7 +9,7 @@ Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kube
 #### Compatible Versions
 
 - Terraform: v0.11+
-- RKE: v0.1.8 (Kubernetes 1.8, 1.9 and 1.10)
+- RKE: v0.1.9 
 
 ## Installation
 
