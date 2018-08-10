@@ -28,7 +28,7 @@
   branch = "master"
   name = "github.com/armon/go-radix"
   packages = ["."]
-  revision = "1fca145dffbcaa8fe914309b1ec0cfc67500fe61"
+  revision = "7fddfc383310abc091d79a27f116d30cf0424032"
 
 [[projects]]
   name = "github.com/aws/aws-sdk-go"
@@ -65,8 +65,8 @@
     "service/s3",
     "service/sts"
   ]
-  revision = "f70339bb6af843c8ab1974381b3f4fcaee2b1a41"
-  version = "v1.15.5"
+  revision = "859b69a01f8cb52b639bd8c868b116144bddc74a"
+  version = "v1.15.9"
 
 [[projects]]
   branch = "master"
@@ -238,7 +238,7 @@
     ".",
     "helper/url"
   ]
-  revision = "a33f09ce9feed989941a4dfe08b3890a0f8aceb9"
+  revision = "4bda8fa99001c61db3cad96b421d4c12a81f256d"
 
 [[projects]]
   branch = "master"
@@ -312,7 +312,7 @@
     "hcldec",
     "hclparse"
   ]
-  revision = "77c0b55a597ce9ff855c699dba2a99c1632690e1"
+  revision = "6743a2254ba3d642b7d3a0be506259a0842819ac"
 
 [[projects]]
   branch = "master"
@@ -546,8 +546,8 @@
     "services",
     "templates"
   ]
-  revision = "de617da4702c28e5794ef6a1f76a47a1e4cfa160"
-  version = "v0.1.9-rc9"
+  revision = "bff7e0a2c3b792704020263927fb7d49b55a3017"
+  version = "v0.1.9"
 
 [[projects]]
   name = "github.com/rancher/types"
@@ -566,8 +566,8 @@
 [[projects]]
   name = "github.com/spf13/pflag"
   packages = ["."]
-  revision = "583c0c0531f06d5278b7d917446061adc344b5cd"
-  version = "v1.0.1"
+  revision = "9a97c102cda95a86cec2345a6f09f55a939babf5"
+  version = "v1.0.2"
 
 [[projects]]
   name = "github.com/stretchr/testify"
@@ -629,7 +629,7 @@
     "ssh/agent",
     "ssh/terminal"
   ]
-  revision = "56440b844dfe139a8ac053f4ecac0b20b79058f4"
+  revision = "de0752318171da717af4ce24d0a2e8626afaeb11"
 
 [[projects]]
   branch = "master"
@@ -648,7 +648,7 @@
     "proxy",
     "trace"
   ]
-  revision = "f4c29de78a2a91c00474a2e689954305c350adf9"
+  revision = "f9ce57c11b242f0f1599cf25c89d8cb02c45295a"
 
 [[projects]]
   branch = "master"
@@ -663,7 +663,7 @@
     "unix",
     "windows"
   ]
-  revision = "34b17bdb430002e9db9ae7ddc8480b9fa05edc22"
+  revision = "f0d5e33068cb57c22a181f5df0ffda885309eb5a"
 
 [[projects]]
   name = "golang.org/x/text"
@@ -696,7 +696,7 @@
   branch = "master"
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
-  revision = "daca94659cb50e9f37c1b834680f2e46358f10b0"
+  revision = "383e8b2c3b9e36c4076b235b32537292176bae20"
 
 [[projects]]
   name = "google.golang.org/grpc"
@@ -891,6 +891,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0de09c4b2bf5a9a212d634de97b52e9a64b74c0d4fd022d049939286094a9df9"
+  inputs-digest = "a125c7859bc833a573d2aefaf74b51a18798619c6c160c5f445111e76bd8c422"
   solver-name = "gps-cdcl"
   solver-version = 1
