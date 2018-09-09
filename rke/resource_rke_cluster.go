@@ -698,7 +698,6 @@ func resourceRKECluster() *schema.Resource {
 			"kubernetes_version": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 				Description: "Kubernetes version to use (if kubernetes image is specified, image version takes precedence)",
 			},
 			"private_registries": {
