@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/hosts"
 	"github.com/rancher/rke/pki"
@@ -359,7 +360,7 @@ func parseResourceRKEConfigNode(nodeValues map[string]interface{}) (v3.RKEConfig
 	}
 
 	// validate role and roles
-	roleValidateFunc := validateStringInWord([]string{"controlplane", "etcd", "worker"})
+	roleValidateFunc := validation.StringInSlice([]string{"controlplane", "etcd", "worker"}, false)
 	rawRole, hasRole := nodeValues["role"]
 	rawRoles, hasRoles := nodeValues["roles"]
 
@@ -450,7 +451,7 @@ func parseResourceETCDService(d resourceData) (*v3.ETCDService, error) {
 			applyMapToObj(&mapObjMapping{
 				source: rawMap,
 				stringMapping: map[string]*string{
-					"image":     &etcd.Image,
+					//"image":     &etcd.Image,
 					"ca_cert":   &etcd.CACert,
 					"cert":      &etcd.Cert,
 					"key":       &etcd.Key,
@@ -488,7 +489,7 @@ func parseResourceKubeAPIService(d resourceData) (*v3.KubeAPIService, error) {
 			applyMapToObj(&mapObjMapping{
 				source: rawMap,
 				stringMapping: map[string]*string{
-					"image":                    &kubeAPI.Image,
+					//"image":                    &kubeAPI.Image,
 					"service_cluster_ip_range": &kubeAPI.ServiceClusterIPRange,
 					"service_node_port_range":  &kubeAPI.ServiceNodePortRange,
 				},
@@ -520,7 +521,7 @@ func parseResourceKubeControllerService(d resourceData) (*v3.KubeControllerServi
 			applyMapToObj(&mapObjMapping{
 				source: rawMap,
 				stringMapping: map[string]*string{
-					"image":                    &kubeController.Image,
+					//"image":                    &kubeController.Image,
 					"cluster_cidr":             &kubeController.ClusterCIDR,
 					"service_cluster_ip_range": &kubeController.ServiceClusterIPRange,
 				},
@@ -547,9 +548,9 @@ func parseResourceSchedulerService(d resourceData) (*v3.SchedulerService, error)
 			rawMap := rawService.(map[string]interface{})
 
 			applyMapToObj(&mapObjMapping{
-				source: rawMap,
+				source:        rawMap,
 				stringMapping: map[string]*string{
-					"image": &scheduler.Image,
+					//"image": &scheduler.Image,
 				},
 				mapStrMapping: map[string]*map[string]string{
 					"extra_args": &scheduler.ExtraArgs,
@@ -576,10 +577,10 @@ func parseResourceKubeletService(d resourceData) (*v3.KubeletService, error) {
 			applyMapToObj(&mapObjMapping{
 				source: rawMap,
 				stringMapping: map[string]*string{
-					"image":                 &kubelet.Image,
-					"cluster_domain":        &kubelet.ClusterDomain,
-					"infra_container_image": &kubelet.InfraContainerImage,
-					"cluster_dns_server":    &kubelet.ClusterDNSServer,
+					//"image":                 &kubelet.Image,
+					"cluster_domain": &kubelet.ClusterDomain,
+					//"infra_container_image": &kubelet.InfraContainerImage,
+					"cluster_dns_server": &kubelet.ClusterDNSServer,
 				},
 				boolMapping: map[string]*bool{
 					"fail_swap_on": &kubelet.FailSwapOn,
@@ -607,9 +608,9 @@ func parseResourceKubeproxyService(d resourceData) (*v3.KubeproxyService, error)
 			rawMap := rawService.(map[string]interface{})
 
 			applyMapToObj(&mapObjMapping{
-				source: rawMap,
+				source:        rawMap,
 				stringMapping: map[string]*string{
-					"image": &kubeproxy.Image,
+					//"image": &kubeproxy.Image,
 				},
 				mapStrMapping: map[string]*map[string]string{
 					"extra_args": &kubeproxy.ExtraArgs,
@@ -1301,7 +1302,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 	// services
 	d.Set("services_etcd", []interface{}{ // nolint
 		map[string]interface{}{
-			"image":         cluster.Services.Etcd.Image,
+			//"image":         cluster.Services.Etcd.Image,
 			"extra_args":    cluster.Services.Etcd.ExtraArgs,
 			"extra_binds":   cluster.Services.Etcd.ExtraBinds,
 			"extra_env":     cluster.Services.Etcd.ExtraEnv,
@@ -1318,7 +1319,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 
 	d.Set("services_kube_api", []interface{}{ // nolint
 		map[string]interface{}{
-			"image":                    cluster.Services.KubeAPI.Image,
+			//"image":                    cluster.Services.KubeAPI.Image,
 			"extra_args":               cluster.Services.KubeAPI.ExtraArgs,
 			"extra_binds":              cluster.Services.KubeAPI.ExtraBinds,
 			"extra_env":                cluster.Services.KubeAPI.ExtraEnv,
@@ -1330,7 +1331,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 
 	d.Set("services_kube_controller", []interface{}{ // nolint
 		map[string]interface{}{
-			"image":                    cluster.Services.KubeController.Image,
+			//"image":                    cluster.Services.KubeController.Image,
 			"extra_args":               cluster.Services.KubeController.ExtraArgs,
 			"extra_binds":              cluster.Services.KubeController.ExtraBinds,
 			"extra_env":                cluster.Services.KubeController.ExtraEnv,
@@ -1341,7 +1342,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 
 	d.Set("services_scheduler", []interface{}{ // nolint
 		map[string]interface{}{
-			"image":       cluster.Services.Scheduler.Image,
+			//"image":       cluster.Services.Scheduler.Image,
 			"extra_args":  cluster.Services.Scheduler.ExtraArgs,
 			"extra_binds": cluster.Services.Scheduler.ExtraBinds,
 			"extra_env":   cluster.Services.Scheduler.ExtraEnv,
@@ -1350,20 +1351,20 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 
 	d.Set("services_kubelet", []interface{}{ // nolint
 		map[string]interface{}{
-			"image":                 cluster.Services.Kubelet.Image,
-			"extra_args":            cluster.Services.Kubelet.ExtraArgs,
-			"extra_binds":           cluster.Services.Kubelet.ExtraBinds,
-			"extra_env":             cluster.Services.Kubelet.ExtraEnv,
-			"cluster_domain":        cluster.Services.Kubelet.ClusterDomain,
-			"infra_container_image": cluster.Services.Kubelet.InfraContainerImage,
-			"cluster_dns_server":    cluster.Services.Kubelet.ClusterDNSServer,
-			"fail_swap_on":          cluster.Services.Kubelet.FailSwapOn,
+			//"image":                 cluster.Services.Kubelet.Image,
+			"extra_args":     cluster.Services.Kubelet.ExtraArgs,
+			"extra_binds":    cluster.Services.Kubelet.ExtraBinds,
+			"extra_env":      cluster.Services.Kubelet.ExtraEnv,
+			"cluster_domain": cluster.Services.Kubelet.ClusterDomain,
+			//"infra_container_image": cluster.Services.Kubelet.InfraContainerImage,
+			"cluster_dns_server": cluster.Services.Kubelet.ClusterDNSServer,
+			"fail_swap_on":       cluster.Services.Kubelet.FailSwapOn,
 		},
 	})
 
 	d.Set("services_kubeproxy", []interface{}{ // nolint
 		map[string]interface{}{
-			"image":       cluster.Services.Kubeproxy.Image,
+			//"image":       cluster.Services.Kubeproxy.Image,
 			"extra_args":  cluster.Services.Kubeproxy.ExtraArgs,
 			"extra_binds": cluster.Services.Kubeproxy.ExtraBinds,
 			"extra_env":   cluster.Services.Kubeproxy.ExtraEnv,
@@ -1388,36 +1389,6 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 	d.Set("addons", cluster.Addons)                     // nolint
 	d.Set("addons_include", cluster.AddonsInclude)      // nolint
 	d.Set("addon_job_timeout", cluster.AddonJobTimeout) // nolint
-
-	d.Set("system_images", []interface{}{ // nolint
-		map[string]interface{}{
-			"etcd":                        cluster.SystemImages.Etcd,
-			"alpine":                      cluster.SystemImages.Alpine,
-			"nginx_proxy":                 cluster.SystemImages.NginxProxy,
-			"cert_downloader":             cluster.SystemImages.CertDownloader,
-			"kubernetes_services_sidecar": cluster.SystemImages.KubernetesServicesSidecar,
-			"kube_dns":                    cluster.SystemImages.KubeDNS,
-			"dnsmasq":                     cluster.SystemImages.DNSmasq,
-			"kube_dns_sidecar":            cluster.SystemImages.KubeDNSSidecar,
-			"kube_dns_autoscaler":         cluster.SystemImages.KubeDNSAutoscaler,
-			"kubernetes":                  cluster.SystemImages.Kubernetes,
-			"flannel":                     cluster.SystemImages.Flannel,
-			"flannel_cni":                 cluster.SystemImages.FlannelCNI,
-			"calico_node":                 cluster.SystemImages.CalicoNode,
-			"calico_cni":                  cluster.SystemImages.CalicoCNI,
-			"calico_controllers":          cluster.SystemImages.CalicoControllers,
-			"calico_ctl":                  cluster.SystemImages.CalicoCtl,
-			"canal_node":                  cluster.SystemImages.CanalNode,
-			"canal_cni":                   cluster.SystemImages.CanalCNI,
-			"canal_flannel":               cluster.SystemImages.CanalFlannel,
-			"weave_node":                  cluster.SystemImages.WeaveNode,
-			"weave_cni":                   cluster.SystemImages.WeaveCNI,
-			"pod_infra_container":         cluster.SystemImages.PodInfraContainer,
-			"ingress":                     cluster.SystemImages.Ingress,
-			"ingress_backend":             cluster.SystemImages.IngressBackend,
-			"metrics_server":              cluster.SystemImages.MetricsServer,
-		},
-	})
 
 	d.Set("ssh_key_path", cluster.SSHKeyPath)     // nolint
 	d.Set("ssh_agent_auth", cluster.SSHAgentAuth) // nolint

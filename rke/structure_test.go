@@ -143,7 +143,7 @@ func TestParseResourceRKEConfigNode(t *testing.T) {
 					},
 				},
 			},
-			expectErrStr: `"role" must be one of [controlplane/etcd/worker]`,
+			expectErrStr: `expected role to be one of [controlplane etcd worker], got xxx`,
 		},
 		{
 			caseName: "invalid roles",
@@ -155,7 +155,7 @@ func TestParseResourceRKEConfigNode(t *testing.T) {
 					},
 				},
 			},
-			expectErrStr: `"role" must be one of [controlplane/etcd/worker]`,
+			expectErrStr: `expected role to be one of [controlplane etcd worker], got xxx`,
 		},
 		{
 			caseName: "use roles attr",
@@ -324,7 +324,7 @@ func TestParseResourceETCDService(t *testing.T) {
 			resourceData: map[string]interface{}{
 				"services_etcd": []interface{}{
 					map[string]interface{}{
-						"image": "image",
+						//"image": "image",
 						"extra_args": map[string]interface{}{
 							"foo": "foo",
 							"bar": "bar",
@@ -344,7 +344,7 @@ func TestParseResourceETCDService(t *testing.T) {
 			},
 			expectService: &v3.ETCDService{
 				BaseService: v3.BaseService{
-					Image: "image",
+					//Image: "image",
 					ExtraArgs: map[string]string{
 						"foo": "foo",
 						"bar": "bar",
@@ -385,7 +385,7 @@ func TestParseResourceKubeAPIService(t *testing.T) {
 			resourceData: map[string]interface{}{
 				"services_kube_api": []interface{}{
 					map[string]interface{}{
-						"image": "image",
+						//"image": "image",
 						"extra_args": map[string]interface{}{
 							"foo": "foo",
 							"bar": "bar",
@@ -400,7 +400,7 @@ func TestParseResourceKubeAPIService(t *testing.T) {
 			},
 			expectService: &v3.KubeAPIService{
 				BaseService: v3.BaseService{
-					Image: "image",
+					//Image: "image",
 					ExtraArgs: map[string]string{
 						"foo": "foo",
 						"bar": "bar",
@@ -436,7 +436,7 @@ func TestParseResourceKubeControllerService(t *testing.T) {
 			resourceData: map[string]interface{}{
 				"services_kube_controller": []interface{}{
 					map[string]interface{}{
-						"image": "image",
+						//"image": "image",
 						"extra_args": map[string]interface{}{
 							"foo": "foo",
 							"bar": "bar",
@@ -450,7 +450,7 @@ func TestParseResourceKubeControllerService(t *testing.T) {
 			},
 			expectService: &v3.KubeControllerService{
 				BaseService: v3.BaseService{
-					Image: "image",
+					//Image: "image",
 					ExtraArgs: map[string]string{
 						"foo": "foo",
 						"bar": "bar",
@@ -485,7 +485,7 @@ func TestParseResourceSchedulerService(t *testing.T) {
 			resourceData: map[string]interface{}{
 				"services_scheduler": []interface{}{
 					map[string]interface{}{
-						"image": "image",
+						//"image": "image",
 						"extra_args": map[string]interface{}{
 							"foo": "foo",
 							"bar": "bar",
@@ -497,7 +497,7 @@ func TestParseResourceSchedulerService(t *testing.T) {
 			},
 			expectService: &v3.SchedulerService{
 				BaseService: v3.BaseService{
-					Image: "image",
+					Image: "",
 					ExtraArgs: map[string]string{
 						"foo": "foo",
 						"bar": "bar",
@@ -530,23 +530,23 @@ func TestParseResourceKubeletService(t *testing.T) {
 			resourceData: map[string]interface{}{
 				"services_kubelet": []interface{}{
 					map[string]interface{}{
-						"image": "image",
+						//"image": "image",
 						"extra_args": map[string]interface{}{
 							"foo": "foo",
 							"bar": "bar",
 						},
-						"extra_binds":           []interface{}{"/etc1", "/etc2"},
-						"extra_env":             []interface{}{"env1=val1", "env2=val2"},
-						"cluster_domain":        "example.com",
-						"infra_container_image": "alpine:latest",
-						"cluster_dns_server":    "192.2.0.1",
-						"fail_swap_on":          true,
+						"extra_binds":    []interface{}{"/etc1", "/etc2"},
+						"extra_env":      []interface{}{"env1=val1", "env2=val2"},
+						"cluster_domain": "example.com",
+						//"infra_container_image": "alpine:latest",
+						"cluster_dns_server": "192.2.0.1",
+						"fail_swap_on":       true,
 					},
 				},
 			},
 			expectService: &v3.KubeletService{
 				BaseService: v3.BaseService{
-					Image: "image",
+					Image: "",
 					ExtraArgs: map[string]string{
 						"foo": "foo",
 						"bar": "bar",
@@ -555,7 +555,7 @@ func TestParseResourceKubeletService(t *testing.T) {
 					ExtraEnv:   []string{"env1=val1", "env2=val2"},
 				},
 				ClusterDomain:       "example.com",
-				InfraContainerImage: "alpine:latest",
+				InfraContainerImage: "",
 				ClusterDNSServer:    "192.2.0.1",
 				FailSwapOn:          true,
 			},
@@ -583,7 +583,7 @@ func TestParseResourceKubeproxyService(t *testing.T) {
 			resourceData: map[string]interface{}{
 				"services_kubeproxy": []interface{}{
 					map[string]interface{}{
-						"image": "image",
+						//"image": "image",
 						"extra_args": map[string]interface{}{
 							"foo": "foo",
 							"bar": "bar",
@@ -595,7 +595,7 @@ func TestParseResourceKubeproxyService(t *testing.T) {
 			},
 			expectService: &v3.KubeproxyService{
 				BaseService: v3.BaseService{
-					Image: "image",
+					Image: "",
 					ExtraArgs: map[string]string{
 						"foo": "foo",
 						"bar": "bar",
@@ -733,85 +733,6 @@ func TestParseResourceAddonJobTimeout(t *testing.T) {
 	v, err := parseResourceAddonJobTimeout(d)
 	assert.NoError(t, err)
 	assert.EqualValues(t, 10, v)
-}
-
-func TestParseResourceSystemImages(t *testing.T) {
-	testcases := []struct {
-		caseName     string
-		resourceData map[string]interface{}
-		expectConfig *v3.RKESystemImages
-	}{
-		{
-			caseName: "all fields",
-			resourceData: map[string]interface{}{
-				"system_images": []interface{}{
-					map[string]interface{}{
-						"etcd":                        "etcd",
-						"alpine":                      "alpine",
-						"nginx_proxy":                 "nginx_proxy",
-						"cert_downloader":             "cert_downloader",
-						"kubernetes_services_sidecar": "kubernetes_services_sidecar",
-						"kube_dns":                    "kube_dns",
-						"dnsmasq":                     "dnsmasq",
-						"kube_dns_sidecar":            "kube_dns_sidecar",
-						"kube_dns_autoscaler":         "kube_dns_autoscaler",
-						"kubernetes":                  "kubernetes",
-						"flannel":                     "flannel",
-						"flannel_cni":                 "flannel_cni",
-						"calico_node":                 "calico_node",
-						"calico_cni":                  "calico_cni",
-						"calico_controllers":          "calico_controllers",
-						"calico_ctl":                  "calico_ctl",
-						"canal_node":                  "canal_node",
-						"canal_cni":                   "canal_cni",
-						"canal_flannel":               "canal_flannel",
-						"weave_node":                  "weave_node",
-						"weave_cni":                   "weave_cni",
-						"pod_infra_container":         "pod_infra_container",
-						"ingress":                     "ingress",
-						"ingress_backend":             "ingress_backend",
-						"metrics_server":              "metrics_server",
-					},
-				},
-			},
-			expectConfig: &v3.RKESystemImages{
-				Etcd:                      "etcd",
-				Alpine:                    "alpine",
-				NginxProxy:                "nginx_proxy",
-				CertDownloader:            "cert_downloader",
-				KubernetesServicesSidecar: "kubernetes_services_sidecar",
-				KubeDNS:                   "kube_dns",
-				DNSmasq:                   "dnsmasq",
-				KubeDNSSidecar:            "kube_dns_sidecar",
-				KubeDNSAutoscaler:         "kube_dns_autoscaler",
-				Kubernetes:                "kubernetes",
-				Flannel:                   "flannel",
-				FlannelCNI:                "flannel_cni",
-				CalicoNode:                "calico_node",
-				CalicoCNI:                 "calico_cni",
-				CalicoControllers:         "calico_controllers",
-				CalicoCtl:                 "calico_ctl",
-				CanalNode:                 "canal_node",
-				CanalCNI:                  "canal_cni",
-				CanalFlannel:              "canal_flannel",
-				WeaveNode:                 "weave_node",
-				WeaveCNI:                  "weave_cni",
-				PodInfraContainer:         "pod_infra_container",
-				Ingress:                   "ingress",
-				IngressBackend:            "ingress_backend",
-				MetricsServer:             "metrics_server",
-			},
-		},
-	}
-
-	for _, testcase := range testcases {
-		t.Run(testcase.caseName, func(t *testing.T) {
-			d := &dummyResourceData{values: testcase.resourceData}
-			config, err := parseResourceSystemImages(d)
-			assert.NoError(t, err)
-			assert.EqualValues(t, testcase.expectConfig, config)
-		})
-	}
 }
 
 func TestParseResourceSSHKeyPath(t *testing.T) {
@@ -1362,7 +1283,7 @@ func TestClusterToState(t *testing.T) {
 					Services: v3.RKEConfigServices{
 						Etcd: v3.ETCDService{
 							BaseService: v3.BaseService{
-								Image: "etcd:latest",
+								Image: "",
 								ExtraArgs: map[string]string{
 									"foo": "bar",
 									"bar": "foo",
@@ -1384,7 +1305,7 @@ func TestClusterToState(t *testing.T) {
 						},
 						KubeAPI: v3.KubeAPIService{
 							BaseService: v3.BaseService{
-								Image: "kube_api:latest",
+								Image: "",
 								ExtraArgs: map[string]string{
 									"foo": "bar",
 									"bar": "foo",
@@ -1398,7 +1319,7 @@ func TestClusterToState(t *testing.T) {
 						},
 						KubeController: v3.KubeControllerService{
 							BaseService: v3.BaseService{
-								Image: "kube_controller:latest",
+								Image: "",
 								ExtraArgs: map[string]string{
 									"foo": "bar",
 									"bar": "foo",
@@ -1411,7 +1332,7 @@ func TestClusterToState(t *testing.T) {
 						},
 						Scheduler: v3.SchedulerService{
 							BaseService: v3.BaseService{
-								Image: "scheduler:latest",
+								Image: "",
 								ExtraArgs: map[string]string{
 									"foo": "bar",
 									"bar": "foo",
@@ -1422,7 +1343,7 @@ func TestClusterToState(t *testing.T) {
 						},
 						Kubelet: v3.KubeletService{
 							BaseService: v3.BaseService{
-								Image: "kubelet:latest",
+								Image: "",
 								ExtraArgs: map[string]string{
 									"foo": "bar",
 									"bar": "foo",
@@ -1431,13 +1352,13 @@ func TestClusterToState(t *testing.T) {
 								ExtraEnv:   []string{"env1=val1", "env2=val2"},
 							},
 							ClusterDomain:       "example.com",
-							InfraContainerImage: "alpine:latest",
+							InfraContainerImage: "",
 							ClusterDNSServer:    "192.2.0.1",
 							FailSwapOn:          true,
 						},
 						Kubeproxy: v3.KubeproxyService{
 							BaseService: v3.BaseService{
-								Image: "kubeproxy:latest",
+								Image: "",
 								ExtraArgs: map[string]string{
 									"foo": "bar",
 									"bar": "foo",
@@ -1468,35 +1389,8 @@ func TestClusterToState(t *testing.T) {
 						"https://example.com/addon2.yaml",
 					},
 					AddonJobTimeout: 10,
-					SystemImages: v3.RKESystemImages{
-						Etcd:                      "etcd",
-						Alpine:                    "alpine",
-						NginxProxy:                "nginx_proxy",
-						CertDownloader:            "cert_downloader",
-						KubernetesServicesSidecar: "kubernetes_services_sidecar",
-						KubeDNS:                   "kube_dns",
-						DNSmasq:                   "dnsmasq",
-						KubeDNSSidecar:            "kube_dns_sidecar",
-						KubeDNSAutoscaler:         "kube_dns_autoscaler",
-						Kubernetes:                "kubernetes",
-						Flannel:                   "flannel",
-						FlannelCNI:                "flannel_cni",
-						CalicoNode:                "calico_node",
-						CalicoCNI:                 "calico_cni",
-						CalicoControllers:         "calico_controllers",
-						CalicoCtl:                 "calico_ctl",
-						CanalNode:                 "canal_node",
-						CanalCNI:                  "canal_cni",
-						CanalFlannel:              "canal_flannel",
-						WeaveNode:                 "weave_node",
-						WeaveCNI:                  "weave_cni",
-						PodInfraContainer:         "pod_infra_container",
-						Ingress:                   "ingress",
-						IngressBackend:            "ingress_backend",
-						MetricsServer:             "metrics_server",
-					},
-					SSHKeyPath:   "ssh_key_path",
-					SSHAgentAuth: true,
+					SSHKeyPath:      "ssh_key_path",
+					SSHAgentAuth:    true,
 					BastionHost: v3.BastionHost{
 						Address:      "192.2.0.1",
 						Port:         "22",
@@ -1721,7 +1615,7 @@ func TestClusterToState(t *testing.T) {
 			state: map[string]interface{}{
 				"services_etcd": []interface{}{
 					map[string]interface{}{
-						"image": "etcd:latest",
+						//"image": "etcd:latest",
 						"extra_args": map[string]string{
 							"foo": "bar",
 							"bar": "foo",
@@ -1743,7 +1637,7 @@ func TestClusterToState(t *testing.T) {
 				},
 				"services_kube_api": []interface{}{
 					map[string]interface{}{
-						"image": "kube_api:latest",
+						//"image": "kube_api:latest",
 						"extra_args": map[string]string{
 							"foo": "bar",
 							"bar": "foo",
@@ -1757,7 +1651,7 @@ func TestClusterToState(t *testing.T) {
 				},
 				"services_kube_controller": []interface{}{
 					map[string]interface{}{
-						"image": "kube_controller:latest",
+						//"image": "kube_controller:latest",
 						"extra_args": map[string]string{
 							"foo": "bar",
 							"bar": "foo",
@@ -1770,7 +1664,7 @@ func TestClusterToState(t *testing.T) {
 				},
 				"services_scheduler": []interface{}{
 					map[string]interface{}{
-						"image": "scheduler:latest",
+						//"image": "scheduler:latest",
 						"extra_args": map[string]string{
 							"foo": "bar",
 							"bar": "foo",
@@ -1781,22 +1675,22 @@ func TestClusterToState(t *testing.T) {
 				},
 				"services_kubelet": []interface{}{
 					map[string]interface{}{
-						"image": "kubelet:latest",
+						//"image": "kubelet:latest",
 						"extra_args": map[string]string{
 							"foo": "bar",
 							"bar": "foo",
 						},
-						"extra_binds":           []string{"/bind1", "/bind2"},
-						"extra_env":             []string{"env1=val1", "env2=val2"},
-						"cluster_domain":        "example.com",
-						"infra_container_image": "alpine:latest",
-						"cluster_dns_server":    "192.2.0.1",
-						"fail_swap_on":          true,
+						"extra_binds":    []string{"/bind1", "/bind2"},
+						"extra_env":      []string{"env1=val1", "env2=val2"},
+						"cluster_domain": "example.com",
+						//"infra_container_image": "alpine:latest",
+						"cluster_dns_server": "192.2.0.1",
+						"fail_swap_on":       true,
 					},
 				},
 				"services_kubeproxy": []interface{}{
 					map[string]interface{}{
-						"image": "kubeproxy:latest",
+						//"image": "kubeproxy:latest",
 						"extra_args": map[string]string{
 							"foo": "bar",
 							"bar": "foo",
@@ -1830,37 +1724,8 @@ func TestClusterToState(t *testing.T) {
 					"https://example.com/addon2.yaml",
 				},
 				"addon_job_timeout": 10,
-				"system_images": []interface{}{
-					map[string]interface{}{
-						"etcd":                        "etcd",
-						"alpine":                      "alpine",
-						"nginx_proxy":                 "nginx_proxy",
-						"cert_downloader":             "cert_downloader",
-						"kubernetes_services_sidecar": "kubernetes_services_sidecar",
-						"kube_dns":                    "kube_dns",
-						"dnsmasq":                     "dnsmasq",
-						"kube_dns_sidecar":            "kube_dns_sidecar",
-						"kube_dns_autoscaler":         "kube_dns_autoscaler",
-						"kubernetes":                  "kubernetes",
-						"flannel":                     "flannel",
-						"flannel_cni":                 "flannel_cni",
-						"calico_node":                 "calico_node",
-						"calico_cni":                  "calico_cni",
-						"calico_controllers":          "calico_controllers",
-						"calico_ctl":                  "calico_ctl",
-						"canal_node":                  "canal_node",
-						"canal_cni":                   "canal_cni",
-						"canal_flannel":               "canal_flannel",
-						"weave_node":                  "weave_node",
-						"weave_cni":                   "weave_cni",
-						"pod_infra_container":         "pod_infra_container",
-						"ingress":                     "ingress",
-						"ingress_backend":             "ingress_backend",
-						"metrics_server":              "metrics_server",
-					},
-				},
-				"ssh_key_path":   "ssh_key_path",
-				"ssh_agent_auth": true,
+				"ssh_key_path":      "ssh_key_path",
+				"ssh_agent_auth":    true,
 				"bastion_host": []interface{}{
 					map[string]interface{}{
 						"address":        "192.2.0.1",

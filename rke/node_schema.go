@@ -1,6 +1,9 @@
 package rke
 
-import "github.com/hashicorp/terraform/helper/schema"
+import (
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
+)
 
 func nodeSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
@@ -17,7 +20,7 @@ func nodeSchema() map[string]*schema.Schema {
 		"port": {
 			Type:         schema.TypeInt,
 			Optional:     true,
-			ValidateFunc: validateIntegerInRange(1, 65535),
+			ValidateFunc: validation.IntBetween(1, 65535),
 			Description:  "Port used for SSH communication",
 		},
 		"internal_address": {
