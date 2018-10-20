@@ -7,20 +7,20 @@ PROTOCOL_VERSION = $(shell go run tools/plugin-protocol-version/main.go)
 BUILD_LDFLAGS = "-s -w \
 	  -X github.com/yamamoto-febc/terraform-provider-rke/version.Revision=`git rev-parse --short HEAD` \
 	  -X github.com/yamamoto-febc/terraform-provider-rke/version.Version=$(CURRENT_VERSION)"
+export GO111MODULE=on
 
-default: lint test build
+default: test build
 
 .PHONY: tools
 tools:
-	go get -u github.com/golang/dep/cmd/dep
 	go get -u github.com/motemen/gobump/cmd/gobump
-	go get -v github.com/alecthomas/gometalinter
+	curl https://git.io/vp6lP | sh
 	gometalinter --install
 
 clean:
 	rm -Rf $(CURDIR)/bin/*
 
-build: clean vet
+build: clean
 	OS="`go env GOOS`" ARCH="`go env GOARCH`" ARCHIVE= BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) PROTOCOL_VERSION=$(PROTOCOL_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
 
 build-x: build-darwin build-windows build-linux shasum
@@ -69,5 +69,4 @@ fmt:
 docker-build: clean
 	sh -c "'$(CURDIR)/scripts/build_on_docker.sh' 'build-x'"
 
-
-.PHONY: default test vet testacc fmt fmtcheck
+.PHONY: default test testacc fmt fmtcheck
