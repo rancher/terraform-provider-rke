@@ -12,6 +12,7 @@ default: test build
 .PHONY: tools
 tools:
 	go get -u github.com/motemen/gobump/cmd/gobump
+	go get -u golang.org/x/tools/cmd/goimports
 	curl https://git.io/vp6lP | sh
 	gometalinter --install
 
@@ -82,3 +83,19 @@ docker-build: clean
 	sh -c "'$(CURDIR)/scripts/build_on_docker.sh' 'build-x'"
 
 .PHONY: default test testacc fmt fmtcheck
+
+.PHONY: bump-patch bump-minor bump-major version
+bump-patch:
+	gobump patch -w
+
+bump-minor:
+	gobump minor -w
+
+bump-major:
+	gobump major -w
+
+version:
+	gobump show
+
+git-tag:
+	git tag v`gobump show -r`
