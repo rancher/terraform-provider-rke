@@ -1,13 +1,15 @@
 package rke
 
-import "github.com/hashicorp/terraform/helper/schema"
+import (
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
+)
 
 func nodeSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"node_name": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "Name of the host provisioned via docker machine",
 		},
 		"address": {
@@ -18,14 +20,12 @@ func nodeSchema() map[string]*schema.Schema {
 		"port": {
 			Type:         schema.TypeInt,
 			Optional:     true,
-			Computed:     true,
-			ValidateFunc: validateIntegerInRange(1, 65535),
+			ValidateFunc: validation.IntBetween(1, 65535),
 			Description:  "Port used for SSH communication",
 		},
 		"internal_address": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "Internal address that will be used for components communication",
 		},
 		"role": {
@@ -47,44 +47,37 @@ func nodeSchema() map[string]*schema.Schema {
 		"hostname_override": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "HostnameOverride",
 		},
 		"user": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "SSH user that will be used by RKE",
 		},
 		"docker_socket": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "Docker socket on the node that will be used in tunneling",
 		},
 		"ssh_agent_auth": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Computed:    true,
 			Description: "SSH Agent Auth enable",
 		},
 		"ssh_key": {
 			Type:        schema.TypeString,
 			Sensitive:   true,
 			Optional:    true,
-			Computed:    true,
 			Description: "SSH Private Key",
 		},
 		"ssh_key_path": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "SSH Private Key",
 		},
 		"labels": {
 			Type:        schema.TypeMap,
 			Optional:    true,
-			Computed:    true,
 			Description: "Node Labels",
 		},
 	}

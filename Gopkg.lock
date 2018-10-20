@@ -346,6 +346,8 @@
     "helper/logging",
     "helper/resource",
     "helper/schema",
+    "helper/structure",
+    "helper/validation",
     "httpclient",
     "moduledeps",
     "plugin",
@@ -360,8 +362,8 @@
     "tfdiags",
     "version"
   ]
-  revision = "41e50bd32a8825a84535e353c3674af8ce799161"
-  version = "v0.11.7"
+  revision = "6dfc4d748de9cda23835bc5704307ed45e839622"
+  version = "v0.11.8"
 
 [[projects]]
   branch = "master"
@@ -891,6 +893,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a125c7859bc833a573d2aefaf74b51a18798619c6c160c5f445111e76bd8c422"
+  inputs-digest = "d44b6af73b7d3de461e48cf88bdd9db8dc61a1c624b96826f73bcfbd13163aba"
   solver-name = "gps-cdcl"
   solver-version = 1
