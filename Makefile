@@ -7,6 +7,8 @@ PROTOCOL_VERSION = $(shell go run tools/plugin-protocol-version/main.go)
 BUILD_LDFLAGS = "-s -w \
 	  -X github.com/yamamoto-febc/terraform-provider-rke/version.Revision=`git rev-parse --short HEAD` \
 	  -X github.com/yamamoto-febc/terraform-provider-rke/version.Version=$(CURRENT_VERSION)"
+export GO111MODULE=on
+
 
 default: lint test build
 
