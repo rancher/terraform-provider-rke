@@ -1,8 +1,5 @@
 language: go
 go: "1.11"
 
-install:
-  - make tools
-
 script:
-  - make lint test build-x
+  - make test
