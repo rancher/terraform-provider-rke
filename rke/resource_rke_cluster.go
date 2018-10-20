@@ -684,6 +684,11 @@ func resourceRKECluster() *schema.Resource {
 							Sensitive:   true,
 							Description: "Password for registry access",
 						},
+						"is_default": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Default registry",
+						},
 					},
 				},
 			},
@@ -1561,7 +1566,7 @@ func realClusterUp( // nolint: gocyclo
 		return APIURL, caCrt, clientCert, clientKey, err
 	}
 
-	err = kubeCluster.SyncLabelsAndTaints(ctx)
+	err = kubeCluster.SyncLabelsAndTaints(ctx, currentCluster)
 	if err != nil {
 		return APIURL, caCrt, clientCert, clientKey, err
 	}
