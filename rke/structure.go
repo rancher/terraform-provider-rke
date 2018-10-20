@@ -877,6 +877,9 @@ func parseResourcePrivateRegistries(d resourceData) ([]v3.PrivateRegistry, error
 				if v, ok := rawMap["password"]; ok {
 					config.Password = v.(string)
 				}
+				if v, ok := rawMap["is_default"]; ok {
+					config.IsDefault = v.(bool)
+				}
 				res = append(res, config)
 			}
 			return res, nil
@@ -1433,6 +1436,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 		r["url"] = registry.URL
 		r["user"] = registry.User
 		r["password"] = registry.Password
+		r["is_default"] = registry.IsDefault
 		registries = append(registries, r)
 	}
 	d.Set("private_registries", registries) // nolint
