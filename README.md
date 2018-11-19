@@ -99,6 +99,7 @@ resource rke_cluster "cluster" {
 
 - [AWS(EC2)](examples/aws_ec2)
 - [DigitalOcean](examples/digitalocean)
+- [OpenStack](https://github.com/mcapuccini/terraform-openstack-rke)
 
 #### With Kubernetes provider 
 
