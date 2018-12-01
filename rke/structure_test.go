@@ -314,6 +314,9 @@ func TestParseResourceRKEConfigNodesConf(t *testing.T) {
 }
 
 func TestParseResourceETCDService(t *testing.T) {
+
+	boolValue := true
+
 	testcases := []struct {
 		caseName      string
 		resourceData  map[string]interface{}
@@ -336,7 +339,7 @@ func TestParseResourceETCDService(t *testing.T) {
 						"cert":          "cert",
 						"key":           "key",
 						"path":          "path",
-						"snapshot":      true,
+						"snapshot":      boolValue,
 						"retention":     "retention",
 						"creation":      "creation",
 					},
@@ -357,7 +360,7 @@ func TestParseResourceETCDService(t *testing.T) {
 				Cert:         "cert",
 				Key:          "key",
 				Path:         "path",
-				Snapshot:     true,
+				Snapshot:     &boolValue,
 				Retention:    "retention",
 				Creation:     "creation",
 			},
@@ -1272,7 +1275,7 @@ func TestParseResourcePrefixPath(t *testing.T) {
 }
 
 func TestClusterToState(t *testing.T) {
-
+	boolValue := true
 	testcases := []struct {
 		caseName string
 		cluster  *cluster.Cluster
@@ -1301,7 +1304,7 @@ func TestClusterToState(t *testing.T) {
 							Cert:      "cert",
 							Key:       "key",
 							Path:      "path",
-							Snapshot:  true,
+							Snapshot:  &boolValue,
 							Retention: "retention",
 							Creation:  "creation",
 						},
@@ -1633,7 +1636,7 @@ func TestClusterToState(t *testing.T) {
 						"cert":      "cert",
 						"key":       "key",
 						"path":      "path",
-						"snapshot":  true,
+						"snapshot":  boolValue,
 						"retention": "retention",
 						"creation":  "creation",
 					},

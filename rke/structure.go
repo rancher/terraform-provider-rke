@@ -446,6 +446,8 @@ func parseResourceETCDService(d resourceData) (*v3.ETCDService, error) {
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
 			etcd := &v3.ETCDService{}
+			boolValue := false
+			etcd.Snapshot = &boolValue
 			rawMap := rawService.(map[string]interface{})
 
 			applyMapToObj(&mapObjMapping{
@@ -460,7 +462,7 @@ func parseResourceETCDService(d resourceData) (*v3.ETCDService, error) {
 					"creation":  &etcd.Creation,
 				},
 				boolMapping: map[string]*bool{
-					"snapshot": &etcd.Snapshot,
+					"snapshot": etcd.Snapshot,
 				},
 				mapStrMapping: map[string]*map[string]string{
 					"extra_args": &etcd.ExtraArgs,
@@ -1303,6 +1305,10 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 	}
 
 	// services
+	etcdSnapshot := false
+	if cluster.Services.Etcd.Snapshot != nil {
+		etcdSnapshot = *cluster.Services.Etcd.Snapshot
+	}
 	d.Set("services_etcd", []interface{}{ // nolint
 		map[string]interface{}{
 			//"image":         cluster.Services.Etcd.Image,
@@ -1314,7 +1320,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"cert":          cluster.Services.Etcd.Cert,
 			"key":           cluster.Services.Etcd.Key,
 			"path":          cluster.Services.Etcd.Path,
-			"snapshot":      cluster.Services.Etcd.Snapshot,
+			"snapshot":      etcdSnapshot,
 			"retention":     cluster.Services.Etcd.Retention,
 			"creation":      cluster.Services.Etcd.Creation,
 		},
