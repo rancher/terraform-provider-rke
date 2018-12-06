@@ -575,6 +575,7 @@ func resourceRKECluster() *schema.Resource {
 							Optional:     true,
 							ValidateFunc: validation.IntBetween(1, 65535),
 							Description:  "SSH Port of Bastion Host",
+							Computed:     true,
 						},
 						"user": {
 							Type:        schema.TypeString,
@@ -596,6 +597,7 @@ func resourceRKECluster() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "SSH Private Key",
+							Computed:    true,
 						},
 					},
 				},
@@ -611,6 +613,7 @@ func resourceRKECluster() *schema.Resource {
 						"provider": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							Description: "Monitoring server provider",
 						},
 						"options": {
@@ -703,6 +706,7 @@ func resourceRKECluster() *schema.Resource {
 						"provider": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true,
 							Description: "Ingress controller type used by kubernetes",
 						},
 						"options": {
