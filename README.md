@@ -147,7 +147,7 @@ You can view full example of tffile, [here](examples/full/example.tf).
 
 ## License
 
- `terraform-provider-rke` Copyright (C) 2018 Kazumichi Yamamoto.
+ `terraform-provider-rke` Copyright (C) 2018-2019 Kazumichi Yamamoto.
 
   This project is published under [Apache 2.0 License](LICENSE.txt).
   
