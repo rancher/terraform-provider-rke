@@ -57,8 +57,8 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/posener/complete v1.1.1 // indirect
-	github.com/rancher/rke v0.1.13-rc1
-	github.com/rancher/types v0.0.0-20181204163128-69a7ac7dcfde
+	github.com/rancher/rke v0.1.15
+	github.com/rancher/types v0.0.0-20190103014026-1e7d94553cfa
 	github.com/sirupsen/logrus v1.0.6
 	github.com/spf13/pflag v1.0.2 // indirect
 	github.com/stretchr/testify v1.2.2
