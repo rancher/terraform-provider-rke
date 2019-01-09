@@ -445,6 +445,9 @@ func parseResourceETCDService(d resourceData) (*v3.ETCDService, error) {
 	if rawList, ok := d.GetOk("services_etcd"); ok {
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
+			if rawService == nil {
+				return nil, nil
+			}
 			etcd := &v3.ETCDService{}
 			boolValue := false
 			etcd.Snapshot = &boolValue
@@ -485,6 +488,9 @@ func parseResourceKubeAPIService(d resourceData) (*v3.KubeAPIService, error) {
 
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
+			if rawService == nil {
+				return nil, nil
+			}
 			kubeAPI := &v3.KubeAPIService{}
 			rawMap := rawService.(map[string]interface{})
 
@@ -517,6 +523,9 @@ func parseResourceKubeControllerService(d resourceData) (*v3.KubeControllerServi
 	if rawList, ok := d.GetOk("services_kube_controller"); ok {
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
+			if rawService == nil {
+				return nil, nil
+			}
 			kubeController := &v3.KubeControllerService{}
 			rawMap := rawService.(map[string]interface{})
 
@@ -546,6 +555,9 @@ func parseResourceSchedulerService(d resourceData) (*v3.SchedulerService, error)
 	if rawList, ok := d.GetOk("services_scheduler"); ok {
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
+			if rawService == nil {
+				return nil, nil
+			}
 			scheduler := &v3.SchedulerService{}
 			rawMap := rawService.(map[string]interface{})
 
@@ -573,6 +585,9 @@ func parseResourceKubeletService(d resourceData) (*v3.KubeletService, error) {
 	if rawList, ok := d.GetOk("services_kubelet"); ok {
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
+			if rawService == nil {
+				return nil, nil
+			}
 			kubelet := &v3.KubeletService{}
 			rawMap := rawService.(map[string]interface{})
 
@@ -606,6 +621,9 @@ func parseResourceKubeproxyService(d resourceData) (*v3.KubeproxyService, error)
 	if rawList, ok := d.GetOk("services_kubeproxy"); ok {
 		if rawServices, ok := rawList.([]interface{}); ok && len(rawServices) > 0 {
 			rawService := rawServices[0]
+			if rawService == nil {
+				return nil, nil
+			}
 			kubeproxy := &v3.KubeproxyService{}
 			rawMap := rawService.(map[string]interface{})
 
@@ -633,6 +651,9 @@ func parseResourceNetwork(d resourceData) (*v3.NetworkConfig, error) {
 	if rawList, ok := d.GetOk("network"); ok {
 		if rawNetworks, ok := rawList.([]interface{}); ok && len(rawNetworks) > 0 {
 			rawNetwork := rawNetworks[0]
+			if rawNetwork == nil {
+				return nil, nil
+			}
 			network := &v3.NetworkConfig{}
 			rawMap := rawNetwork.(map[string]interface{})
 
@@ -656,6 +677,9 @@ func parseResourceAuthentication(d resourceData) (*v3.AuthnConfig, error) {
 	if rawList, ok := d.GetOk("authentication"); ok {
 		if rawAuthns, ok := rawList.([]interface{}); ok && len(rawAuthns) > 0 {
 			rawAuthn := rawAuthns[0]
+			if rawAuthn == nil {
+				return nil, nil
+			}
 			config := &v3.AuthnConfig{}
 			rawMap := rawAuthn.(map[string]interface{})
 
@@ -689,6 +713,9 @@ func parseResourceAddonsInclude(d resourceData) ([]string, error) {
 	if v, ok := d.GetOk("addons_include"); ok {
 		values := []string{}
 		for _, e := range v.([]interface{}) {
+			if e == nil {
+				continue
+			}
 			values = append(values, e.(string))
 		}
 		return values, nil
@@ -707,6 +734,9 @@ func parseResourceSystemImages(d resourceData) (*v3.RKESystemImages, error) {
 	if rawList, ok := d.GetOk("system_images"); ok {
 		if rawImages, ok := rawList.([]interface{}); ok && len(rawImages) > 0 {
 			rawImage := rawImages[0]
+			if rawImage == nil {
+				return nil, nil
+			}
 			config := &v3.RKESystemImages{}
 			rawMap := rawImage.(map[string]interface{})
 
@@ -765,6 +795,9 @@ func parseResourceBastionHost(d resourceData) (*v3.BastionHost, error) {
 	if rawList, ok := d.GetOk("bastion_host"); ok {
 		if rawHosts, ok := rawList.([]interface{}); ok && len(rawHosts) > 0 {
 			rawHost := rawHosts[0]
+			if rawHost == nil {
+				return nil, nil
+			}
 			config := &v3.BastionHost{}
 
 			rawMap := rawHost.(map[string]interface{})
@@ -799,6 +832,9 @@ func parseResourceMonitoring(d resourceData) (*v3.MonitoringConfig, error) {
 	if rawList, ok := d.GetOk("monitoring"); ok {
 		if rawMonitorings, ok := rawList.([]interface{}); ok && len(rawMonitorings) > 0 {
 			rawMonitoring := rawMonitorings[0]
+			if rawMonitoring == nil {
+				return nil, nil
+			}
 			config := &v3.MonitoringConfig{}
 
 			rawMap := rawMonitoring.(map[string]interface{})
@@ -826,6 +862,9 @@ func parseResourceAuthorization(d resourceData) (*v3.AuthzConfig, error) {
 	if rawList, ok := d.GetOk("authorization"); ok {
 		if rawAuthzs, ok := rawList.([]interface{}); ok && len(rawAuthzs) > 0 {
 			rawAuthz := rawAuthzs[0]
+			if rawAuthz == nil {
+				return nil, nil
+			}
 			config := &v3.AuthzConfig{}
 
 			rawMap := rawAuthz.(map[string]interface{})
@@ -866,8 +905,11 @@ func parseResourceVersion(d resourceData) (string, error) {
 func parseResourcePrivateRegistries(d resourceData) ([]v3.PrivateRegistry, error) {
 	if rawList, ok := d.GetOk("private_registries"); ok {
 		if rawRegistries, ok := rawList.([]interface{}); ok && len(rawRegistries) > 0 {
-			res := []v3.PrivateRegistry{}
+			var res []v3.PrivateRegistry
 			for _, rawRegistry := range rawRegistries {
+				if rawRegistry == nil {
+					continue
+				}
 				config := v3.PrivateRegistry{}
 				rawMap := rawRegistry.(map[string]interface{})
 				if v, ok := rawMap["url"]; ok {
@@ -894,6 +936,9 @@ func parseResourceIngress(d resourceData) (*v3.IngressConfig, error) {
 	if rawList, ok := d.GetOk("ingress"); ok {
 		if rawIngresses, ok := rawList.([]interface{}); ok && len(rawIngresses) > 0 {
 			rawIngress := rawIngresses[0]
+			if rawIngress == nil {
+				return nil, nil
+			}
 			config := &v3.IngressConfig{}
 
 			rawMap := rawIngress.(map[string]interface{})
@@ -950,6 +995,9 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 	if rawList, ok := d.GetOk("cloud_provider"); ok {
 		if rawProviders, ok := rawList.([]interface{}); ok && len(rawProviders) > 0 {
 			rawProvider := rawProviders[0]
+			if rawProvider == nil {
+				return nil, nil
+			}
 			config := &v3.CloudProvider{}
 
 			rawProviderMap := rawProvider.(map[string]interface{})
@@ -973,6 +1021,9 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 			if rawList, ok := rawProviderMap["azure_cloud_config"]; ok {
 				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
 					rawConfig := rawCloudConfigs[0]
+					if rawConfig == nil {
+						return nil, nil
+					}
 					c := &v3.AzureCloudProvider{}
 
 					rawMap := rawConfig.(map[string]interface{})
@@ -1012,7 +1063,6 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 							"use_managed_identity_extension": &c.UseManagedIdentityExtension,
 						},
 					})
-
 					config.AzureCloudProvider = c
 				}
 			}
@@ -1020,6 +1070,9 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 			if rawList, ok := rawProviderMap["vsphere_cloud_config"]; ok {
 				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
 					rawConfig := rawCloudConfigs[0]
+					if rawConfig == nil {
+						return nil, nil
+					}
 					c := &v3.VsphereCloudProvider{}
 
 					rawVSphereConfigMap := rawConfig.(map[string]interface{})
@@ -1028,32 +1081,34 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					if rawList, ok := rawVSphereConfigMap["global"]; ok {
 						if rawGlobals, ok := rawList.([]interface{}); ok && len(rawGlobals) > 0 {
 							rawGlobal := rawGlobals[0]
-							rawMap := rawGlobal.(map[string]interface{})
-							global := v3.GlobalVsphereOpts{}
+							if rawGlobal != nil {
+								rawMap := rawGlobal.(map[string]interface{})
+								global := v3.GlobalVsphereOpts{}
 
-							applyMapToObj(&mapObjMapping{
-								source: rawMap,
-								stringMapping: map[string]*string{
-									"user":        &global.User,
-									"password":    &global.Password,
-									"server":      &global.VCenterIP,
-									"port":        &global.VCenterPort,
-									"datacenter":  &global.Datacenter,
-									"datacenters": &global.Datacenters,
-									"datastore":   &global.DefaultDatastore,
-									"working_dir": &global.WorkingDir,
-									"vm_uuid":     &global.VMUUID,
-									"vm_name":     &global.VMName,
-								},
-								intMapping: map[string]*int{
-									"soap_roundtrip_count": &global.RoundTripperCount,
-								},
-								boolMapping: map[string]*bool{
-									"insecure_flag": &global.InsecureFlag,
-								},
-							})
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"user":        &global.User,
+										"password":    &global.Password,
+										"server":      &global.VCenterIP,
+										"port":        &global.VCenterPort,
+										"datacenter":  &global.Datacenter,
+										"datacenters": &global.Datacenters,
+										"datastore":   &global.DefaultDatastore,
+										"working_dir": &global.WorkingDir,
+										"vm_uuid":     &global.VMUUID,
+										"vm_name":     &global.VMName,
+									},
+									intMapping: map[string]*int{
+										"soap_roundtrip_count": &global.RoundTripperCount,
+									},
+									boolMapping: map[string]*bool{
+										"insecure_flag": &global.InsecureFlag,
+									},
+								})
 
-							c.Global = global
+								c.Global = global
+							}
 						}
 					}
 
@@ -1062,6 +1117,9 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 						if rawVCs, ok := rawList.([]interface{}); ok {
 							vcs := map[string]v3.VirtualCenterConfig{}
 							for _, rawVC := range rawVCs {
+								if rawVC == nil {
+									continue
+								}
 								var server string
 								rawMap := rawVC.(map[string]interface{})
 								vc := v3.VirtualCenterConfig{}
@@ -1090,17 +1148,19 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					if rawList, ok := rawVSphereConfigMap["network"]; ok {
 						if rawNetworks, ok := rawList.([]interface{}); ok && len(rawNetworks) > 0 {
 							rawNetwork := rawNetworks[0]
-							rawMap := rawNetwork.(map[string]interface{})
-							network := v3.NetworkVshpereOpts{}
+							if rawNetwork != nil {
+								rawMap := rawNetwork.(map[string]interface{})
+								network := v3.NetworkVshpereOpts{}
 
-							applyMapToObj(&mapObjMapping{
-								source: rawMap,
-								stringMapping: map[string]*string{
-									"public_network": &network.PublicNetwork,
-								},
-							})
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"public_network": &network.PublicNetwork,
+									},
+								})
 
-							c.Network = network
+								c.Network = network
+							}
 						}
 					}
 
@@ -1108,17 +1168,19 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					if rawList, ok := rawVSphereConfigMap["disk"]; ok {
 						if rawDisks, ok := rawList.([]interface{}); ok && len(rawDisks) > 0 {
 							rawDisk := rawDisks[0]
-							rawMap := rawDisk.(map[string]interface{})
-							disk := v3.DiskVsphereOpts{}
+							if rawDisk != nil {
+								rawMap := rawDisk.(map[string]interface{})
+								disk := v3.DiskVsphereOpts{}
 
-							applyMapToObj(&mapObjMapping{
-								source: rawMap,
-								stringMapping: map[string]*string{
-									"scsi_controller_type": &disk.SCSIControllerType,
-								},
-							})
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"scsi_controller_type": &disk.SCSIControllerType,
+									},
+								})
 
-							c.Disk = disk
+								c.Disk = disk
+							}
 						}
 					}
 
@@ -1126,21 +1188,23 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					if rawList, ok := rawVSphereConfigMap["workspace"]; ok {
 						if rawWSs, ok := rawList.([]interface{}); ok && len(rawWSs) > 0 {
 							rawWS := rawWSs[0]
-							rawMap := rawWS.(map[string]interface{})
-							ws := v3.WorkspaceVsphereOpts{}
+							if rawWSs != nil {
+								rawMap := rawWS.(map[string]interface{})
+								ws := v3.WorkspaceVsphereOpts{}
 
-							applyMapToObj(&mapObjMapping{
-								source: rawMap,
-								stringMapping: map[string]*string{
-									"server":            &ws.VCenterIP,
-									"datacenter":        &ws.Datacenter,
-									"folder":            &ws.Folder,
-									"default_datastore": &ws.DefaultDatastore,
-									"resourcepool_path": &ws.ResourcePoolPath,
-								},
-							})
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"server":            &ws.VCenterIP,
+										"datacenter":        &ws.Datacenter,
+										"folder":            &ws.Folder,
+										"default_datastore": &ws.DefaultDatastore,
+										"resourcepool_path": &ws.ResourcePoolPath,
+									},
+								})
 
-							c.Workspace = ws
+								c.Workspace = ws
+							}
 						}
 					}
 
@@ -1151,6 +1215,9 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 			if rawList, ok := rawProviderMap["openstack_cloud_config"]; ok {
 				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
 					rawConfig := rawCloudConfigs[0]
+					if rawConfig == nil {
+						return nil, nil
+					}
 					c := &v3.OpenstackCloudProvider{}
 
 					rawOpenStackConfigMap := rawConfig.(map[string]interface{})
@@ -1159,27 +1226,29 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					if rawList, ok := rawOpenStackConfigMap["global"]; ok {
 						if rawGlobals, ok := rawList.([]interface{}); ok && len(rawGlobals) > 0 {
 							rawGlobal := rawGlobals[0]
-							rawMap := rawGlobal.(map[string]interface{})
-							global := v3.GlobalOpenstackOpts{}
+							if rawGlobal != nil {
+								rawMap := rawGlobal.(map[string]interface{})
+								global := v3.GlobalOpenstackOpts{}
 
-							applyMapToObj(&mapObjMapping{
-								source: rawMap,
-								stringMapping: map[string]*string{
-									"auth_url":    &global.AuthURL,
-									"username":    &global.Username,
-									"user_id":     &global.UserID,
-									"password":    &global.Password,
-									"tenant_id":   &global.TenantID,
-									"tenant_name": &global.TenantName,
-									"trust_id":    &global.TrustID,
-									"domain_id":   &global.DomainID,
-									"domain_name": &global.DomainName,
-									"region":      &global.Region,
-									"ca_file":     &global.CAFile,
-								},
-							})
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"auth_url":    &global.AuthURL,
+										"username":    &global.Username,
+										"user_id":     &global.UserID,
+										"password":    &global.Password,
+										"tenant_id":   &global.TenantID,
+										"tenant_name": &global.TenantName,
+										"trust_id":    &global.TrustID,
+										"domain_id":   &global.DomainID,
+										"domain_name": &global.DomainName,
+										"region":      &global.Region,
+										"ca_file":     &global.CAFile,
+									},
+								})
 
-							c.Global = global
+								c.Global = global
+							}
 						}
 					}
 
@@ -1187,31 +1256,33 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					if rawList, ok := rawOpenStackConfigMap["load_balancer"]; ok {
 						if rawLBs, ok := rawList.([]interface{}); ok && len(rawLBs) > 0 {
 							rawLB := rawLBs[0]
-							rawMap := rawLB.(map[string]interface{})
-							lb := v3.LoadBalancerOpenstackOpts{}
+							if rawLB != nil {
+								rawMap := rawLB.(map[string]interface{})
+								lb := v3.LoadBalancerOpenstackOpts{}
 
-							applyMapToObj(&mapObjMapping{
-								source: rawMap,
-								stringMapping: map[string]*string{
-									"lb_version":          &lb.LBVersion,
-									"subnet_id":           &lb.SubnetID,
-									"floating_network_id": &lb.FloatingNetworkID,
-									"lb_method":           &lb.LBMethod,
-									"lb_provider":         &lb.LBProvider,
-								},
-								boolMapping: map[string]*bool{
-									"use_octavia":            &lb.UseOctavia,
-									"create_monitor":         &lb.CreateMonitor,
-									"manage_security_groups": &lb.ManageSecurityGroups,
-								},
-								intMapping: map[string]*int{
-									"monitor_delay":       &lb.MonitorDelay,
-									"monitor_timeout":     &lb.MonitorTimeout,
-									"monitor_max_retries": &lb.MonitorMaxRetries,
-								},
-							})
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"lb_version":          &lb.LBVersion,
+										"subnet_id":           &lb.SubnetID,
+										"floating_network_id": &lb.FloatingNetworkID,
+										"lb_method":           &lb.LBMethod,
+										"lb_provider":         &lb.LBProvider,
+									},
+									boolMapping: map[string]*bool{
+										"use_octavia":            &lb.UseOctavia,
+										"create_monitor":         &lb.CreateMonitor,
+										"manage_security_groups": &lb.ManageSecurityGroups,
+									},
+									intMapping: map[string]*int{
+										"monitor_delay":       &lb.MonitorDelay,
+										"monitor_timeout":     &lb.MonitorTimeout,
+										"monitor_max_retries": &lb.MonitorMaxRetries,
+									},
+								})
 
-							c.LoadBalancer = lb
+								c.LoadBalancer = lb
+							}
 						}
 					}
 
@@ -1219,21 +1290,23 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					if rawList, ok := rawOpenStackConfigMap["block_storage"]; ok {
 						if rawBSs, ok := rawList.([]interface{}); ok && len(rawBSs) > 0 {
 							rawBS := rawBSs[0]
-							rawMap := rawBS.(map[string]interface{})
-							bs := v3.BlockStorageOpenstackOpts{}
+							if rawBS != nil {
+								rawMap := rawBS.(map[string]interface{})
+								bs := v3.BlockStorageOpenstackOpts{}
 
-							applyMapToObj(&mapObjMapping{
-								source: rawMap,
-								stringMapping: map[string]*string{
-									"bs_version": &bs.BSVersion,
-								},
-								boolMapping: map[string]*bool{
-									"trust_device_path": &bs.TrustDevicePath,
-									"ignore_volume_az":  &bs.IgnoreVolumeAZ,
-								},
-							})
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"bs_version": &bs.BSVersion,
+									},
+									boolMapping: map[string]*bool{
+										"trust_device_path": &bs.TrustDevicePath,
+										"ignore_volume_az":  &bs.IgnoreVolumeAZ,
+									},
+								})
 
-							c.BlockStorage = bs
+								c.BlockStorage = bs
+							}
 						}
 					}
 
@@ -1241,17 +1314,19 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					if rawList, ok := rawOpenStackConfigMap["route"]; ok {
 						if rawRouters, ok := rawList.([]interface{}); ok && len(rawRouters) > 0 {
 							rawRouter := rawRouters[0]
-							rawMap := rawRouter.(map[string]interface{})
-							router := v3.RouteOpenstackOpts{}
+							if rawRouter != nil {
+								rawMap := rawRouter.(map[string]interface{})
+								router := v3.RouteOpenstackOpts{}
 
-							applyMapToObj(&mapObjMapping{
-								source: rawMap,
-								stringMapping: map[string]*string{
-									"router_id": &router.RouterID,
-								},
-							})
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"router_id": &router.RouterID,
+									},
+								})
 
-							c.Route = router
+								c.Route = router
+							}
 						}
 					}
 
@@ -1259,20 +1334,22 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 					if rawList, ok := rawOpenStackConfigMap["metadata"]; ok {
 						if rawMetadataList, ok := rawList.([]interface{}); ok && len(rawMetadataList) > 0 {
 							rawMetadata := rawMetadataList[0]
-							rawMap := rawMetadata.(map[string]interface{})
-							meta := v3.MetadataOpenstackOpts{}
+							if rawMetadata != nil {
+								rawMap := rawMetadata.(map[string]interface{})
+								meta := v3.MetadataOpenstackOpts{}
 
-							applyMapToObj(&mapObjMapping{
-								source: rawMap,
-								stringMapping: map[string]*string{
-									"search_order": &meta.SearchOrder,
-								},
-								intMapping: map[string]*int{
-									"request_timeout": &meta.RequestTimeout,
-								},
-							})
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"search_order": &meta.SearchOrder,
+									},
+									intMapping: map[string]*int{
+										"request_timeout": &meta.RequestTimeout,
+									},
+								})
 
-							c.Metadata = meta
+								c.Metadata = meta
+							}
 						}
 					}
 
