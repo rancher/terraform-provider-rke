@@ -1,3 +1,4 @@
 .env
 bin/
 test/
+go.sum

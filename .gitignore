@@ -2,3 +2,4 @@ bin/
 test/
 /**/.terraform*
 /**/terraform.tfstate*
+go.sum
