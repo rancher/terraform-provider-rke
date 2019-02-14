@@ -30,16 +30,32 @@ func TestProvider_impl(t *testing.T) {
 	var _ terraform.ResourceProvider = Provider()
 }
 
-func testAccPreCheck(t *testing.T) {
-	requiredEnvs := []string{
-		envRKENodeAddr,
-		envRKENodeUser,
-		envRKENodeSSHKey,
+func hasEnvValue(envKey string) bool {
+	if v := os.Getenv(envKey); v == "" {
+		return false
 	}
+	return true
+}
 
-	for _, env := range requiredEnvs {
-		if v := os.Getenv(env); v == "" {
+func testAccPreCheckEnvs(t *testing.T, keys ...string) {
+	for _, env := range keys {
+		if !hasEnvValue(env) {
 			t.Fatal(fmt.Sprintf("%s must be set for acceptance tests", env))
 		}
 	}
+}
+
+func testAccPreCheck(t *testing.T) {
+	testAccPreCheckEnvs(t, envRKENodeAddr, envRKENodeUser, envRKENodeSSHKey)
+}
+
+func testAccPreCheckForMultiNodes(t *testing.T) {
+	var envKeys []string
+	baseKeys := []string{envRKENodeAddr, envRKENodeUser, envRKENodeSSHKey}
+	for i := 0; i < 2; i++ {
+		for _, key := range baseKeys {
+			envKeys = append(envKeys, fmt.Sprintf("%s_%d", key, i))
+		}
+	}
+	testAccPreCheckEnvs(t, envKeys...)
 }
