@@ -4,14 +4,19 @@ require (
 	github.com/Microsoft/go-winio v0.0.0-20180501170546-ab35fc04b636 // indirect
 	github.com/agext/levenshtein v1.2.1 // indirect
 	github.com/apparentlymart/go-cidr v0.0.0-20170616213631-2bd8b58cf427 // indirect
+	github.com/apparentlymart/go-dump v0.0.0-20180507223929-23540a00eaa3 // indirect
 	github.com/apparentlymart/go-textseg v0.0.0-20170531203952-b836f5c4d331 // indirect
 	github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310 // indirect
 	github.com/aws/aws-sdk-go v1.15.9 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/coreos/bbolt v1.3.2 // indirect
 	github.com/coreos/etcd v3.3.9+incompatible // indirect
 	github.com/coreos/go-semver v0.2.0 // indirect
+	github.com/coreos/go-systemd v0.0.0-20190212144455-93d5ec2c7f76 // indirect
+	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/docker/distribution v0.0.0-20171023080744-3800056b8832 // indirect
 	github.com/docker/docker v0.0.0-20171027131009-ecf4125b85e0 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -19,10 +24,15 @@ require (
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-ini/ini v1.38.1 // indirect
+	github.com/go-test/deep v1.0.1 // indirect
 	github.com/gogo/protobuf v1.1.1 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
+	github.com/google/btree v0.0.0-20180813153112-4030bb1f1f0c // indirect
 	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
 	github.com/googleapis/gnostic v0.2.0 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway v1.7.0 // indirect
 	github.com/hashicorp/errwrap v0.0.0-20180715044906-d6c0cd880357 // indirect
 	github.com/hashicorp/go-cleanhttp v0.0.0-20171218145408-d5fe4b57a186 // indirect
 	github.com/hashicorp/go-getter v0.0.0-20180809191950-4bda8fa99001
@@ -40,7 +50,10 @@ require (
 	github.com/hashicorp/terraform v0.11.8
 	github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
+	github.com/jonboulle/clockwork v0.1.0 // indirect
 	github.com/json-iterator/go v1.1.5 // indirect
+	github.com/jtolds/gls v4.2.1+incompatible // indirect
+	github.com/kylelemons/godebug v0.0.0-20170820004349-d65d576e9348 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/mitchellh/cli v0.0.0-20180414170447-c48282d14eba // indirect
@@ -60,12 +73,17 @@ require (
 	github.com/rancher/rke v0.1.15
 	github.com/rancher/types v0.0.0-20190103014026-1e7d94553cfa
 	github.com/sirupsen/logrus v1.0.6
+	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
+	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
+	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/spf13/pflag v1.0.2 // indirect
 	github.com/stretchr/testify v1.2.2
+	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
 	github.com/ugorji/go v1.1.1 // indirect
 	github.com/ulikunitz/xz v0.5.4 // indirect
-	github.com/urfave/cli v1.20.0 // indirect
+	github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2 // indirect
 	github.com/zclconf/go-cty v0.0.0-20180718220526-02bd58e97b57 // indirect
+	go.etcd.io/bbolt v1.3.2 // indirect
 	golang.org/x/crypto v0.0.0-20180808211826-de0752318171 // indirect
 	golang.org/x/net v0.0.0-20180808004115-f9ce57c11b24 // indirect
 	golang.org/x/sys v0.0.0-20180810070207-f0d5e33068cb // indirect
@@ -74,6 +92,8 @@ require (
 	google.golang.org/genproto v0.0.0-20180808183934-383e8b2c3b9e // indirect
 	google.golang.org/grpc v1.14.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gopkg.in/ini.v1 v1.41.0 // indirect
 	gopkg.in/yaml.v2 v2.2.1
+	k8s.io/apimachinery v0.0.0-20190116203031-d49e237a2683
 	k8s.io/client-go v7.0.0+incompatible
 )
