@@ -29,6 +29,17 @@ func resourceRKECluster() *schema.Resource {
 		Read:   resourceRKEClusterRead,
 		Update: resourceRKEClusterUp,
 		Delete: resourceRKEClusterDelete,
+		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
+			if isRKEConfigChanged(d) {
+				computedFields := []string{
+					"rke_cluster_yaml",
+				}
+				for _, key := range computedFields {
+					d.SetNewComputed(key)
+				}
+			}
+			return nil
+		},
 		Schema: map[string]*schema.Schema{
 			"disable_port_check": {
 				Type:     schema.TypeBool,
@@ -1689,6 +1700,12 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 		return nil, parseErr
 	}
 
+	yamlRkeConfig, err := yaml.Marshal(*rkeConfig)
+	if err != nil {
+		return nil, err
+	}
+	d.Set("rke_cluster_yaml", string(yamlRkeConfig)) // nolint
+
 	// create tmp dir for cluster.yml and kube_config_cluster.yml
 	tempDir, tempDirErr := createTempDir()
 	if tempDirErr != nil {
@@ -1764,6 +1781,47 @@ func createTempDir() (string, error) {
 		return "", err
 	}
 	return tempDir, nil
+}
+
+type resourceDiffer interface {
+	HasChange(string) bool
+}
+
+func isRKEConfigChanged(d resourceDiffer) bool {
+	targetKeys := []string{
+		"nodes_conf",
+		"nodes",
+		"services_etcd",
+		"services_kube_api",
+		"services_kube_controller",
+		"services_scheduler",
+		"services_kubelet",
+		"services_kubeproxy",
+		"network",
+		"authentication",
+		"addons",
+		"addons_include",
+		"addon_job_timeout",
+		"system_images",
+		"ssh_key_path",
+		"ssh_agent_auth",
+		"bastion_host",
+		"monitoring",
+		"authorization",
+		"ignore_docker_version",
+		"kubernetes_version",
+		"private_registries",
+		"ingress",
+		"cluster_name",
+		"cloud_provider",
+		"prefix_path",
+	}
+	for _, key := range targetKeys {
+		if d.HasChange(key) {
+			return true
+		}
+	}
+	return false
 }
 
 type nodeUnreachableError struct {

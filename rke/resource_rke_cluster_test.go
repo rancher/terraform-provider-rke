@@ -13,6 +13,8 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/rancher/types/apis/management.cattle.io/v3"
+	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -99,7 +101,7 @@ func TestAccResourceRKECluster_NodeCountUpAndDown(t *testing.T) {
 		}
 	}
 	requireValues := [][]string{nodeIPs, nodeUsers, nodeSSHKeys}
-	for _ ,values := range requireValues {
+	for _, values := range requireValues {
 		if len(values) != 2 {
 			t.Skip("Acceptance tests skipped unless required env set")
 		}
@@ -118,6 +120,7 @@ func TestAccResourceRKECluster_NodeCountUpAndDown(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"rke_cluster.cluster", "nodes.#", "1"),
 					testAccCheckRKENodeExists("rke_cluster.cluster", nodeIPs[0]),
+					testAccCheckRKEClusterYAML("rke_cluster.cluster", 1),
 				),
 			},
 			{
@@ -129,6 +132,7 @@ func TestAccResourceRKECluster_NodeCountUpAndDown(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"rke_cluster.cluster", "nodes.#", "2"),
 					testAccCheckRKENodeExists("rke_cluster.cluster", nodeIPs[0], nodeIPs[1]),
+					testAccCheckRKEClusterYAML("rke_cluster.cluster", 2),
 				),
 			},
 			{
@@ -139,6 +143,7 @@ func TestAccResourceRKECluster_NodeCountUpAndDown(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"rke_cluster.cluster", "nodes.#", "1"),
 					testAccCheckRKENodeExists("rke_cluster.cluster", nodeIPs[0]),
+					testAccCheckRKEClusterYAML("rke_cluster.cluster", 1),
 				),
 			},
 		},
@@ -201,6 +206,33 @@ func testAccCheckRKENodeExists(n string, nodeIPs ...string) resource.TestCheckFu
 			if !found {
 				return fmt.Errorf("node %q not found", ip)
 			}
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckRKEClusterYAML(n string, expectNodeLen int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return errors.New("no ID of rke_cluster is set")
+		}
+
+		v := rs.Primary.Attributes["rke_cluster_yaml"]
+
+		var rkeConfig v3.RancherKubernetesEngineConfig
+		if err := yaml.Unmarshal([]byte(v), &rkeConfig); err != nil {
+			return err
+		}
+
+		if len(rkeConfig.Nodes) != expectNodeLen {
+			return fmt.Errorf("rke_cluster_yaml has unexpected nodes. expect: %d, actual: %d", expectNodeLen, len(rkeConfig.Nodes))
 		}
 
 		return nil
