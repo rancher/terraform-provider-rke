@@ -1481,7 +1481,7 @@ func clusterUp(d *schema.ResourceData) error {
 
 	apiURL, caCrt, clientCert, clientKey, clusterUpErr := realClusterUp(context.Background(),
 		rkeConfig, nil, nil, nil,
-		clusterFilePath, tempDir, false, disablePortCheck)
+		clusterFilePath, "", false, disablePortCheck)
 	if clusterUpErr != nil {
 		return clusterUpErr
 	}
@@ -1511,7 +1511,7 @@ func clusterRemove(d *schema.ResourceData) error {
 	}
 
 	return realClusterRemove(context.Background(),
-		rkeConfig, nil, nil, clusterFilePath, tempDir)
+		rkeConfig, nil, nil, clusterFilePath, "")
 }
 
 func realClusterUp( // nolint: gocyclo
@@ -1723,7 +1723,7 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 
 	ctx := context.Background()
 	kubeCluster, err := cluster.ParseCluster(ctx, rkeConfig, clusterFilePath,
-		tempDir, nil, nil, nil)
+		"", nil, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1737,7 +1737,8 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 }
 
 func readKubeConfig(dir string) (string, error) {
-	localKubeConfigPath := pki.GetLocalKubeConfig(pki.ClusterConfig, dir)
+	configPath := filepath.Join(dir, pki.ClusterConfig)
+	localKubeConfigPath := pki.GetLocalKubeConfig(configPath, "")
 	if _, err := os.Stat(localKubeConfigPath); err == nil {
 		var data []byte
 		if data, err = ioutil.ReadFile(localKubeConfigPath); err != nil {
@@ -1752,7 +1753,8 @@ func writeKubeConfigFile(dir string, d *schema.ResourceData) error {
 	if rawKubeConfig, ok := d.GetOk("kube_config_yaml"); ok {
 		strConf := rawKubeConfig.(string)
 		if strConf != "" {
-			localKubeConfigPath := pki.GetLocalKubeConfig(pki.ClusterConfig, dir)
+			configPath := filepath.Join(dir, pki.ClusterConfig)
+			localKubeConfigPath := pki.GetLocalKubeConfig(configPath, "")
 			if err := ioutil.WriteFile(localKubeConfigPath, []byte(strConf), 0640); err != nil {
 				return err
 			}
