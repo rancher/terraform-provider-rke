@@ -13,6 +13,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/rancher/rke/pki"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
@@ -58,6 +59,7 @@ func TestAccResourceRKECluster(t *testing.T) {
 						"rke_cluster.cluster", "nodes.0.address", nodeIP),
 					resource.TestMatchResourceAttr(
 						"rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
+					testAccCheckTempFilesExists(),
 				),
 			},
 			{
@@ -77,6 +79,7 @@ func TestAccResourceRKECluster(t *testing.T) {
 						"rke_cluster.cluster", "nodes.0.labels.foo", "foo"),
 					resource.TestCheckResourceAttr(
 						"rke_cluster.cluster", "nodes.0.labels.bar", "bar"),
+					testAccCheckTempFilesExists(),
 				),
 			},
 		},
@@ -148,6 +151,21 @@ func TestAccResourceRKECluster_NodeCountUpAndDown(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccCheckTempFilesExists() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		if _, err := os.Stat(pki.ClusterConfig); err == nil {
+			return fmt.Errorf("temporary file %q is still exists", pki.ClusterConfig)
+		}
+
+		kubeClusterYAML := fmt.Sprintf("%s%s", pki.KubeAdminConfigPrefix, pki.ClusterConfig)
+		if _, err := os.Stat(kubeClusterYAML); err == nil {
+			return fmt.Errorf("temporary file %q is still exists", kubeClusterYAML)
+		}
+		return nil
+	}
 }
 
 func testAccCheckRKENodeExists(n string, nodeIPs ...string) resource.TestCheckFunc {
@@ -299,7 +317,8 @@ func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 		}
 	}
 
-	return nil
+	// check tmp files
+	return testAccCheckTempFilesExists()(s)
 }
 
 func testAccCheckRKEConfigBasic(ip, user, sshKey string) string {
