@@ -21,13 +21,15 @@ clean:
 build: clean
 	OS="`go env GOOS`" ARCH="`go env GOARCH`" ARCHIVE= BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) PROTOCOL_VERSION=$(PROTOCOL_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
 
-build-x: build-darwin build-windows build-linux shasum
+build-x: build-darwin build-windows build-linux build-bsd shasum
 
 build-darwin: bin/terraform-provider-rke_$(CURRENT_VERSION)_darwin-386.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_darwin-amd64.zip
 
 build-windows: bin/terraform-provider-rke_$(CURRENT_VERSION)_windows-386.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_windows-amd64.zip
 
-build-linux: bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-386.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-amd64.zip
+build-linux: bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-386.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-amd64.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-arm.zip
+
+build-bsd: bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-386.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-amd64.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-arm.zip
 
 bin/terraform-provider-rke_$(CURRENT_VERSION)_darwin-386.zip:
 	OS="darwin"  ARCH="386"   ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) PROTOCOL_VERSION=$(PROTOCOL_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
@@ -46,6 +48,18 @@ bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-386.zip:
 
 bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-amd64.zip:
 	OS="linux"   ARCH="amd64" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) PROTOCOL_VERSION=$(PROTOCOL_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
+
+bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-arm.zip:
+	OS="linux"   ARCH="arm" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) PROTOCOL_VERSION=$(PROTOCOL_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
+
+bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-386.zip:
+	OS="openbsd" ARCH="386"   ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) PROTOCOL_VERSION=$(PROTOCOL_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
+
+bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-amd64.zip:
+	OS="openbsd" ARCH="amd64" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) PROTOCOL_VERSION=$(PROTOCOL_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
+
+bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-arm.zip:
+	OS="openbsd" ARCH="arm" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) PROTOCOL_VERSION=$(PROTOCOL_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
 
 shasum:
 	(cd bin/; shasum -a 256 * > terraform-provider-rke_$(CURRENT_VERSION)_SHA256SUMS)
