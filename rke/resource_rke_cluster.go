@@ -6,19 +6,16 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/hashicorp/go-getter/helper/url"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/rancher/rke/cluster"
+	"github.com/rancher/rke/cmd"
 	"github.com/rancher/rke/hosts"
-	"github.com/rancher/rke/k8s"
-	"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"gopkg.in/yaml.v2"
-	"k8s.io/client-go/util/cert"
 )
 
 const rkeKubeConfigFileName = "kube_config_cluster.yml"
@@ -32,6 +29,8 @@ func resourceRKECluster() *schema.Resource {
 		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
 			if isRKEConfigChanged(d) {
 				computedFields := []string{
+					"rke_state",
+					"kube_config_yaml",
 					"rke_cluster_yaml",
 				}
 				for _, key := range computedFields {
@@ -145,6 +144,60 @@ func resourceRKECluster() *schema.Resource {
 							Computed:    true,
 							Description: "Etcd snapshot Creation period",
 						},
+						"backup_config": {
+							Type:     schema.TypeList,
+							MaxItems: 1,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"interval_hours": {
+										Type:        schema.TypeInt,
+										Optional:    true,
+										Default:     12,
+										Description: "Backup interval in hours",
+									},
+									"retention": {
+										Type:        schema.TypeInt,
+										Optional:    true,
+										Default:     6,
+										Description: "Number of backups to keep",
+									},
+									"s3_backup_config": {
+										Type:     schema.TypeList,
+										MaxItems: 1,
+										Optional: true,
+										Computed: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"access_key": {
+													Type:      schema.TypeString,
+													Optional:  true,
+													Sensitive: true,
+												},
+												"secret_key": {
+													Type:      schema.TypeString,
+													Optional:  true,
+													Sensitive: true,
+												},
+												"bucket_name": {
+													Type:     schema.TypeString,
+													Optional: true,
+												},
+												"region": {
+													Type:     schema.TypeString,
+													Optional: true,
+												},
+												"endpoint": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: "Endpoint is used if this is not an AWS API",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -197,6 +250,12 @@ func resourceRKECluster() *schema.Resource {
 							Optional:    true,
 							Computed:    true,
 							Description: "Enabled/Disable PodSecurityPolicy",
+						},
+						"always_pull_images": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Computed:    true,
+							Description: "Enable/Disable AlwaysPullImages admissions plugin",
 						},
 					},
 				},
@@ -415,16 +474,32 @@ func resourceRKECluster() *schema.Resource {
 							Description:  "Authentication strategy that will be used in kubernetes cluster",
 							ValidateFunc: validation.StringInSlice([]string{"x509"}, false),
 						},
-						"options": {
-							Type:        schema.TypeMap,
-							Optional:    true,
-							Description: "Authentication options",
-						},
 						"sans": {
 							Type:        schema.TypeList,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Optional:    true,
 							Description: "List of additional hostnames and IPs to include in the api server PKI cert",
+						},
+						"webhook": {
+							Type:        schema.TypeList,
+							MaxItems:    1,
+							Optional:    true,
+							Computed:    true,
+							Description: "Authentication configuration used in the cluster",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"config_file": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "ConfigFile is a multiline string that represent a custom webhook config file",
+									},
+									"cache_timeout": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "CacheTimeout controls how long to cache authentication decisions",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -487,6 +562,14 @@ func resourceRKECluster() *schema.Resource {
 							Optional: true,
 						},
 						"kube_dns_autoscaler": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"coredns": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"coredns_autoscaler": {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
@@ -563,6 +646,12 @@ func resourceRKECluster() *schema.Resource {
 				Computed:    true,
 				Description: "SSH Private Key Path",
 			},
+			"ssh_cert_path": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "SSH Certificate Path",
+			},
 			"ssh_agent_auth": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -610,6 +699,18 @@ func resourceRKECluster() *schema.Resource {
 							Description: "SSH Private Key",
 							Computed:    true,
 						},
+						"ssh_cert": {
+							Type:        schema.TypeString,
+							Sensitive:   true,
+							Optional:    true,
+							Description: "SSH Certificate Key",
+						},
+						"ssh_cert_path": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "SSH Certificate Key",
+							Computed:    true,
+						},
 					},
 				},
 			},
@@ -631,6 +732,82 @@ func resourceRKECluster() *schema.Resource {
 							Type:        schema.TypeMap,
 							Optional:    true,
 							Description: "Metrics server options",
+						},
+					},
+				},
+			},
+			"restore": {
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Computed:    true,
+				Description: "RestoreCluster flag",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"restore": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Monitoring server provider",
+						},
+						"snapshot_name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Monitoring server provider",
+						},
+					},
+				},
+			},
+			"rotate_certificates": {
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Description: "Rotating Certificates Option",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"ca_certificates": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Rotate CA Certificates",
+						},
+						"services": {
+							Type:        schema.TypeList,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Optional:    true,
+							Description: "Services to rotate their certs. valid values are etcd/kubelet/kube-apiserver/kube-proxy/kube-scheduler/kube-controller-manager",
+						},
+					},
+				},
+			},
+			"dns": {
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Computed:    true,
+				Description: "DNS Config",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"provider": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "DNS provider",
+						},
+						"upstream_nameservers": {
+							Type:        schema.TypeList,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Optional:    true,
+							Description: "Upstream nameservers",
+						},
+						"reverse_cidrs": {
+							Type:        schema.TypeList,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Optional:    true,
+							Description: "ReverseCIDRs",
+						},
+						"node_selector": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Description: "NodeSelector key pair",
 						},
 					},
 				},
@@ -1269,6 +1446,10 @@ func resourceRKECluster() *schema.Resource {
 				Sensitive: true,
 				Computed:  true,
 			},
+			"rke_state": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"kube_config_yaml": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -1474,14 +1655,21 @@ func clusterUp(d *schema.ResourceData) error {
 	if err := writeKubeConfigFile(tempDir, d); err != nil {
 		return err
 	}
+	if err := writeRKEStateFile(tempDir, d); err != nil {
+		return err
+	}
 	clusterFilePath := filepath.Join(tempDir, pki.ClusterConfig)
 	if err := writeClusterConfig(rkeConfig, clusterFilePath); err != nil {
 		return err
 	}
 
-	apiURL, caCrt, clientCert, clientKey, clusterUpErr := realClusterUp(context.Background(),
-		rkeConfig, nil, nil, nil,
-		clusterFilePath, "", false, disablePortCheck)
+	// setting up the flags
+	flags := cluster.GetExternalFlags(false, false, disablePortCheck, "", clusterFilePath)
+	if err := cmd.ClusterInit(context.Background(), rkeConfig, hosts.DialersOptions{}, flags); err != nil {
+		return err
+	}
+
+	apiURL, caCrt, clientCert, clientKey, _, clusterUpErr := cmd.ClusterUp(context.Background(), hosts.DialersOptions{}, flags)
 	if clusterUpErr != nil {
 		return clusterUpErr
 	}
@@ -1505,152 +1693,18 @@ func clusterRemove(d *schema.ResourceData) error {
 	if err := writeKubeConfigFile(tempDir, d); err != nil {
 		return err
 	}
+	if err := writeRKEStateFile(tempDir, d); err != nil {
+		return err
+	}
 	clusterFilePath := filepath.Join(tempDir, pki.ClusterConfig)
 	if err := writeClusterConfig(rkeConfig, clusterFilePath); err != nil {
 		return err
 	}
 
-	return realClusterRemove(context.Background(),
-		rkeConfig, nil, nil, clusterFilePath, "")
-}
+	// setting up the flags
+	flags := cluster.GetExternalFlags(false, false, false, "", clusterFilePath)
 
-func realClusterUp( // nolint: gocyclo
-	ctx context.Context,
-	rkeConfig *v3.RancherKubernetesEngineConfig,
-	dockerDialerFactory, localConnDialerFactory hosts.DialerFactory,
-	k8sWrapTransport k8s.WrapTransport,
-	clusterFilePath, configDir string, updateOnly, disablePortCheck bool) (string, string, string, string, error) {
-
-	log.Infof(ctx, "Building Kubernetes cluster")
-	var APIURL, caCrt, clientCert, clientKey string
-	kubeCluster, err := cluster.ParseCluster(ctx, rkeConfig, clusterFilePath, configDir,
-		dockerDialerFactory, localConnDialerFactory, k8sWrapTransport)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	err = kubeCluster.TunnelHosts(ctx, false)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, newNodeUnreachableError(err)
-	}
-
-	currentCluster, err := kubeCluster.GetClusterState(ctx)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-	if !disablePortCheck {
-		if err = kubeCluster.CheckClusterPorts(ctx, currentCluster); err != nil {
-			return APIURL, caCrt, clientCert, clientKey, err
-		}
-	}
-
-	err = cluster.SetUpAuthentication(ctx, kubeCluster, currentCluster)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	err = cluster.ReconcileCluster(ctx, kubeCluster, currentCluster, updateOnly)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	err = kubeCluster.SetUpHosts(ctx)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	if err = kubeCluster.PrePullK8sImages(ctx); err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	err = kubeCluster.DeployControlPlane(ctx)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	// Apply Authz configuration after deploying controlplane
-	err = cluster.ApplyAuthzResources(ctx, kubeCluster.RancherKubernetesEngineConfig, clusterFilePath, configDir, k8sWrapTransport)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	err = kubeCluster.SaveClusterState(ctx, &kubeCluster.RancherKubernetesEngineConfig)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	err = kubeCluster.DeployWorkerPlane(ctx)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	if err = kubeCluster.CleanDeadLogs(ctx); err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	err = kubeCluster.SyncLabelsAndTaints(ctx, currentCluster)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	err = cluster.ConfigureCluster(ctx, kubeCluster.RancherKubernetesEngineConfig, kubeCluster.Certificates, clusterFilePath, configDir, k8sWrapTransport, false)
-	if err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-	if len(kubeCluster.ControlPlaneHosts) > 0 {
-		APIURL = fmt.Sprintf("https://" + kubeCluster.ControlPlaneHosts[0].Address + ":6443")
-		clientCert = string(cert.EncodeCertPEM(kubeCluster.Certificates[pki.KubeAdminCertName].Certificate))
-		clientKey = string(cert.EncodePrivateKeyPEM(kubeCluster.Certificates[pki.KubeAdminCertName].Key))
-	}
-	caCrt = string(cert.EncodeCertPEM(kubeCluster.Certificates[pki.CACertName].Certificate))
-
-	if err := checkAllIncluded(kubeCluster); err != nil {
-		return APIURL, caCrt, clientCert, clientKey, err
-	}
-
-	log.Infof(ctx, "Finished building Kubernetes cluster successfully")
-	return APIURL, caCrt, clientCert, clientKey, nil
-}
-
-func checkAllIncluded(cluster *cluster.Cluster) error {
-	if len(cluster.InactiveHosts) == 0 {
-		return nil
-	}
-
-	var names []string
-	for _, host := range cluster.InactiveHosts {
-		names = append(names, host.Address)
-	}
-
-	return fmt.Errorf("Provisioning incomplete, host(s) [%s] skipped because they could not be contacted", strings.Join(names, ","))
-}
-
-func realClusterRemove(
-	ctx context.Context,
-	rkeConfig *v3.RancherKubernetesEngineConfig,
-	dialerFactory hosts.DialerFactory,
-	k8sWrapTransport k8s.WrapTransport,
-	clusterFilePath, configDir string) error {
-
-	log.Infof(ctx, "Tearing down Kubernetes cluster")
-	kubeCluster, err := cluster.ParseCluster(ctx, rkeConfig, clusterFilePath, configDir, dialerFactory, nil, k8sWrapTransport)
-	if err != nil {
-		return err
-	}
-
-	err = kubeCluster.TunnelHosts(ctx, false)
-	if err != nil {
-		return newNodeUnreachableError(err)
-	}
-
-	log.Infof(ctx, "Starting Cluster removal")
-	err = kubeCluster.ClusterRemove(ctx)
-	if err != nil {
-		return err
-	}
-
-	log.Infof(ctx, "Cluster removed successfully")
-	return nil
+	return cmd.ClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)
 }
 
 func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, clientKey string, configDir string, rkeConfig *v3.RancherKubernetesEngineConfig) error {
@@ -1662,6 +1716,14 @@ func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, client
 	d.Set("ca_crt", caCrt)           // nolint
 	d.Set("client_cert", clientCert) // nolint
 	d.Set("client_key", clientKey)   // nolint
+
+	rkeState, err := readRKEStateFile(configDir)
+	if err != nil {
+		return err
+	}
+	if rkeState != "" {
+		d.Set("rke_state", rkeState)
+	}
 
 	kubeConfig, err := readKubeConfig(configDir)
 	if err != nil {
@@ -1715,25 +1777,39 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 	if err := writeKubeConfigFile(tempDir, d); err != nil {
 		return nil, err
 	}
+	if err := writeRKEStateFile(tempDir, d); err != nil {
+		return nil, err
+	}
 
 	clusterFilePath := filepath.Join(tempDir, pki.ClusterConfig)
 	if err := writeClusterConfig(rkeConfig, clusterFilePath); err != nil {
 		return nil, err
 	}
 
+	// setting up the flags
+	flags := cluster.GetExternalFlags(false, false, d.Get("disable_port_check").(bool), "", clusterFilePath)
+
 	ctx := context.Background()
-	kubeCluster, err := cluster.ParseCluster(ctx, rkeConfig, clusterFilePath,
-		"", nil, nil, nil)
+	clusterState, err := cluster.ReadStateFile(ctx, cluster.GetStateFilePath(flags.ClusterFilePath, flags.ConfigDir))
 	if err != nil {
 		return nil, err
 	}
 
-	err = kubeCluster.TunnelHosts(ctx, false)
+	kubeCluster, err := cluster.InitClusterObject(ctx, clusterState.DesiredState.RancherKubernetesEngineConfig.DeepCopy(), flags)
 	if err != nil {
-		return nil, newNodeUnreachableError(err)
+		return nil, err
+	}
+	err = kubeCluster.SetupDialers(ctx, hosts.DialersOptions{})
+	if err != nil {
+		return nil, err
 	}
 
-	return kubeCluster.GetClusterState(ctx)
+	err = kubeCluster.TunnelHosts(ctx, flags)
+	if err != nil {
+		return nil, err
+	}
+
+	return kubeCluster.GetClusterState(ctx, clusterState)
 }
 
 func readKubeConfig(dir string) (string, error) {
@@ -1747,6 +1823,33 @@ func readKubeConfig(dir string) (string, error) {
 		return string(data), nil
 	}
 	return "", nil
+}
+
+func readRKEStateFile(dir string) (string, error) {
+	configPath := filepath.Join(dir, pki.ClusterConfig)
+	stateFilePath := cluster.GetStateFilePath(configPath, "")
+	if _, err := os.Stat(stateFilePath); err == nil {
+		var data []byte
+		if data, err = ioutil.ReadFile(stateFilePath); err != nil {
+			return "", err
+		}
+		return string(data), nil
+	}
+	return "", nil
+}
+
+func writeRKEStateFile(dir string, d *schema.ResourceData) error {
+	if rawRKEState, ok := d.GetOk("rke_state"); ok {
+		strState := rawRKEState.(string)
+		if strState != "" {
+			configPath := filepath.Join(dir, pki.ClusterConfig)
+			stateFilePath := cluster.GetStateFilePath(configPath, "")
+			if err := ioutil.WriteFile(stateFilePath, []byte(strState), 0640); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func writeKubeConfigFile(dir string, d *schema.ResourceData) error {

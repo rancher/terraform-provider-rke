@@ -36,6 +36,9 @@ var rkeConfigBuilders = []func(rkeConfig *v3.RancherKubernetesEngineConfig, d re
 	setSSHSettingsFromResource,
 	setBastionHostFromResource,
 	setMonitoringFromResource,
+	setRestoreFromResource,
+	setRotateCertificatesFromResource,
+	setDNSFromResource,
 	setAuthorizationFromResource,
 	setMiscConfigFromResource,
 	setCloudProviderFromResource,
@@ -204,6 +207,12 @@ func setSSHSettingsFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d r
 	}
 	rkeConfig.SSHKeyPath = sshKeyPath
 
+	var sshCertPath string
+	if sshCertPath, err = parseResourceSSHCertPath(d); err != nil {
+		return err
+	}
+	rkeConfig.SSHCertPath = sshCertPath
+
 	var sshAgentAuth bool
 	if sshAgentAuth, err = parseResourceSSHAgentAuth(d); err != nil {
 		return err
@@ -233,6 +242,40 @@ func setMonitoringFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d re
 	}
 	if monitoring != nil {
 		rkeConfig.Monitoring = *monitoring
+	}
+	return nil
+}
+
+func setRestoreFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d resourceData) error {
+	var err error
+	var restore *v3.RestoreConfig
+	if restore, err = parseResourceRestore(d); err != nil {
+		return err
+	}
+	if restore != nil {
+		rkeConfig.Restore = *restore
+	}
+	return nil
+}
+
+func setRotateCertificatesFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d resourceData) error {
+	var err error
+	var rc *v3.RotateCertificates
+	if rc, err = parseResourceRotateCertificates(d); err != nil {
+		return err
+	}
+	rkeConfig.RotateCertificates = rc
+	return nil
+}
+
+func setDNSFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d resourceData) error {
+	var err error
+	var dns *v3.DNSConfig
+	if dns, err = parseResourceDNS(d); err != nil {
+		return err
+	}
+	if dns != nil {
+		rkeConfig.DNS = *dns
 	}
 	return nil
 }
@@ -340,6 +383,8 @@ func parseResourceRKEConfigNode(nodeValues map[string]interface{}) (v3.RKEConfig
 			"docker_socket":     &node.DockerSocket,
 			"ssh_key":           &node.SSHKey,
 			"ssh_key_path":      &node.SSHKeyPath,
+			"ssh_cert":          &node.SSHCert,
+			"ssh_cert_path":     &node.SSHCertPath,
 		},
 		boolMapping: map[string]*bool{
 			"ssh_agent_auth": &node.SSHAgentAuth,
@@ -477,6 +522,51 @@ func parseResourceETCDService(d resourceData) (*v3.ETCDService, error) {
 				},
 			})
 
+			if v, ok := rawMap["backup_config"]; ok {
+				if rawList, ok := v.([]interface{}); ok && len(rawList) > 0 {
+					rawConfig := rawList[0]
+					if rawConfig == nil {
+						return etcd, nil
+					}
+					rawMap := rawConfig.(map[string]interface{})
+					etcd.BackupConfig = &v3.BackupConfig{}
+
+					if v, ok := rawMap["interval_hours"]; ok {
+						etcd.BackupConfig.IntervalHours = v.(int)
+					}
+					if v, ok := rawMap["retention"]; ok {
+						etcd.BackupConfig.Retention = v.(int)
+					}
+					if v, ok := rawMap["s3_backup_config"]; ok {
+						if rawList, ok := v.([]interface{}); ok && len(rawList) > 0 {
+							rawConfig := rawList[0]
+							if rawConfig == nil {
+								return etcd, nil
+							}
+							rawMap := rawConfig.(map[string]interface{})
+							etcd.BackupConfig.S3BackupConfig = &v3.S3BackupConfig{}
+							if v, ok := rawMap["access_key"]; ok {
+								etcd.BackupConfig.S3BackupConfig.AccessKey = v.(string)
+							}
+							if v, ok := rawMap["secret_key"]; ok {
+								etcd.BackupConfig.S3BackupConfig.SecretKey = v.(string)
+							}
+							if v, ok := rawMap["bucket_name"]; ok {
+								etcd.BackupConfig.S3BackupConfig.BucketName = v.(string)
+							}
+							if v, ok := rawMap["region"]; ok {
+								etcd.BackupConfig.S3BackupConfig.Region = v.(string)
+							}
+							if v, ok := rawMap["endpoint"]; ok {
+								etcd.BackupConfig.S3BackupConfig.Endpoint = v.(string)
+							}
+						}
+
+					}
+				}
+
+			}
+
 			return etcd, nil
 		}
 	}
@@ -503,6 +593,7 @@ func parseResourceKubeAPIService(d resourceData) (*v3.KubeAPIService, error) {
 				},
 				boolMapping: map[string]*bool{
 					"pod_security_policy": &kubeAPI.PodSecurityPolicy,
+					"always_pull_images":  &kubeAPI.AlwaysPullImages,
 				},
 				mapStrMapping: map[string]*map[string]string{
 					"extra_args": &kubeAPI.ExtraArgs,
@@ -691,10 +782,26 @@ func parseResourceAuthentication(d resourceData) (*v3.AuthnConfig, error) {
 				listStrMapping: map[string]*[]string{
 					"sans": &config.SANs,
 				},
-				mapStrMapping: map[string]*map[string]string{
-					"options": &config.Options,
-				},
 			})
+
+			if rawList, ok := rawMap["webhook"]; ok {
+				if rawConfigs, ok := rawList.([]interface{}); ok && len(rawConfigs) > 0 {
+					rawConfig := rawConfigs[0]
+					if rawConfig == nil {
+						return config, nil
+					}
+					webhook := &v3.AuthWebhookConfig{}
+					rawMap := rawConfig.(map[string]interface{})
+
+					if v, ok := rawMap["config_file"]; ok {
+						webhook.ConfigFile = v.(string)
+					}
+					if v, ok := rawMap["cache_timeout"]; ok {
+						webhook.CacheTimeout = v.(string)
+					}
+					config.Webhook = webhook
+				}
+			}
 
 			return config, nil
 		}
@@ -752,6 +859,8 @@ func parseResourceSystemImages(d resourceData) (*v3.RKESystemImages, error) {
 					"dnsmasq":                     &config.DNSmasq,
 					"kube_dns_sidecar":            &config.KubeDNSSidecar,
 					"kube_dns_autoscaler":         &config.KubeDNSAutoscaler,
+					"coredns":                     &config.CoreDNS,
+					"coredns_autoscaler":          &config.CoreDNSAutoscaler,
 					"kubernetes":                  &config.Kubernetes,
 					"flannel":                     &config.Flannel,
 					"flannel_cni":                 &config.FlannelCNI,
@@ -784,6 +893,13 @@ func parseResourceSSHKeyPath(d resourceData) (string, error) {
 	return "", nil
 }
 
+func parseResourceSSHCertPath(d resourceData) (string, error) {
+	if v, ok := d.GetOk("ssh_cert_path"); ok {
+		return v.(string), nil
+	}
+	return "", nil
+}
+
 func parseResourceSSHAgentAuth(d resourceData) (bool, error) {
 	if v, ok := d.GetOk("ssh_agent_auth"); ok {
 		return v.(bool), nil
@@ -805,10 +921,12 @@ func parseResourceBastionHost(d resourceData) (*v3.BastionHost, error) {
 			applyMapToObj(&mapObjMapping{
 				source: rawMap,
 				stringMapping: map[string]*string{
-					"address":      &config.Address,
-					"user":         &config.User,
-					"ssh_key":      &config.SSHKey,
-					"ssh_key_path": &config.SSHKeyPath,
+					"address":       &config.Address,
+					"user":          &config.User,
+					"ssh_key":       &config.SSHKey,
+					"ssh_key_path":  &config.SSHKeyPath,
+					"ssh_cert":      &config.SSHCert,
+					"ssh_cert_path": &config.SSHCertPath,
 				},
 				boolMapping: map[string]*bool{
 					"ssh_agent_auth": &config.SSHAgentAuth,
@@ -852,6 +970,105 @@ func parseResourceMonitoring(d resourceData) (*v3.MonitoringConfig, error) {
 				}
 				config.Options = options
 			}
+			return config, nil
+		}
+	}
+	return nil, nil
+}
+
+func parseResourceRestore(d resourceData) (*v3.RestoreConfig, error) {
+	if rawList, ok := d.GetOk("restore"); ok {
+		if rawRestores, ok := rawList.([]interface{}); ok && len(rawRestores) > 0 {
+			rawRestore := rawRestores[0]
+			if rawRestore == nil {
+				return nil, nil
+			}
+			config := &v3.RestoreConfig{}
+
+			rawMap := rawRestore.(map[string]interface{})
+			if v, ok := rawMap["restore"]; ok {
+				config.Restore = v.(bool)
+			}
+			if v, ok := rawMap["snapshot_name"]; ok {
+				config.SnapshotName = v.(string)
+			}
+			return config, nil
+		}
+	}
+	return nil, nil
+}
+
+func parseResourceRotateCertificates(d resourceData) (*v3.RotateCertificates, error) {
+	if rawList, ok := d.GetOk("rotate_certificates"); ok {
+		if rawRotates, ok := rawList.([]interface{}); ok && len(rawRotates) > 0 {
+			rawRotate := rawRotates[0]
+			if rawRotate == nil {
+				return nil, nil
+			}
+			config := &v3.RotateCertificates{}
+
+			rawMap := rawRotate.(map[string]interface{})
+			if v, ok := rawMap["ca_certificates"]; ok {
+				config.CACertificates = v.(bool)
+			}
+			if v, ok := rawMap["services"]; ok {
+				services := v.([]interface{})
+
+				var values []string
+				for _, s := range services {
+					values = append(values, s.(string))
+				}
+				config.Services = values
+			}
+			return config, nil
+		}
+	}
+	return nil, nil
+}
+
+func parseResourceDNS(d resourceData) (*v3.DNSConfig, error) {
+	if rawList, ok := d.GetOk("dns"); ok {
+		if rawDNSs, ok := rawList.([]interface{}); ok && len(rawDNSs) > 0 {
+			rawDNS := rawDNSs[0]
+			if rawDNS == nil {
+				return nil, nil
+			}
+			config := &v3.DNSConfig{}
+
+			rawMap := rawDNS.(map[string]interface{})
+			if v, ok := rawMap["provider"]; ok {
+				config.Provider = v.(string)
+			}
+
+			if v, ok := rawMap["upstream_nameservers"]; ok {
+				servers := []string{}
+				values := v.([]interface{})
+				for _, v := range values {
+					servers = append(servers, v.(string))
+				}
+				config.UpstreamNameservers = servers
+			}
+
+			if v, ok := rawMap["reverse_cidrs"]; ok {
+				cidrs := []string{}
+				values := v.([]interface{})
+				for _, v := range values {
+					cidrs = append(cidrs, v.(string))
+				}
+				config.ReverseCIDRs = cidrs
+			}
+
+			if v, ok := rawMap["node_selector"]; ok {
+				selectors := map[string]string{}
+				values := v.(map[string]interface{})
+				for k, v := range values {
+					if v, ok := v.(string); ok {
+						selectors[k] = v
+					}
+				}
+				config.NodeSelector = selectors
+			}
+
 			return config, nil
 		}
 	}
@@ -1386,6 +1603,30 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 	if cluster.Services.Etcd.Snapshot != nil {
 		etcdSnapshot = *cluster.Services.Etcd.Snapshot
 	}
+	var etcdBackupConfig []interface{}
+	if cluster.Services.Etcd.BackupConfig != nil {
+		backupConfig := cluster.Services.Etcd.BackupConfig
+
+		var s3BackupConfig []interface{}
+
+		if backupConfig.S3BackupConfig != nil {
+			v := backupConfig.S3BackupConfig
+			s3BackupConfig = append(s3BackupConfig, map[string]interface{}{
+				"access_key":  v.AccessKey,
+				"secret_key":  v.SecretKey,
+				"bucket_name": v.BucketName,
+				"region":      v.Region,
+				"endpoint":    v.Endpoint,
+			})
+		}
+
+		etcdBackupConfig = append(etcdBackupConfig, map[string]interface{}{
+			"interval_hours":   backupConfig.IntervalHours,
+			"retention":        backupConfig.Retention,
+			"s3_backup_config": s3BackupConfig,
+		})
+	}
+
 	d.Set("services_etcd", []interface{}{ // nolint
 		map[string]interface{}{
 			//"image":         cluster.Services.Etcd.Image,
@@ -1400,6 +1641,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"snapshot":      etcdSnapshot,
 			"retention":     cluster.Services.Etcd.Retention,
 			"creation":      cluster.Services.Etcd.Creation,
+			"backup_config": etcdBackupConfig,
 		},
 	})
 
@@ -1412,6 +1654,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 			"service_cluster_ip_range": cluster.Services.KubeAPI.ServiceClusterIPRange,
 			"service_node_port_range":  cluster.Services.KubeAPI.ServiceNodePortRange,
 			"pod_security_policy":      cluster.Services.KubeAPI.PodSecurityPolicy,
+			"always_pull_images":       cluster.Services.KubeAPI.AlwaysPullImages,
 		},
 	})
 
@@ -1464,11 +1707,19 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 		},
 	})
 
+	var authnWebhook []interface{}
+	if cluster.Authentication.Webhook != nil {
+		wh := cluster.Authentication.Webhook
+		authnWebhook = append(authnWebhook, map[string]interface{}{
+			"config_file":   wh.ConfigFile,
+			"cache_timeout": wh.CacheTimeout,
+		})
+	}
 	d.Set("authentication", []interface{}{ // nolint
 		map[string]interface{}{
 			"strategy": cluster.Authentication.Strategy,
-			"options":  cluster.Authentication.Options,
 			"sans":     cluster.Authentication.SANs,
+			"webhook":  authnWebhook,
 		},
 	})
 
@@ -1477,6 +1728,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 	d.Set("addon_job_timeout", cluster.AddonJobTimeout) // nolint
 
 	d.Set("ssh_key_path", cluster.SSHKeyPath)     // nolint
+	d.Set("ssh_cert_path", cluster.SSHCertPath)   // nolint
 	d.Set("ssh_agent_auth", cluster.SSHAgentAuth) // nolint
 
 	bastionHost := map[string]interface{}{}
@@ -1494,12 +1746,41 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 	bastionHost["ssh_agent_auth"] = cluster.BastionHost.SSHAgentAuth
 	bastionHost["ssh_key"] = cluster.BastionHost.SSHKey
 	bastionHost["ssh_key_path"] = cluster.BastionHost.SSHKeyPath
+	bastionHost["ssh_cert"] = cluster.BastionHost.SSHCert
+	bastionHost["ssh_cert_path"] = cluster.BastionHost.SSHCertPath
 	d.Set("bastion_host", []interface{}{bastionHost}) // nolint
 
 	d.Set("monitoring", []interface{}{ // nolint
 		map[string]interface{}{
 			"provider": cluster.Monitoring.Provider,
 			"options":  cluster.Monitoring.Options,
+		},
+	})
+
+	d.Set("restore", []interface{}{ // nolint
+		map[string]interface{}{
+			"restore":       cluster.Restore.Restore,
+			"snapshot_name": cluster.Restore.SnapshotName,
+		},
+	})
+
+	if cluster.RotateCertificates == nil {
+		d.Set("rotate_certificates", []interface{}{}) // nolint
+	} else {
+		d.Set("rotate_certificates", []interface{}{ // nolint
+			map[string]interface{}{
+				"ca_certificates": cluster.RotateCertificates.CACertificates,
+				"services":        cluster.RotateCertificates.Services,
+			},
+		})
+	}
+
+	d.Set("dns", []interface{}{ // nolint
+		map[string]interface{}{
+			"provider":             cluster.DNS.Provider,
+			"upstream_nameservers": cluster.DNS.UpstreamNameservers,
+			"reverse_cidrs":        cluster.DNS.ReverseCIDRs,
+			"node_selector":        cluster.DNS.NodeSelector,
 		},
 	})
 

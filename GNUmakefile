@@ -64,7 +64,7 @@ bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-arm.zip:
 shasum:
 	(cd bin/; shasum -a 256 * > terraform-provider-rke_$(CURRENT_VERSION)_SHA256SUMS)
 
-test:
+test: fmt
 	TF_ACC=  go test $(TEST) -v $(TESTARGS) -timeout=30s -parallel=4 ; \
 
 testacc:

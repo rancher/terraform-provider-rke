@@ -190,6 +190,8 @@ func TestParseResourceRKEConfigNode(t *testing.T) {
 						"ssh_agent_auth":    true,
 						"ssh_key":           "ssh_key",
 						"ssh_key_path":      "ssh_key_path",
+						"ssh_cert":          "ssh_cert",
+						"ssh_cert_path":     "ssh_cert_path",
 						"labels": map[string]interface{}{
 							"foo": "foo",
 							"bar": "bar",
@@ -210,6 +212,8 @@ func TestParseResourceRKEConfigNode(t *testing.T) {
 					SSHAgentAuth:     true,
 					SSHKey:           "ssh_key",
 					SSHKeyPath:       "ssh_key_path",
+					SSHCert:          "ssh_cert",
+					SSHCertPath:      "ssh_cert_path",
 					Labels: map[string]string{
 						"foo": "foo",
 						"bar": "bar",
@@ -342,6 +346,21 @@ func TestParseResourceETCDService(t *testing.T) {
 						"snapshot":      boolValue,
 						"retention":     "retention",
 						"creation":      "creation",
+						"backup_config": []interface{}{
+							map[string]interface{}{
+								"interval_hours": 1,
+								"retention":      2,
+								"s3_backup_config": []interface{}{
+									map[string]interface{}{
+										"access_key":  "access_key",
+										"secret_key":  "secret_key",
+										"bucket_name": "bucket_name",
+										"region":      "region",
+										"endpoint":    "endpoint",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -363,6 +382,17 @@ func TestParseResourceETCDService(t *testing.T) {
 				Snapshot:     &boolValue,
 				Retention:    "retention",
 				Creation:     "creation",
+				BackupConfig: &v3.BackupConfig{
+					IntervalHours: 1,
+					Retention:     2,
+					S3BackupConfig: &v3.S3BackupConfig{
+						AccessKey:  "access_key",
+						SecretKey:  "secret_key",
+						BucketName: "bucket_name",
+						Region:     "region",
+						Endpoint:   "endpoint",
+					},
+				},
 			},
 		},
 	}
@@ -398,6 +428,7 @@ func TestParseResourceKubeAPIService(t *testing.T) {
 						"service_cluster_ip_range": "10.240.0.0/16",
 						"service_node_port_range":  "30000-31000",
 						"pod_security_policy":      true,
+						"always_pull_images":       true,
 					},
 				},
 			},
@@ -414,6 +445,7 @@ func TestParseResourceKubeAPIService(t *testing.T) {
 				ServiceClusterIPRange: "10.240.0.0/16",
 				ServiceNodePortRange:  "30000-31000",
 				PodSecurityPolicy:     true,
+				AlwaysPullImages:      true,
 			},
 		},
 	}
@@ -671,26 +703,28 @@ func TestParseResourceAuthentication(t *testing.T) {
 				"authentication": []interface{}{
 					map[string]interface{}{
 						"strategy": "x509",
-						"options": map[string]interface{}{
-							"foo": "foo",
-							"bar": "bar",
-						},
 						"sans": []interface{}{
 							"192.2.0.1",
 							"test.example.com",
+						},
+						"webhook": []interface{}{
+							map[string]interface{}{
+								"config_file":   "config_file",
+								"cache_timeout": "cache_timeout",
+							},
 						},
 					},
 				},
 			},
 			expectConfig: &v3.AuthnConfig{
 				Strategy: "x509",
-				Options: map[string]string{
-					"foo": "foo",
-					"bar": "bar",
-				},
 				SANs: []string{
 					"192.2.0.1",
 					"test.example.com",
+				},
+				Webhook: &v3.AuthWebhookConfig{
+					ConfigFile:   "config_file",
+					CacheTimeout: "cache_timeout",
 				},
 			},
 		},
@@ -770,6 +804,8 @@ func TestParseResourceBastionHost(t *testing.T) {
 						"ssh_agent_auth": true,
 						"ssh_key":        "ssh_key",
 						"ssh_key_path":   "ssh_key_path",
+						"ssh_cert":       "ssh_cert",
+						"ssh_cert_path":  "ssh_cert_path",
 					},
 				},
 			},
@@ -780,6 +816,8 @@ func TestParseResourceBastionHost(t *testing.T) {
 				SSHAgentAuth: true,
 				SSHKey:       "ssh_key",
 				SSHKeyPath:   "ssh_key_path",
+				SSHCert:      "ssh_cert",
+				SSHCertPath:  "ssh_cert_path",
 			},
 		},
 	}
@@ -827,6 +865,115 @@ func TestParseResourceMonitoring(t *testing.T) {
 		t.Run(testcase.caseName, func(t *testing.T) {
 			d := &dummyResourceData{values: testcase.resourceData}
 			config, err := parseResourceMonitoring(d)
+			assert.NoError(t, err)
+			assert.EqualValues(t, testcase.expectConfig, config)
+		})
+	}
+}
+
+func TestParseResourceRestore(t *testing.T) {
+	testcases := []struct {
+		caseName     string
+		resourceData map[string]interface{}
+		expectConfig *v3.RestoreConfig
+	}{
+		{
+			caseName: "all fields",
+			resourceData: map[string]interface{}{
+				"restore": []interface{}{
+					map[string]interface{}{
+						"restore":       true,
+						"snapshot_name": "snapshot_name",
+					},
+				},
+			},
+			expectConfig: &v3.RestoreConfig{
+				Restore:      true,
+				SnapshotName: "snapshot_name",
+			},
+		},
+	}
+
+	for _, testcase := range testcases {
+		t.Run(testcase.caseName, func(t *testing.T) {
+			d := &dummyResourceData{values: testcase.resourceData}
+			config, err := parseResourceRestore(d)
+			assert.NoError(t, err)
+			assert.EqualValues(t, testcase.expectConfig, config)
+		})
+	}
+}
+
+func TestParseResourceRotateCertificates(t *testing.T) {
+	testcases := []struct {
+		caseName     string
+		resourceData map[string]interface{}
+		expectConfig *v3.RotateCertificates
+	}{
+		{
+			caseName: "all fields",
+			resourceData: map[string]interface{}{
+				"rotate_certificates": []interface{}{
+					map[string]interface{}{
+						"ca_certificates": true,
+						"services":        []interface{}{"etcd", "kubelet"},
+					},
+				},
+			},
+			expectConfig: &v3.RotateCertificates{
+				CACertificates: true,
+				Services:       []string{"etcd", "kubelet"},
+			},
+		},
+	}
+
+	for _, testcase := range testcases {
+		t.Run(testcase.caseName, func(t *testing.T) {
+			d := &dummyResourceData{values: testcase.resourceData}
+			config, err := parseResourceRotateCertificates(d)
+			assert.NoError(t, err)
+			assert.EqualValues(t, testcase.expectConfig, config)
+		})
+	}
+}
+
+func TestParseResourceDNS(t *testing.T) {
+	testcases := []struct {
+		caseName     string
+		resourceData map[string]interface{}
+		expectConfig *v3.DNSConfig
+	}{
+		{
+			caseName: "all fields",
+			resourceData: map[string]interface{}{
+				"dns": []interface{}{
+					map[string]interface{}{
+						"provider":             "core-dns",
+						"upstream_nameservers": []interface{}{"8.8.8.8", "8.8.4.4"},
+						"reverse_cidrs":        []interface{}{"1.0.2.192.in-addr.arpa", "2.0.2.192.in-addr.arpa"},
+						"node_selector": map[string]interface{}{
+							"foo": "foo",
+							"bar": "bar",
+						},
+					},
+				},
+			},
+			expectConfig: &v3.DNSConfig{
+				Provider:            "core-dns",
+				UpstreamNameservers: []string{"8.8.8.8", "8.8.4.4"},
+				ReverseCIDRs:        []string{"1.0.2.192.in-addr.arpa", "2.0.2.192.in-addr.arpa"},
+				NodeSelector: map[string]string{
+					"foo": "foo",
+					"bar": "bar",
+				},
+			},
+		},
+	}
+
+	for _, testcase := range testcases {
+		t.Run(testcase.caseName, func(t *testing.T) {
+			d := &dummyResourceData{values: testcase.resourceData}
+			config, err := parseResourceDNS(d)
 			assert.NoError(t, err)
 			assert.EqualValues(t, testcase.expectConfig, config)
 		})
@@ -1307,6 +1454,17 @@ func TestClusterToState(t *testing.T) {
 							Snapshot:  &boolValue,
 							Retention: "retention",
 							Creation:  "creation",
+							BackupConfig: &v3.BackupConfig{
+								IntervalHours: 1,
+								Retention:     2,
+								S3BackupConfig: &v3.S3BackupConfig{
+									AccessKey:  "access_key",
+									SecretKey:  "secret_key",
+									BucketName: "bucket_name",
+									Region:     "region",
+									Endpoint:   "endpoint",
+								},
+							},
 						},
 						KubeAPI: v3.KubeAPIService{
 							BaseService: v3.BaseService{
@@ -1321,6 +1479,7 @@ func TestClusterToState(t *testing.T) {
 							ServiceClusterIPRange: "10.240.0.0/16",
 							ServiceNodePortRange:  "30000-31000",
 							PodSecurityPolicy:     true,
+							AlwaysPullImages:      true,
 						},
 						KubeController: v3.KubeControllerService{
 							BaseService: v3.BaseService{
@@ -1382,11 +1541,11 @@ func TestClusterToState(t *testing.T) {
 					},
 					Authentication: v3.AuthnConfig{
 						Strategy: "x509",
-						Options: map[string]string{
-							"foo": "bar",
-							"bar": "foo",
+						SANs:     []string{"sans1", "sans2"},
+						Webhook: &v3.AuthWebhookConfig{
+							ConfigFile:   "config_file",
+							CacheTimeout: "cache_timeout",
 						},
-						SANs: []string{"sans1", "sans2"},
 					},
 					Addons: "addons: yaml",
 					AddonsInclude: []string{
@@ -1395,6 +1554,7 @@ func TestClusterToState(t *testing.T) {
 					},
 					AddonJobTimeout: 10,
 					SSHKeyPath:      "ssh_key_path",
+					SSHCertPath:     "ssh_cert_path",
 					SSHAgentAuth:    true,
 					BastionHost: v3.BastionHost{
 						Address:      "192.2.0.1",
@@ -1403,10 +1563,29 @@ func TestClusterToState(t *testing.T) {
 						SSHAgentAuth: true,
 						SSHKey:       "ssh_key",
 						SSHKeyPath:   "ssh_key_path",
+						SSHCert:      "ssh_cert",
+						SSHCertPath:  "ssh_cert_path",
 					},
 					Monitoring: v3.MonitoringConfig{
 						Provider: "provider",
 						Options: map[string]string{
+							"foo": "bar",
+							"bar": "foo",
+						},
+					},
+					Restore: v3.RestoreConfig{
+						Restore:      true,
+						SnapshotName: "snapshot_name",
+					},
+					RotateCertificates: &v3.RotateCertificates{
+						CACertificates: true,
+						Services:       []string{"etcd", "kubelet"},
+					},
+					DNS: v3.DNSConfig{
+						Provider:            "core-dns",
+						UpstreamNameservers: []string{"8.8.8.8", "8.8.4.4"},
+						ReverseCIDRs:        []string{"1.0.2.192.in-addr.arpa", "2.0.2.192.in-addr.arpa"},
+						NodeSelector: map[string]string{
 							"foo": "bar",
 							"bar": "foo",
 						},
@@ -1639,6 +1818,21 @@ func TestClusterToState(t *testing.T) {
 						"snapshot":  boolValue,
 						"retention": "retention",
 						"creation":  "creation",
+						"backup_config": []interface{}{
+							map[string]interface{}{
+								"interval_hours": 1,
+								"retention":      2,
+								"s3_backup_config": []interface{}{
+									map[string]interface{}{
+										"access_key":  "access_key",
+										"secret_key":  "secret_key",
+										"bucket_name": "bucket_name",
+										"region":      "region",
+										"endpoint":    "endpoint",
+									},
+								},
+							},
+						},
 					},
 				},
 				"services_kube_api": []interface{}{
@@ -1653,6 +1847,7 @@ func TestClusterToState(t *testing.T) {
 						"service_cluster_ip_range": "10.240.0.0/16",
 						"service_node_port_range":  "30000-31000",
 						"pod_security_policy":      true,
+						"always_pull_images":       true,
 					},
 				},
 				"services_kube_controller": []interface{}{
@@ -1717,11 +1912,13 @@ func TestClusterToState(t *testing.T) {
 				"authentication": []interface{}{
 					map[string]interface{}{
 						"strategy": "x509",
-						"options": map[string]string{
-							"foo": "bar",
-							"bar": "foo",
+						"sans":     []string{"sans1", "sans2"},
+						"webhook": []interface{}{
+							map[string]interface{}{
+								"config_file":   "config_file",
+								"cache_timeout": "cache_timeout",
+							},
 						},
-						"sans": []string{"sans1", "sans2"},
 					},
 				},
 				"addons": "addons: yaml",
@@ -1731,6 +1928,7 @@ func TestClusterToState(t *testing.T) {
 				},
 				"addon_job_timeout": 10,
 				"ssh_key_path":      "ssh_key_path",
+				"ssh_cert_path":     "ssh_cert_path",
 				"ssh_agent_auth":    true,
 				"bastion_host": []interface{}{
 					map[string]interface{}{
@@ -1740,12 +1938,37 @@ func TestClusterToState(t *testing.T) {
 						"ssh_agent_auth": true,
 						"ssh_key":        "ssh_key",
 						"ssh_key_path":   "ssh_key_path",
+						"ssh_cert":       "ssh_cert",
+						"ssh_cert_path":  "ssh_cert_path",
 					},
 				},
 				"monitoring": []interface{}{
 					map[string]interface{}{
 						"provider": "provider",
 						"options": map[string]string{
+							"foo": "bar",
+							"bar": "foo",
+						},
+					},
+				},
+				"restore": []interface{}{
+					map[string]interface{}{
+						"restore":       true,
+						"snapshot_name": "snapshot_name",
+					},
+				},
+				"rotate_certificates": []interface{}{
+					map[string]interface{}{
+						"ca_certificates": true,
+						"services":        []string{"etcd", "kubelet"},
+					},
+				},
+				"dns": []interface{}{
+					map[string]interface{}{
+						"provider":             "core-dns",
+						"upstream_nameservers": []string{"8.8.8.8", "8.8.4.4"},
+						"reverse_cidrs":        []string{"1.0.2.192.in-addr.arpa", "2.0.2.192.in-addr.arpa"},
+						"node_selector": map[string]string{
 							"foo": "bar",
 							"bar": "foo",
 						},

@@ -73,7 +73,17 @@ func nodeSchema() map[string]*schema.Schema {
 		"ssh_key_path": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "SSH Private Key",
+			Description: "SSH Private Key path",
+		},
+		"ssh_cert": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "SSH Certificate",
+		},
+		"ssh_cert_path": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "SSH Certificate path",
 		},
 		"labels": {
 			Type:        schema.TypeMap,

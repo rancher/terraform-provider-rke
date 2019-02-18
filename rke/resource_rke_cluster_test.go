@@ -13,6 +13,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/pki"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"gopkg.in/yaml.v2"
@@ -164,6 +165,12 @@ func testAccCheckTempFilesExists() resource.TestCheckFunc {
 		if _, err := os.Stat(kubeClusterYAML); err == nil {
 			return fmt.Errorf("temporary file %q is still exists", kubeClusterYAML)
 		}
+
+		rkeStatePath := cluster.GetStateFilePath(pki.ClusterConfig, "")
+		if _, err := os.Stat(rkeStatePath); err == nil {
+			return fmt.Errorf("temporary file %q is still exists", rkeStatePath)
+		}
+
 		return nil
 	}
 }

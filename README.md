@@ -9,7 +9,7 @@ Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kube
 #### Compatible Versions
 
 - Terraform: v0.11+
-- RKE: v0.1.16
+- RKE: v0.2.0-rc5
 
 ## Installation
 
@@ -62,7 +62,7 @@ resource rke_cluster "cluster" {
 //}
 ```
 
-* default k8s version: `v1.11.6-rancher1-1`
+* default k8s version: `v1.13.1-rancher1-1`
 * default network plugin: `canal`
 
 #### Dynamic multiple nodes example
