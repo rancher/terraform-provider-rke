@@ -2,6 +2,7 @@ package rke
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -13,12 +14,12 @@ import (
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/cmd"
 	"github.com/rancher/rke/hosts"
+	"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
 	"github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
-
-const rkeKubeConfigFileName = "kube_config_cluster.yml"
 
 func resourceRKECluster() *schema.Resource {
 	return &schema.Resource{
@@ -29,8 +30,6 @@ func resourceRKECluster() *schema.Resource {
 		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
 			if isRKEConfigChanged(d) {
 				computedFields := []string{
-					"rke_state",
-					"kube_config_yaml",
 					"rke_cluster_yaml",
 				}
 				for _, key := range computedFields {
@@ -1449,6 +1448,7 @@ func resourceRKECluster() *schema.Resource {
 			"rke_state": {
 				Type:     schema.TypeString,
 				Computed: true,
+				Sensitive: true,
 			},
 			"kube_config_yaml": {
 				Type:     schema.TypeString,
@@ -1641,27 +1641,13 @@ func clusterUp(d *schema.ResourceData) error {
 	if parseErr != nil {
 		return parseErr
 	}
-
 	disablePortCheck := d.Get("disable_port_check").(bool)
 
-	// create tmp dir for configDir
-	tempDir, tempDirErr := createTempDir()
-	if tempDirErr != nil {
-		return tempDirErr
+	clusterFilePath, tempDir, err := prepareTempRKEConfigFiles(rkeConfig, d)
+	if err != nil {
+		return err
 	}
 	defer os.RemoveAll(tempDir) // nolint
-
-	// deploy
-	if err := writeKubeConfigFile(tempDir, d); err != nil {
-		return err
-	}
-	if err := writeRKEStateFile(tempDir, d); err != nil {
-		return err
-	}
-	clusterFilePath := filepath.Join(tempDir, pki.ClusterConfig)
-	if err := writeClusterConfig(rkeConfig, clusterFilePath); err != nil {
-		return err
-	}
 
 	// setting up the flags
 	flags := cluster.GetExternalFlags(false, false, disablePortCheck, "", clusterFilePath)
@@ -1684,27 +1670,46 @@ func clusterRemove(d *schema.ResourceData) error {
 		return parseErr
 	}
 
-	// create tmp dir for configDir
-	tempDir, tempDirErr := createTempDir()
-	if tempDirErr != nil {
-		return tempDirErr
+	clusterFilePath, tempDir, err := prepareTempRKEConfigFiles(rkeConfig, d)
+	if err != nil {
+		return err
 	}
 	defer os.RemoveAll(tempDir) // nolint
-	if err := writeKubeConfigFile(tempDir, d); err != nil {
-		return err
-	}
-	if err := writeRKEStateFile(tempDir, d); err != nil {
-		return err
-	}
-	clusterFilePath := filepath.Join(tempDir, pki.ClusterConfig)
-	if err := writeClusterConfig(rkeConfig, clusterFilePath); err != nil {
-		return err
-	}
 
 	// setting up the flags
 	flags := cluster.GetExternalFlags(false, false, false, "", clusterFilePath)
 
-	return cmd.ClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)
+	return realClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)
+}
+
+func realClusterRemove(
+	ctx context.Context,
+	rkeConfig *v3.RancherKubernetesEngineConfig,
+	dialersOptions hosts.DialersOptions,
+	flags cluster.ExternalFlags) error {
+
+	log.Infof(ctx, "Tearing down Kubernetes cluster")
+	kubeCluster, err := cluster.InitClusterObject(ctx, rkeConfig, flags)
+	if err != nil {
+		return err
+	}
+	if err := kubeCluster.SetupDialers(ctx, dialersOptions); err != nil {
+		return err
+	}
+
+	err = kubeCluster.TunnelHosts(ctx, flags)
+	if err != nil {
+		return newNodeUnreachableError(err)
+	}
+
+	logrus.Debugf("Starting Cluster removal")
+	err = kubeCluster.ClusterRemove(ctx)
+	if err != nil {
+		return err
+	}
+
+	log.Infof(ctx, "Cluster removed successfully")
+	return nil
 }
 
 func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, clientKey string, configDir string, rkeConfig *v3.RancherKubernetesEngineConfig) error {
@@ -1768,48 +1773,86 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 	}
 	d.Set("rke_cluster_yaml", string(yamlRkeConfig)) // nolint
 
-	// create tmp dir for cluster.yml and kube_config_cluster.yml
-	tempDir, tempDirErr := createTempDir()
-	if tempDirErr != nil {
-		return nil, tempDirErr
+	clusterFilePath, tempDir, err := prepareTempRKEConfigFiles(rkeConfig, d)
+	if err != nil {
+		return nil, err
 	}
 	defer os.RemoveAll(tempDir) // nolint
-	if err := writeKubeConfigFile(tempDir, d); err != nil {
-		return nil, err
-	}
-	if err := writeRKEStateFile(tempDir, d); err != nil {
-		return nil, err
-	}
-
-	clusterFilePath := filepath.Join(tempDir, pki.ClusterConfig)
-	if err := writeClusterConfig(rkeConfig, clusterFilePath); err != nil {
-		return nil, err
-	}
 
 	// setting up the flags
 	flags := cluster.GetExternalFlags(false, false, d.Get("disable_port_check").(bool), "", clusterFilePath)
+	fullState, readedCluster, err := realClusterRead(context.Background(), hosts.DialersOptions{}, flags)
+	if err != nil {
+		switch err.(type) {
+		case *stateNotFoundError, *nodeUnreachableError:
+			d.SetId("")
+			return nil, nil
+		}
+	}
 
-	ctx := context.Background()
-	clusterState, err := cluster.ReadStateFile(ctx, cluster.GetStateFilePath(flags.ClusterFilePath, flags.ConfigDir))
+	kubeConfig, err := readKubeConfig(tempDir)
 	if err != nil {
 		return nil, err
 	}
+	if kubeConfig != "" {
+		d.Set("kube_config_yaml", kubeConfig) // nolint
+	}
 
-	kubeCluster, err := cluster.InitClusterObject(ctx, clusterState.DesiredState.RancherKubernetesEngineConfig.DeepCopy(), flags)
+	strRKEState , err := json.MarshalIndent(fullState, "", "  ")
 	if err != nil {
-		return nil, err
+		return nil , fmt.Errorf("Failed to Marshal state object: %v", err)
+	}
+	d.Set("rke_state", strRKEState) // nolint
+
+	return readedCluster, err
+}
+
+func realClusterRead(ctx context.Context, dialersOptions hosts.DialersOptions, flags cluster.ExternalFlags) (*cluster.FullState, *cluster.Cluster, error) {
+
+	fullState, err := cluster.ReadStateFile(ctx, cluster.GetStateFilePath(flags.ClusterFilePath, flags.ConfigDir))
+	if err != nil {
+		return nil, nil, newStateNotFoundError(err)
+	}
+
+	kubeCluster, err := cluster.InitClusterObject(ctx, fullState.DesiredState.RancherKubernetesEngineConfig.DeepCopy(), flags)
+	if err != nil {
+		return nil, nil, err
 	}
 	err = kubeCluster.SetupDialers(ctx, hosts.DialersOptions{})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	err = kubeCluster.TunnelHosts(ctx, flags)
 	if err != nil {
-		return nil, err
+		return nil, nil, newNodeUnreachableError(err)
 	}
 
-	return kubeCluster.GetClusterState(ctx, clusterState)
+	clusterState, err := kubeCluster.GetClusterState(ctx, fullState)
+	if err != nil {
+		return nil, nil, err
+	}
+	return fullState, clusterState, nil
+}
+
+func prepareTempRKEConfigFiles(rkeConfig *v3.RancherKubernetesEngineConfig, d resourceData) (string, string, error) {
+	tempDir, tempDirErr := createTempDir()
+	if tempDirErr != nil {
+		return "", "", tempDirErr
+	}
+	if err := writeKubeConfigFile(tempDir, d); err != nil {
+		return "", "", err
+	}
+	if err := writeRKEStateFile(tempDir, d); err != nil {
+		return "", "", err
+	}
+
+	clusterFilePath := filepath.Join(tempDir, pki.ClusterConfig)
+	if err := writeClusterConfig(rkeConfig, clusterFilePath); err != nil {
+		return "", "", err
+	}
+
+	return clusterFilePath, tempDir, nil
 }
 
 func readKubeConfig(dir string) (string, error) {
@@ -1838,7 +1881,7 @@ func readRKEStateFile(dir string) (string, error) {
 	return "", nil
 }
 
-func writeRKEStateFile(dir string, d *schema.ResourceData) error {
+func writeRKEStateFile(dir string, d resourceData) error {
 	if rawRKEState, ok := d.GetOk("rke_state"); ok {
 		strState := rawRKEState.(string)
 		if strState != "" {
@@ -1852,7 +1895,7 @@ func writeRKEStateFile(dir string, d *schema.ResourceData) error {
 	return nil
 }
 
-func writeKubeConfigFile(dir string, d *schema.ResourceData) error {
+func writeKubeConfigFile(dir string, d resourceData) error {
 	if rawKubeConfig, ok := d.GetOk("kube_config_yaml"); ok {
 		strConf := rawKubeConfig.(string)
 		if strConf != "" {
@@ -1938,5 +1981,17 @@ func newNodeUnreachableError(actual error) *nodeUnreachableError {
 }
 
 func (n *nodeUnreachableError) Error() string {
+	return n.actual.Error()
+}
+
+type stateNotFoundError struct {
+	actual error
+}
+
+func newStateNotFoundError(actual error) *stateNotFoundError {
+	return &stateNotFoundError{actual: actual}
+}
+
+func (n *stateNotFoundError) Error() string {
 	return n.actual.Error()
 }

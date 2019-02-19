@@ -331,6 +331,7 @@ func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 func testAccCheckRKEConfigBasic(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes = [
     {
       address = "%s"
@@ -349,6 +350,7 @@ EOF
 func testAccCheckRKEConfigUpdate(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes = [
     {
       address = "%s"
@@ -371,6 +373,7 @@ EOF
 func testAccCheckRKEConfigNodeCountUpAndDownSingleNode(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes = [
     {
       address = "%s"
@@ -387,6 +390,7 @@ EOF
 func testAccCheckRKEConfigNodeCountUpAndDownMultiNodes(ip1, user1, sshKey1, ip2, user2, sshKey2 string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes = [
     {
       address = "%s"
@@ -421,6 +425,7 @@ EOF
 }
 
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes_conf = ["${data.rke_node_parameter.node.json}"]
 }
 	`, ip, user, sshKey)
@@ -444,6 +449,7 @@ EOF
 }
 
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes_conf = ["${data.rke_node_parameter.node.json}"]
 }
 	`, ip, user, sshKey)

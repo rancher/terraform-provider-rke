@@ -47,6 +47,7 @@ func testAccPreCheckEnvs(t *testing.T, keys ...string) {
 
 func testAccPreCheck(t *testing.T) {
 	testAccPreCheckEnvs(t, envRKENodeAddr, envRKENodeUser, envRKENodeSSHKey)
+	rkeLogBuf.Reset()
 }
 
 func testAccPreCheckForMultiNodes(t *testing.T) {
