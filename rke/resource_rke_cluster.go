@@ -1446,8 +1446,8 @@ func resourceRKECluster() *schema.Resource {
 				Computed:  true,
 			},
 			"rke_state": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Computed:  true,
 				Sensitive: true,
 			},
 			"kube_config_yaml": {
@@ -1798,9 +1798,9 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 		d.Set("kube_config_yaml", kubeConfig) // nolint
 	}
 
-	strRKEState , err := json.MarshalIndent(fullState, "", "  ")
+	strRKEState, err := json.MarshalIndent(fullState, "", "  ")
 	if err != nil {
-		return nil , fmt.Errorf("Failed to Marshal state object: %v", err)
+		return nil, fmt.Errorf("Failed to Marshal state object: %v", err)
 	}
 	d.Set("rke_state", strRKEState) // nolint
 
