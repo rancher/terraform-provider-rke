@@ -23,13 +23,14 @@ import (
 
 func resourceRKECluster() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRKEClusterUp,
+		Create: resourceRKEClusterCreate,
 		Read:   resourceRKEClusterRead,
-		Update: resourceRKEClusterUp,
+		Update: resourceRKEClusterUpdate,
 		Delete: resourceRKEClusterDelete,
 		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
 			if isRKEConfigChanged(d) {
 				computedFields := []string{
+					"kube_config_yaml",
 					"rke_cluster_yaml",
 				}
 				for _, key := range computedFields {
@@ -1454,6 +1455,11 @@ func resourceRKECluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"internal_kube_config_yaml": {
+				Type:      schema.TypeString,
+				Computed:  true,
+				Sensitive: true,
+			},
 			"rke_cluster_yaml": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -1607,8 +1613,15 @@ func resourceRKECluster() *schema.Resource {
 	}
 }
 
-func resourceRKEClusterUp(d *schema.ResourceData, meta interface{}) error {
-	if err := clusterUp(d); err != nil {
+func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
+	if err := clusterUp(d, true); err != nil {
+		return wrapErrWithRKEOutputs(err)
+	}
+	return wrapErrWithRKEOutputs(resourceRKEClusterRead(d, meta))
+}
+
+func resourceRKEClusterUpdate(d *schema.ResourceData, meta interface{}) error {
+	if err := clusterUp(d, false); err != nil {
 		return wrapErrWithRKEOutputs(err)
 	}
 	return wrapErrWithRKEOutputs(resourceRKEClusterRead(d, meta))
@@ -1636,7 +1649,11 @@ func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func clusterUp(d *schema.ResourceData) error {
+func clusterUp(d *schema.ResourceData, init bool) error {
+	if init {
+		clusterRemove(d) // nolint ignore error
+	}
+
 	rkeConfig, parseErr := parseResourceRKEConfig(d)
 	if parseErr != nil {
 		return parseErr
@@ -1735,7 +1752,8 @@ func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, client
 		return err
 	}
 	if kubeConfig != "" {
-		d.Set("kube_config_yaml", kubeConfig) // nolint
+		d.Set("kube_config_yaml", kubeConfig)          // nolint
+		d.Set("internal_kube_config_yaml", kubeConfig) // nolint
 	}
 
 	yamlRkeConfig, err := yaml.Marshal(*rkeConfig)
@@ -1795,7 +1813,8 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 		return nil, err
 	}
 	if kubeConfig != "" {
-		d.Set("kube_config_yaml", kubeConfig) // nolint
+		d.Set("kube_config_yaml", kubeConfig)          // nolint
+		d.Set("internal_kube_config_yaml", kubeConfig) // nolint
 	}
 
 	strRKEState, err := json.MarshalIndent(fullState, "", "  ")
@@ -1896,7 +1915,7 @@ func writeRKEStateFile(dir string, d resourceData) error {
 }
 
 func writeKubeConfigFile(dir string, d resourceData) error {
-	if rawKubeConfig, ok := d.GetOk("kube_config_yaml"); ok {
+	if rawKubeConfig, ok := d.GetOk("internal_kube_config_yaml"); ok {
 		strConf := rawKubeConfig.(string)
 		if strConf != "" {
 			configPath := filepath.Join(dir, pki.ClusterConfig)
