@@ -125,12 +125,14 @@ func ClusterSchema() map[string]*schema.Schema {
 			Default:  false,
 		},
 		"nodes_conf": {
-			Type:          schema.TypeList,
-			MinItems:      1,
-			Optional:      true,
-			Description:   "Kubernetes nodes(YAML or JSON)",
-			Sensitive:     true,
-			Elem:          &schema.Schema{Type: schema.TypeString},
+			Type:        schema.TypeList,
+			MinItems:    1,
+			Optional:    true,
+			Description: "Kubernetes nodes(YAML or JSON)",
+			Elem: &schema.Schema{
+				Type:      schema.TypeString,
+				Sensitive: true,
+			},
 			ConflictsWith: []string{"nodes"},
 		},
 		"nodes": {
@@ -850,7 +852,6 @@ func ClusterSchema() map[string]*schema.Schema {
 					"ca_certificates": {
 						Type:        schema.TypeBool,
 						Optional:    true,
-						Sensitive:   true,
 						Description: "Rotate CA Certificates",
 					},
 					"services": {
@@ -1645,9 +1646,8 @@ func ClusterSchema() map[string]*schema.Schema {
 			Sensitive: true,
 		},
 		"certificates": {
-			Type:      schema.TypeList,
-			Computed:  true,
-			Sensitive: true,
+			Type:     schema.TypeList,
+			Computed: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"id": {
@@ -1655,8 +1655,9 @@ func ClusterSchema() map[string]*schema.Schema {
 						Computed: true,
 					},
 					"certificate": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:      schema.TypeString,
+						Computed:  true,
+						Sensitive: true,
 					},
 					"key": {
 						Type:      schema.TypeString,
