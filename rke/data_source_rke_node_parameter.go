@@ -10,7 +10,7 @@ import (
 func dataSourceRKENodeParameter() *schema.Resource {
 	return &schema.Resource{
 		Read:   resourceRKENodeParameterRead,
-		Schema: nodeDataSourceSchema(),
+		Schema: NodeDataSourceSchema(),
 	}
 }
 
