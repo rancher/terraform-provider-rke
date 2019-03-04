@@ -3,7 +3,7 @@ package rke
 import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
-	"github.com/rancher/types/apis/management.cattle.io/v3"
+	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 )
 
 // NodeDataSourceSchema returns schema of rke_node_parameter
@@ -1016,7 +1016,100 @@ func ClusterSchema() map[string]*schema.Schema {
 						Optional:    true,
 						Description: "AWS cloud config file",
 						Elem: &schema.Resource{
-							Schema: map[string]*schema.Schema{},
+							Schema: map[string]*schema.Schema{
+								"global": {
+									Type:     schema.TypeList,
+									MaxItems: 1,
+									Optional: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"zone": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
+											"vpc": {
+												Type:        schema.TypeString,
+												Optional:    true,
+												Description: "The AWS VPC flag enables the possibility to run the master components on a different aws account, on a different cloud provider or on-premises. If the flag is set also the KubernetesClusterTag must be provided",
+											},
+											"subnet_id": {
+												Type:        schema.TypeString,
+												Optional:    true,
+												Description: "enables using a specific subnet to use for ELB's",
+											},
+											"route_table_id": {
+												Type:        schema.TypeString,
+												Optional:    true,
+												Description: "enables using a specific RouteTable",
+											},
+											"role_arn": {
+												Type:        schema.TypeString,
+												Optional:    true,
+												Description: "IAM role to assume when interaction with AWS APIs",
+											},
+											"kubernetes_cluster_tag": {
+												Type:        schema.TypeString,
+												Optional:    true,
+												Description: "the legacy cluster id we'll use to identify our cluster resources",
+											},
+											"kubernetes_cluster_id": {
+												Type:        schema.TypeString,
+												Optional:    true,
+												Description: "the cluster id we'll use to identify our cluster resources",
+											},
+											"disable_security_group_ingres": {
+												Type:        schema.TypeBool,
+												Optional:    true,
+												Description: "disables the automatic ingress creation",
+											},
+											"elb_security_group": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
+											"disable_strict_zone_check": {
+												Type:     schema.TypeBool,
+												Optional: true,
+											},
+										},
+									},
+								},
+								"service_override": {
+									Type:     schema.TypeList,
+									Optional: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"key": {
+												Type:     schema.TypeString,
+												Required: true,
+											},
+											"service": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
+											"region": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
+											"url": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
+											"signing_region": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
+											"signing_method": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
+											"signing_name": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 					"azure_cloud_config": {

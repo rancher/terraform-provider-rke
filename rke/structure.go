@@ -13,7 +13,7 @@ import (
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/hosts"
 	"github.com/rancher/rke/pki"
-	"github.com/rancher/types/apis/management.cattle.io/v3"
+	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 	"gopkg.in/yaml.v2"
 )
 
@@ -1222,18 +1222,74 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 				config.Name = v.(string)
 			}
 
-			/*
-				if v, ok := rawProviderMap["cloud_config"]; ok {
-					cc := map[string]string{}
-					values := v.(map[string]interface{})
-					for k, v := range values {
-						if v, ok := v.(string); ok {
-							cc[k] = v
+			if rawList, ok := rawProviderMap["aws_cloud_config"]; ok {
+				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
+					rawConfig := rawCloudConfigs[0]
+					if rawConfig == nil {
+						return nil, nil
+					}
+					awsConfig := &v3.AWSCloudProvider{
+						ServiceOverride: map[string]v3.ServiceOverride{},
+					}
+
+					rawMap := rawConfig.(map[string]interface{})
+
+					if rawList, ok := rawMap["global"]; ok {
+						if rawConfigs, ok := rawList.([]interface{}); ok && len(rawConfigs) > 0 {
+							rawConfig := rawConfigs[0]
+							if rawConfig != nil {
+
+								c := v3.GlobalAwsOpts{}
+								rawMap := rawConfig.(map[string]interface{})
+
+								applyMapToObj(&mapObjMapping{
+									source: rawMap,
+									stringMapping: map[string]*string{
+										"zone":                   &c.Zone,
+										"vpc":                    &c.VPC,
+										"subnet_id":              &c.SubnetID,
+										"route_table_id":         &c.RouteTableID,
+										"role_arn":               &c.RoleARN,
+										"kubernetes_cluster_tag": &c.KubernetesClusterTag,
+										"kubernetes_cluster_id":  &c.KubernetesClusterID,
+										"elb_security_group":     &c.ElbSecurityGroup,
+									},
+									boolMapping: map[string]*bool{
+										"disable_security_group_ingress": &c.DisableSecurityGroupIngress,
+										"disable_strict_zone_check":      &c.DisableStrictZoneCheck,
+									},
+								})
+								awsConfig.Global = c
+							}
 						}
 					}
-					config.CloudConfig = cc
+
+					if rawList, ok := rawMap["service_override"]; ok {
+						if rawConfigs, ok := rawList.([]interface{}); ok {
+							for _, rawConfig := range rawConfigs {
+								if rawConfig != nil {
+									c := v3.ServiceOverride{}
+									rawMap := rawConfig.(map[string]interface{})
+									applyMapToObj(&mapObjMapping{
+										source: rawMap,
+										stringMapping: map[string]*string{
+											"service":        &c.Service,
+											"region":         &c.Region,
+											"url":            &c.URL,
+											"signing_region": &c.SigningRegion,
+											"signing_method": &c.SigningMethod,
+											"signing_name":   &c.SigningName,
+										},
+									})
+									key := rawMap["key"].(string)
+									awsConfig.ServiceOverride[key] = c
+								}
+							}
+						}
+					}
+					config.AWSCloudProvider = awsConfig
 				}
-			*/
+			}
 
 			if rawList, ok := rawProviderMap["azure_cloud_config"]; ok {
 				if rawCloudConfigs, ok := rawList.([]interface{}); ok && len(rawCloudConfigs) > 0 {
@@ -1827,6 +1883,42 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 		"name":                cluster.CloudProvider.Name,
 		"custom_cloud_config": cluster.CloudProvider.CustomCloudProvider,
 	}
+	if cp := cluster.CloudProvider.AWSCloudProvider; cp != nil {
+		cpg := cp.Global
+		global := map[string]interface{}{
+			"zone":                           cpg.Zone,
+			"vpc":                            cpg.VPC,
+			"subnet_id":                      cpg.SubnetID,
+			"route_table_id":                 cpg.RouteTableID,
+			"role_arn":                       cpg.RoleARN,
+			"kubernetes_cluster_tag":         cpg.KubernetesClusterTag,
+			"kubernetes_cluster_id":          cpg.KubernetesClusterID,
+			"disable_security_group_ingress": cpg.DisableSecurityGroupIngress,
+			"elb_security_group":             cpg.ElbSecurityGroup,
+			"disable_strict_zone_check":      cpg.DisableStrictZoneCheck,
+		}
+
+		var serviceOverrides []interface{}
+		for key, overrides := range cp.ServiceOverride {
+			override := map[string]interface{}{
+				"key":            key,
+				"service":        overrides.Service,
+				"region":         overrides.Region,
+				"url":            overrides.URL,
+				"signing_region": overrides.SigningRegion,
+				"signing_method": overrides.SigningMethod,
+				"signing_name":   overrides.SigningName,
+			}
+			serviceOverrides = append(serviceOverrides, override)
+		}
+
+		awsConfig := map[string]interface{}{
+			"global":           []interface{}{global},
+			"service_override": serviceOverrides,
+		}
+		cloudProvider["aws_cloud_config"] = []interface{}{awsConfig}
+	}
+
 	if cp := cluster.CloudProvider.AzureCloudProvider; cp != nil {
 		acp := map[string]interface{}{}
 		acp["cloud"] = cp.Cloud

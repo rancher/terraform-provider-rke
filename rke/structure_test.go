@@ -10,7 +10,7 @@ import (
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/hosts"
 	"github.com/rancher/rke/pki"
-	"github.com/rancher/types/apis/management.cattle.io/v3"
+	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -1152,10 +1152,31 @@ func TestParseResourceCloudProvider(t *testing.T) {
 				"cloud_provider": []interface{}{
 					map[string]interface{}{
 						"name": "sakuracloud",
-						// TODO not implements on RKE v0.1.8-rc2
-						//"aws_cloud_provider": []interface{}{
-						//	map[string]interface{}{},
-						//},
+						"aws_cloud_config": []interface{}{
+							map[string]interface{}{
+								"global": []interface{}{map[string]interface{}{
+									"zone":                           "zone",
+									"vpc":                            "vpc",
+									"subnet_id":                      "subnet_id",
+									"route_table_id":                 "route_table_id",
+									"role_arn":                       "role_arn",
+									"kubernetes_cluster_tag":         "kubernetes_cluster_tag",
+									"kubernetes_cluster_id":          "kubernetes_cluster_id",
+									"disable_security_group_ingress": true,
+									"elb_security_group":             "elb_security_group",
+									"disable_strict_zone_check":      true,
+								}},
+								"service_override": []interface{}{map[string]interface{}{
+									"key":            "key",
+									"service":        "service",
+									"region":         "region",
+									"url":            "url",
+									"signing_region": "signing_region",
+									"signing_method": "signing_method",
+									"signing_name":   "signing_name",
+								}},
+							},
+						},
 						"azure_cloud_config": []interface{}{
 							map[string]interface{}{
 								"cloud":                            "cloud",
@@ -1293,6 +1314,30 @@ func TestParseResourceCloudProvider(t *testing.T) {
 			},
 			expectConfig: &v3.CloudProvider{
 				Name: "sakuracloud",
+				AWSCloudProvider: &v3.AWSCloudProvider{
+					Global: v3.GlobalAwsOpts{
+						Zone:                        "zone",
+						VPC:                         "vpc",
+						SubnetID:                    "subnet_id",
+						RouteTableID:                "route_table_id",
+						RoleARN:                     "role_arn",
+						KubernetesClusterTag:        "kubernetes_cluster_tag",
+						KubernetesClusterID:         "kubernetes_cluster_id",
+						DisableSecurityGroupIngress: true,
+						ElbSecurityGroup:            "elb_security_group",
+						DisableStrictZoneCheck:      true,
+					},
+					ServiceOverride: map[string]v3.ServiceOverride{
+						"key": {
+							Service:       "service",
+							Region:        "region",
+							URL:           "url",
+							SigningRegion: "signing_region",
+							SigningMethod: "signing_method",
+							SigningName:   "signing_name",
+						},
+					},
+				},
 				AzureCloudProvider: &v3.AzureCloudProvider{
 					Cloud:                        "cloud",
 					TenantID:                     "tenant_id",
@@ -1629,6 +1674,30 @@ func TestClusterToState(t *testing.T) {
 					ClusterName: "example",
 					CloudProvider: v3.CloudProvider{
 						Name: "sakuracloud",
+						AWSCloudProvider: &v3.AWSCloudProvider{
+							Global: v3.GlobalAwsOpts{
+								Zone:                        "zone",
+								VPC:                         "vpc",
+								SubnetID:                    "subnet_id",
+								RouteTableID:                "route_table_id",
+								RoleARN:                     "role_arn",
+								KubernetesClusterTag:        "kubernetes_cluster_tag",
+								KubernetesClusterID:         "kubernetes_cluster_id",
+								DisableSecurityGroupIngress: true,
+								ElbSecurityGroup:            "elb_security_group",
+								DisableStrictZoneCheck:      true,
+							},
+							ServiceOverride: map[string]v3.ServiceOverride{
+								"key": {
+									Service:       "service",
+									Region:        "region",
+									URL:           "url",
+									SigningRegion: "signing_region",
+									SigningMethod: "signing_method",
+									SigningName:   "signing_name",
+								},
+							},
+						},
 						AzureCloudProvider: &v3.AzureCloudProvider{
 							Cloud:                        "cloud",
 							TenantID:                     "tenant_id",
@@ -2021,6 +2090,31 @@ func TestClusterToState(t *testing.T) {
 				"cloud_provider": []interface{}{
 					map[string]interface{}{
 						"name": "sakuracloud",
+						"aws_cloud_config": []interface{}{
+							map[string]interface{}{
+								"global": []interface{}{map[string]interface{}{
+									"zone":                           "zone",
+									"vpc":                            "vpc",
+									"subnet_id":                      "subnet_id",
+									"route_table_id":                 "route_table_id",
+									"role_arn":                       "role_arn",
+									"kubernetes_cluster_tag":         "kubernetes_cluster_tag",
+									"kubernetes_cluster_id":          "kubernetes_cluster_id",
+									"disable_security_group_ingress": true,
+									"elb_security_group":             "elb_security_group",
+									"disable_strict_zone_check":      true,
+								}},
+								"service_override": []interface{}{map[string]interface{}{
+									"key":            "key",
+									"service":        "service",
+									"region":         "region",
+									"url":            "url",
+									"signing_region": "signing_region",
+									"signing_method": "signing_method",
+									"signing_name":   "signing_name",
+								}},
+							},
+						},
 						"azure_cloud_config": []interface{}{
 							map[string]interface{}{
 								"cloud":                            "cloud",
