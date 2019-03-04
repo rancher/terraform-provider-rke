@@ -13,11 +13,13 @@ func NodeDataSourceSchema() map[string]*schema.Schema {
 	nodeSchema["yaml"] = &schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
+		Sensitive:   true,
 		Description: "RKE Node YAML",
 	}
 	nodeSchema["json"] = &schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
+		Sensitive:   true,
 		Description: "RKE Node JSON",
 	}
 
@@ -98,6 +100,7 @@ func NodeSchema() map[string]*schema.Schema {
 		"ssh_cert": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Sensitive:   true,
 			Description: "SSH Certificate",
 		},
 		"ssh_cert_path": {
@@ -126,6 +129,7 @@ func ClusterSchema() map[string]*schema.Schema {
 			MinItems:      1,
 			Optional:      true,
 			Description:   "Kubernetes nodes(YAML or JSON)",
+			Sensitive:     true,
 			Elem:          &schema.Schema{Type: schema.TypeString},
 			ConflictsWith: []string{"nodes"},
 		},
@@ -182,18 +186,21 @@ func ClusterSchema() map[string]*schema.Schema {
 						Type:        schema.TypeString,
 						Optional:    true,
 						Computed:    true,
+						Sensitive:   true,
 						Description: "External CA certificate",
 					},
 					"cert": {
 						Type:        schema.TypeString,
 						Optional:    true,
 						Computed:    true,
+						Sensitive:   true,
 						Description: "External Client certificate",
 					},
 					"key": {
 						Type:        schema.TypeString,
 						Optional:    true,
 						Computed:    true,
+						Sensitive:   true,
 						Description: "External Client key",
 					},
 					"path": {
@@ -843,6 +850,7 @@ func ClusterSchema() map[string]*schema.Schema {
 					"ca_certificates": {
 						Type:        schema.TypeBool,
 						Optional:    true,
+						Sensitive:   true,
 						Description: "Rotate CA Certificates",
 					},
 					"services": {
@@ -1589,6 +1597,7 @@ func ClusterSchema() map[string]*schema.Schema {
 					"custom_cloud_config": {
 						Type:        schema.TypeString,
 						Optional:    true,
+						Sensitive:   true,
 						Description: "CustomCloudProvider is a multiline string that represent a custom cloud config file",
 					},
 				},
@@ -1621,8 +1630,9 @@ func ClusterSchema() map[string]*schema.Schema {
 			Sensitive: true,
 		},
 		"kube_config_yaml": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:      schema.TypeString,
+			Computed:  true,
+			Sensitive: true,
 		},
 		"internal_kube_config_yaml": {
 			Type:      schema.TypeString,
@@ -1630,12 +1640,14 @@ func ClusterSchema() map[string]*schema.Schema {
 			Sensitive: true,
 		},
 		"rke_cluster_yaml": {
-			Type:     schema.TypeString,
-			Computed: true,
+			Type:      schema.TypeString,
+			Computed:  true,
+			Sensitive: true,
 		},
 		"certificates": {
-			Type:     schema.TypeList,
-			Computed: true,
+			Type:      schema.TypeList,
+			Computed:  true,
+			Sensitive: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"id": {
