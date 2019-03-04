@@ -10,7 +10,7 @@ import (
 func dataSourceRKENodeParameter() *schema.Resource {
 	return &schema.Resource{
 		Read:   resourceRKENodeParameterRead,
-		Schema: nodeDataSourceSchema(),
+		Schema: NodeDataSourceSchema(),
 	}
 }
 
@@ -29,6 +29,8 @@ func resourceRKENodeParameterRead(d *schema.ResourceData, _ interface{}) error {
 		"ssh_agent_auth":    d.Get("ssh_agent_auth"),
 		"ssh_key":           d.Get("ssh_key"),
 		"ssh_key_path":      d.Get("ssh_key_path"),
+		"ssh_cert":          d.Get("ssh_cert"),
+		"ssh_cert_path":     d.Get("ssh_cert_path"),
 		"labels":            d.Get("labels"),
 	}
 

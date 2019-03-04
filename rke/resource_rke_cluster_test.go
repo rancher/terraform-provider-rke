@@ -13,8 +13,9 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/pki"
-	"github.com/rancher/types/apis/management.cattle.io/v3"
+	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 	"gopkg.in/yaml.v2"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -164,6 +165,12 @@ func testAccCheckTempFilesExists() resource.TestCheckFunc {
 		if _, err := os.Stat(kubeClusterYAML); err == nil {
 			return fmt.Errorf("temporary file %q is still exists", kubeClusterYAML)
 		}
+
+		rkeStatePath := cluster.GetStateFilePath(pki.ClusterConfig, "")
+		if _, err := os.Stat(rkeStatePath); err == nil {
+			return fmt.Errorf("temporary file %q is still exists", rkeStatePath)
+		}
+
 		return nil
 	}
 }
@@ -324,6 +331,7 @@ func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 func testAccCheckRKEConfigBasic(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes = [
     {
       address = "%s"
@@ -342,6 +350,7 @@ EOF
 func testAccCheckRKEConfigUpdate(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes = [
     {
       address = "%s"
@@ -364,6 +373,7 @@ EOF
 func testAccCheckRKEConfigNodeCountUpAndDownSingleNode(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes = [
     {
       address = "%s"
@@ -380,6 +390,7 @@ EOF
 func testAccCheckRKEConfigNodeCountUpAndDownMultiNodes(ip1, user1, sshKey1, ip2, user2, sshKey2 string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes = [
     {
       address = "%s"
@@ -414,6 +425,7 @@ EOF
 }
 
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes_conf = ["${data.rke_node_parameter.node.json}"]
 }
 	`, ip, user, sshKey)
@@ -437,6 +449,7 @@ EOF
 }
 
 resource rke_cluster "cluster" {
+  ignore_docker_version = true
   nodes_conf = ["${data.rke_node_parameter.node.json}"]
 }
 	`, ip, user, sshKey)
