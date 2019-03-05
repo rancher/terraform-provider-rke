@@ -332,16 +332,14 @@ func testAccCheckRKEConfigBasic(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
   ignore_docker_version = true
-  nodes = [
-    {
-      address = "%s"
-      user    = "%s"
-      role    = ["controlplane", "worker", "etcd"]
-      ssh_key = <<EOF
+  nodes {
+    address = "%s"
+    user    = "%s"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = <<EOF
 %s
 EOF
-    },
-  ]
+  }
 }
 	`, ip, user, sshKey)
 
@@ -351,20 +349,18 @@ func testAccCheckRKEConfigUpdate(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
   ignore_docker_version = true
-  nodes = [
-    {
-      address = "%s"
-      user    = "%s"
-      role    = ["controlplane", "worker", "etcd"]
-      ssh_key = <<EOF
+  nodes {
+    address = "%s"
+    user    = "%s"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = <<EOF
 %s
 EOF
-      labels = {
-        foo = "foo"
-        bar = "bar"
-      }
-    },
-  ]
+    labels = {
+      foo = "foo"
+      bar = "bar"
+    }
+  }
 }
 	`, ip, user, sshKey)
 
@@ -374,16 +370,14 @@ func testAccCheckRKEConfigNodeCountUpAndDownSingleNode(ip, user, sshKey string) 
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
   ignore_docker_version = true
-  nodes = [
-    {
-      address = "%s"
-      user    = "%s"
-      role    = ["controlplane", "worker", "etcd"]
-      ssh_key = <<EOF
+  nodes {
+    address = "%s"
+    user    = "%s"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = <<EOF
 %s
 EOF
-    },
-  ]
+  }
 }
 	`, ip, user, sshKey)
 }
@@ -391,24 +385,22 @@ func testAccCheckRKEConfigNodeCountUpAndDownMultiNodes(ip1, user1, sshKey1, ip2,
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
   ignore_docker_version = true
-  nodes = [
-    {
-      address = "%s"
-      user    = "%s"
-      role    = ["controlplane", "worker", "etcd"]
-      ssh_key = <<EOF
+  nodes {
+    address = "%s"
+    user    = "%s"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = <<EOF
 %s
 EOF
-    },
-    {
-      address = "%s"
-      user    = "%s"
-      role    = ["controlplane", "worker", "etcd"]
-      ssh_key = <<EOF
+  }
+  nodes {
+    address = "%s"
+    user    = "%s"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = <<EOF
 %s
 EOF
-    },
-  ]
+  }
 }
 	`, ip1, user1, sshKey1, ip2, user2, sshKey2)
 }
@@ -426,7 +418,7 @@ EOF
 
 resource rke_cluster "cluster" {
   ignore_docker_version = true
-  nodes_conf = ["${data.rke_node_parameter.node.json}"]
+  nodes_conf = [data.rke_node_parameter.node.json]
 }
 	`, ip, user, sshKey)
 
@@ -435,23 +427,22 @@ resource rke_cluster "cluster" {
 func testAccCheckRKEConfigWithNodesConfUpdate(ip, user, sshKey string) string {
 	return fmt.Sprintf(`	
 data rke_node_parameter "node" {
-    address = "%s"
-    user    = "%s"
-    role    = ["controlplane", "worker", "etcd"]
-    ssh_key = <<EOF
+  address = "%s"
+  user    = "%s"
+  role    = ["controlplane", "worker", "etcd"]
+  ssh_key = <<EOF
 %s
 EOF
 
-    labels = {
-      foo = "foo"
-      bar = "bar"
-    }
+  labels = {
+    foo = "foo"
+    bar = "bar"
+  }
 }
 
 resource rke_cluster "cluster" {
   ignore_docker_version = true
-  nodes_conf = ["${data.rke_node_parameter.node.json}"]
+  nodes_conf = [data.rke_node_parameter.node.json]
 }
 	`, ip, user, sshKey)
-
 }

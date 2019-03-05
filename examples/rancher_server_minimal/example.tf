@@ -1,14 +1,12 @@
-resource rke_cluster "cluster" {
-  nodes = [
-    {
-      address = "1.2.3.4"
-      user    = "ubuntu"
-      role    = ["controlplane", "worker", "etcd"]
-      ssh_key = "${file("~/.ssh/id_rsa")}"
-    },
-  ]
+resource "rke_cluster" "cluster" {
+  nodes {
+    address = "1.2.3.4"
+    user    = "ubuntu"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = file("~/.ssh/id_rsa")
+  }
 
-  ingress = {
+  ingress {
     provider = "nginx"
     extra_args = {
       enable-ssl-passthrough = ""
@@ -137,12 +135,14 @@ spec:
           defaultMode: 420
           secretName: cattle-keys-server
 EOL
+
 }
 
 ###############################################################################
 # If you need kubeconfig.yml for using kubectl, please uncomment follows.
 ###############################################################################
-#resource "local_file" "kube_cluster_yaml" {
-#  filename = "${path.root}/kube_config_cluster.yml"
-#  content  = "${rke_cluster.cluster.kube_config_yaml}"
-#}
+# resource "local_file" "kube_cluster_yaml" {
+#   filename = "${path.root}/kube_config_cluster.yml"
+#   content = rke_cluster.cluster.kube_config_yaml
+# }
+

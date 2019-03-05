@@ -1,5 +1,5 @@
 output "private_key" {
-  value = "${tls_private_key.node-key.private_key_pem}"
+  value = tls_private_key.node-key.private_key_pem
 }
 
 output "ssh_username" {
@@ -7,5 +7,6 @@ output "ssh_username" {
 }
 
 output "addresses" {
-  value = ["${digitalocean_droplet.rke-node.*.ipv4_address}"]
+  value = digitalocean_droplet.rke-node[*].ipv4_address
 }
+

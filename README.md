@@ -8,15 +8,17 @@ Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kube
 
 #### Compatible Versions
 
-- Terraform: v0.11+
+- Terraform: v0.11+(includes v0.12)
 - RKE: v0.2.0-rc7
 
 ## Installation
 
-- Install [Terraform](https://www.terraform.io/downloads.html) v0.11+ 
+- Install [Terraform](https://www.terraform.io/downloads.html) v0.11+(includes v0.12) 
 - Add the [`terraform-provider-rke` plugin binary](https://github.com/yamamoto-febc/terraform-provider-rke/releases/latest) In `~/.terraform.d/plugins/` 
 
 ## Usage
+
+*Note: Following examples are compatible with Terraform v0.12.*
 
 ### Target Node Requirements
 
@@ -28,29 +30,27 @@ It is same as the [requirements of RKE](https://github.com/rancher/rke/blob/mast
 
 ```hcl
 resource rke_cluster "cluster" {
-  nodes = [
-    {
+  nodes {
       address = "1.2.3.4"
       user    = "rancher"
       role    = ["controlplane", "worker", "etcd"]
-    },
-  ]
+  }
 }
 
 ###############################################################################
 # If you need kubeconfig.yml for using kubectl, please uncomment follows.
 ###############################################################################
 //resource "local_file" "kube_cluster_yaml" {
-//  filename = "${path.root}/kube_config_cluster.yml"
-//  content = "${rke_cluster.cluster.kube_config_yaml}"
+//  filename = format("%s/%s" , path.root, "kube_config_cluster.yml")
+//  content = rke_cluster.cluster.kube_config_yaml
 //}
 
 ###############################################################################
 # If you need cluster.yml for using rke, please uncomment follows.
 ###############################################################################
 //resource "local_file" "rke_cluster_yaml" {
-//  filename = "${path.root}/cluster.yml"
-//  content = "${rke_cluster.cluster.rke_cluster_yaml}"
+//  filename = format("%s/%s", path.root, "cluster.yml")
+//  content = rke_cluster.cluster.rke_cluster_yaml
 //}
 
 ###############################################################################
@@ -58,7 +58,7 @@ resource rke_cluster "cluster" {
 ###############################################################################
 // output "rke_cluster_yaml" {
 //  sensitive = true
-//  value = "${rke_cluster.cluster.rke_cluster_yaml}"
+//  value = rke_cluster.cluster.rke_cluster_yaml
 //}
 ```
 
@@ -68,30 +68,41 @@ resource rke_cluster "cluster" {
 #### Dynamic multiple nodes example
 
 ```hcl
-variable "node_addrs" {
-  type    = "list"
-  default = ["192.2.0.1", "192.2.0.2"]
-}
-
-data rke_node_parameter "nodes" {
-  count   = "${length(var.node_addrs)}"
-
-  address = "${var.node_addrs[count.index]}"
-  user    = "ubuntu"
-  role    = ["controlplane", "worker", "etcd"]
-  ssh_key = "${file("~/.ssh/id_rsa")}"
+variable "nodes" {
+  type = list(object({
+    address = string,
+    user    = string,
+  }))
+  default = [
+    {
+      address = "192.2.0.1"
+      user    = "ubuntu"
+    },
+    {
+      address = "192.2.0.2"
+      user    = "ubuntu"
+    },
+  ]
 }
 
 resource rke_cluster "cluster" {
-  nodes_conf = ["${data.rke_node_parameter.nodes.*.json}"]
+  dynamic nodes {
+    for_each = var.nodes
+    content {
+      address = nodes.value.address
+      user    = nodes.value.user
+      role    = ["controlplane", "worker", "etcd"]
+      ssh_key = file("~/.ssh/id_rsa")
+    }
+  }
 }
 
 ###############################################################################
 # If you need kubeconfig.yml for using kubectl, please uncomment follows.
 ###############################################################################
 //resource "local_file" "kube_cluster_yaml" {
-//  filename = "${path.root}/kube_config_cluster.yml"
-//  content = "${rke_cluster.cluster.kube_config_yaml}"
+//  filename = format("%s/%s" , path.root, "kube_config_cluster.yml")
+//  content = rke_cluster.cluster.kube_config_yaml
 //}
 ```
 
@@ -107,23 +118,21 @@ You can use RKE provider and [Kubernetes provider](https://www.terraform.io/docs
 
 ```hcl
 resource rke_cluster "cluster" {
-  nodes = [
-    {
-      address = "1.2.3.4"
-      user    = "ubuntu"
-      role    = ["controlplane", "worker", "etcd"]
-      ssh_key = "${file("~/.ssh/id_rsa")}"
-    },
-  ]
+  nodes {
+    address = "1.2.3.4"
+    user    = "ubuntu"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = file("~/.ssh/id_rsa")
+  }
 }
 
 provider "kubernetes" {
-  host     = "${rke_cluster.cluster.api_server_url}"
-  username = "${rke_cluster.cluster.kube_admin_user}"
+  host     = rke_cluster.cluster.api_server_url
+  username = rke_cluster.cluster.kube_admin_user
 
-  client_certificate     = "${rke_cluster.cluster.client_cert}"
-  client_key             = "${rke_cluster.cluster.client_key}"
-  cluster_ca_certificate = "${rke_cluster.cluster.ca_crt}"
+  client_certificate     = rke_cluster.cluster.client_cert
+  client_key             = rke_cluster.cluster.client_key
+  cluster_ca_certificate = rke_cluster.cluster.ca_crt
   # load_config_file = false
 }
 
