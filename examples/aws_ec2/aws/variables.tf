@@ -9,3 +9,4 @@ variable "instance_type" {
 variable "cluster_id" {
   default = "rke"
 }
+

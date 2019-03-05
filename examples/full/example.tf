@@ -1,49 +1,49 @@
 # This example same as https://github.com/rancher/rke/blob/master/cluster.yml
-resource rke_cluster "cluster" {
+resource "rke_cluster" "cluster" {
   # Disable port check validation between nodes
   disable_port_check = false
 
   ###############################################
   # Kubernets nodes
   ###############################################
-  nodes = [
-    {
-      address      = "1.1.1.1"
-      user         = "ubuntu"
-      role         = ["controlplane", "etcd"]
-      ssh_key_path = "~/.ssh/id_rsa"
-      port         = 2222
-    },
-    {
-      address = "2.2.2.2"
-      user    = "ubuntu"
-      role    = ["worker"]
+  nodes {
+    address      = "1.1.1.1"
+    user         = "ubuntu"
+    role         = ["controlplane", "etcd"]
+    ssh_key_path = "~/.ssh/id_rsa"
+    port         = 2222
+  }
 
-      ssh_key = <<EOL
+  nodes {
+    address = "2.2.2.2"
+    user    = "ubuntu"
+    role    = ["worker"]
+
+    ssh_key = <<EOL
 -----BEGIN RSA PRIVATE KEY-----
 
 -----END RSA PRIVATE KEY-----
 EOL
 
-      # or
-      #ssh_key      = "${file("~/.ssh/id_rsa")}"
-    },
-    {
-      address           = "example.com"
-      user              = "ubuntu"
+    # or
+    #ssh_key      = "${file("~/.ssh/id_rsa")}"
+  }
 
-      role              = ["controlplane","etcd","worker"]
-      # or
-      # roles             = "controlplane,etcd,worker"
+  nodes {
+    address = "example.com"
+    user    = "ubuntu"
 
-      hostname_override = "node3"
-      internal_address  = "192.168.1.6"
+    role = ["controlplane", "etcd", "worker"]
+    # or
+    # roles             = "controlplane,etcd,worker"
 
-      labels = {
-        app = "ingress"
-      }
-    },
-  ]
+    hostname_override = "node3"
+    internal_address  = "192.168.1.6"
+
+    labels = {
+      app = "ingress"
+    }
+  }
 
   # If set to true, RKE will not fail when unsupported Docker version are found
   ignore_docker_version = false
@@ -62,12 +62,12 @@ EOL
   ################################################
   # Bastion/Jump host configuration
   ################################################
-  #bastion_host = {
+  #bastion_host {
   #  address      = "1.1.1.1"
   #  user         = "ubuntu"
   #  ssh_key_path = "~/.ssh/id_rsa"
   #  or
-  #  ssh_key      = "${file("~/.ssh/id_rsa")}"
+  #  ssh_key      = file("~/.ssh/id_rsa")
   #  port         = 2222
   #}
 
@@ -76,17 +76,16 @@ EOL
   ################################################
   # List of registry credentials, if you are using a Docker Hub registry,
   # you can omit the `url` or set it to `docker.io`
-  private_registries = {
+  private_registries {
     url      = "registry1.com"
     user     = "Username"
     password = "password1"
   }
-  private_registries = {
+  private_registries {
     url      = "registry2.com"
     user     = "Username"
     password = "password1"
   }
-
 
   ################################################
   # Cluster Name
@@ -103,7 +102,7 @@ EOL
   #
   # In case the kubernetes_version and kubernetes image in system_images are defined,
   # the system_images configuration will take precedence over kubernetes_version.
-  kubernetes_version = "v1.10.3-rancher2"
+  kubernetes_version = "v1.13.1-rancher1-1"
 
   ################################################
   # System Images
@@ -132,9 +131,9 @@ EOL
   services_etcd {
     # if external etcd used
     #path      = "/etcdcluster"
-    #ca_cert   = "${file("ca_cert")}"
-    #cert      = "${file("cert")}"
-    #key       = "${file("key")}"
+    #ca_cert   = file("ca_cert")
+    #cert      = file("cert")
+    #key       = file("key")
 
     # for etcd snapshots
     #snapshot  = false
@@ -150,39 +149,35 @@ EOL
     # Expose a different port range for NodePort services
     service_node_port_range = "30000-32767"
 
-    pod_security_policy      = false
+    pod_security_policy = false
 
     # Add additional arguments to the kubernetes API server
     # This WILL OVERRIDE any existing defaults
     extra_args = {
-      # Enable audit log to stdout
-      audit-log-path = "-"
-
-      # Increase number of delete workers
+      audit-log-path            = "-"
       delete-collection-workers = 3
-
-      # Set the level of log output to debug-level
-      v = 4
+      v                         = 4
     }
   }
 
   services_kube_controller {
     # CIDR pool used to assign IP addresses to pods in the cluster
-    cluster_cidr             = "10.42.0.0/16"
+    cluster_cidr = "10.42.0.0/16"
 
     # IP range for any services created on Kubernetes
     # This must match the service_cluster_ip_range in kube-api
     service_cluster_ip_range = "10.43.0.0/16"
   }
 
-  services_scheduler {}
+  services_scheduler {
+  }
 
   services_kubelet {
     # Base domain for the cluster
-    cluster_domain        = "cluster.local"
+    cluster_domain = "cluster.local"
 
     # IP address for the DNS service endpoint
-    cluster_dns_server    = "10.43.0.10"
+    cluster_dns_server = "10.43.0.10"
 
     # Fail if swap is on
     fail_swap_on = false
@@ -193,7 +188,8 @@ EOL
     ]
   }
 
-  services_kubeproxy {}
+  services_kubeproxy {
+  }
 
   ################################################
   # Authentication
@@ -267,38 +263,35 @@ spec:
     - containerPort: 80
 EOL
 
-  addons_include = [
-    "https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/rook-operator.yaml",
-    "https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/rook-cluster.yaml",
-    "/path/to/manifest",
-  ]
 
-}
+    addons_include = [
+      "https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/rook-operator.yaml",
+      "https://raw.githubusercontent.com/rook/rook/master/cluster/examples/kubernetes/rook-cluster.yaml",
+      "/path/to/manifest",
+    ]
+  }
 
-###############################################################################
-# If you need kubeconfig.yml for using kubectl, please uncomment follows.
-###############################################################################
-#resource "local_file" "kube_cluster_yaml" {
-#  filename = "${path.root}/kube_config_cluster.yml"
-#  content  = "${rke_cluster.cluster.kube_config_yaml}"
-#}
-
-
-###############################################################################
-# If you need ca_crt/client_cert/client_key, please uncomment follows.
-###############################################################################
-#resource "local_file" "ca_crt" {
-#  filename = "${path.root}/ca_cert"
-#  content  = "${rke_cluster.cluster.ca_crt}"
-#}
-#
-#resource "local_file" "client_cert" {
-#  filename = "${path.root}/client_cert"
-#  content  = "${rke_cluster.cluster.client_cert}"
-#}
-#
-#resource "local_file" "client_key" {
-#  filename = "${path.root}/client_key"
-#  content  = "${rke_cluster.cluster.client_key}"
-#}
-
+  ###############################################################################
+  # If you need kubeconfig.yml for using kubectl, please uncomment follows.
+  ###############################################################################
+  #resource "local_file" "kube_cluster_yaml" {
+  #  filename = "${path.root}/kube_config_cluster.yml"
+  #  content  = rke_cluster.cluster.kube_config_yaml
+  #}
+  ###############################################################################
+  # If you need ca_crt/client_cert/client_key, please uncomment follows.
+  ###############################################################################
+  #resource "local_file" "ca_crt" {
+  #  filename = "${path.root}/ca_cert"
+  #  content  = rke_cluster.cluster.ca_crt
+  #}
+  #
+  #resource "local_file" "client_cert" {
+  #  filename = "${path.root}/client_cert"
+  #  content  = rke_cluster.cluster.client_cert
+  #}
+  #
+  #resource "local_file" "client_key" {
+  #  filename = "${path.root}/client_key"
+  #  content  = rke_cluster.cluster.client_key
+  #}

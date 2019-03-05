@@ -1,21 +1,19 @@
-resource rke_cluster "cluster" {
-  nodes = [
-    {
-      address = "1.2.3.4"
-      user    = "ubuntu"
-      role    = ["controlplane", "worker", "etcd"]
-      ssh_key = "${file("~/.ssh/id_rsa")}"
-    },
-  ]
+resource "rke_cluster" "cluster" {
+  nodes {
+    address = "1.2.3.4"
+    user    = "ubuntu"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = file("~/.ssh/id_rsa")
+  }
 }
 
 provider "kubernetes" {
-  host     = "${rke_cluster.cluster.api_server_url}"
-  username = "${rke_cluster.cluster.kube_admin_user}"
+  host     = rke_cluster.cluster.api_server_url
+  username = rke_cluster.cluster.kube_admin_user
 
-  client_certificate     = "${rke_cluster.cluster.client_cert}"
-  client_key             = "${rke_cluster.cluster.client_key}"
-  cluster_ca_certificate = "${rke_cluster.cluster.ca_crt}"
+  client_certificate     = rke_cluster.cluster.client_cert
+  client_key             = rke_cluster.cluster.client_key
+  cluster_ca_certificate = rke_cluster.cluster.ca_crt
 }
 
 resource "kubernetes_namespace" "example" {
@@ -23,3 +21,4 @@ resource "kubernetes_namespace" "example" {
     name = "terraform-example-namespace"
   }
 }
+
