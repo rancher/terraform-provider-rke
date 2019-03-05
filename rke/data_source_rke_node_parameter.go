@@ -9,8 +9,9 @@ import (
 
 func dataSourceRKENodeParameter() *schema.Resource {
 	return &schema.Resource{
-		Read:   resourceRKENodeParameterRead,
-		Schema: NodeDataSourceSchema(),
+		Read:               resourceRKENodeParameterRead,
+		Schema:             NodeDataSourceSchema(),
+		DeprecationMessage: "the rke_node_parameter will be deprecated and removed in a future version. Use rke_cluster+dynamic instead",
 	}
 }
 
