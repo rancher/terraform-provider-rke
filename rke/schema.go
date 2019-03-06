@@ -1665,8 +1665,9 @@ func ClusterSchema() map[string]*schema.Schema {
 						Computed:  true,
 					},
 					"config": {
-						Type:     schema.TypeString,
-						Computed: true,
+						Type:      schema.TypeString,
+						Computed:  true,
+						Sensitive: true,
 					},
 					"name": {
 						Type:     schema.TypeString,
