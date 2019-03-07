@@ -47,11 +47,14 @@ func resourceRKECluster() *schema.Resource {
 				Default:  false,
 			},
 			"nodes_conf": {
-				Type:          schema.TypeList,
-				MinItems:      1,
-				Optional:      true,
-				Description:   "Kubernetes nodes(YAML or JSON)",
-				Elem:          &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeList,
+				MinItems:    1,
+				Optional:    true,
+				Description: "Kubernetes nodes(YAML or JSON)",
+				Elem: &schema.Schema{
+					Type:      schema.TypeString,
+					Sensitive: true,
+				},
 				ConflictsWith: []string{"nodes"},
 			},
 			"nodes": {
@@ -107,18 +110,21 @@ func resourceRKECluster() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true,
+							Sensitive:   true,
 							Description: "External CA certificate",
 						},
 						"cert": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true,
+							Sensitive:   true,
 							Description: "External Client certificate",
 						},
 						"key": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true,
+							Sensitive:   true,
 							Description: "External Client key",
 						},
 						"path": {
@@ -1243,6 +1249,7 @@ func resourceRKECluster() *schema.Resource {
 						"custom_cloud_config": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Sensitive:   true,
 							Description: "CustomCloudProvider is a multiline string that represent a custom cloud config file",
 						},
 					},
@@ -1270,16 +1277,19 @@ func resourceRKECluster() *schema.Resource {
 				Computed:  true,
 			},
 			"kube_config_yaml": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Sensitive: true,
+				Computed:  true,
 			},
 			"rke_cluster_yaml": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:      schema.TypeString,
+				Sensitive: true,
+				Computed:  true,
 			},
 			"certificates": {
-				Type:     schema.TypeList,
-				Computed: true,
+				Type:      schema.TypeList,
+				Computed:  true,
+				Sensitive: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -1287,8 +1297,9 @@ func resourceRKECluster() *schema.Resource {
 							Computed: true,
 						},
 						"certificate": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:      schema.TypeString,
+							Computed:  true,
+							Sensitive: true,
 						},
 						"key": {
 							Type:      schema.TypeString,
@@ -1296,8 +1307,9 @@ func resourceRKECluster() *schema.Resource {
 							Computed:  true,
 						},
 						"config": {
-							Type:     schema.TypeString,
-							Computed: true,
+							Type:      schema.TypeString,
+							Computed:  true,
+							Sensitive: true,
 						},
 						"name": {
 							Type:     schema.TypeString,

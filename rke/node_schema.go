@@ -89,11 +89,13 @@ func nodeDataSourceSchema() map[string]*schema.Schema {
 	nodeSchema["yaml"] = &schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
+		Sensitive:   true,
 		Description: "RKE Node YAML",
 	}
 	nodeSchema["json"] = &schema.Schema{
 		Type:        schema.TypeString,
 		Computed:    true,
+		Sensitive:   true,
 		Description: "RKE Node JSON",
 	}
 
