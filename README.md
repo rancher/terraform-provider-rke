@@ -11,6 +11,8 @@ Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kube
 - Terraform: v0.11+(includes v0.12)
 - RKE: v0.2.0-rc7
 
+**Current master is focusing on RKE v0.2.x. If you use RKE v0.1.x, please see [rke/v0.1.x](https://github.com/yamamoto-febc/terraform-provider-rke/tree/rke/v0.1.x) branch.**
+
 ## Installation
 
 - Install [Terraform](https://www.terraform.io/downloads.html) v0.11+(includes v0.12) 
