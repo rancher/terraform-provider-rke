@@ -1310,6 +1310,7 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 							"resource_group":                &c.ResourceGroup,
 							"location":                      &c.Location,
 							"vnet_name":                     &c.VnetName,
+							"subnet_name":                   &c.SubnetName,
 							"vnet_resource_group":           &c.VnetResourceGroup,
 							"route_table_name":              &c.RouteTableName,
 							"primary_availability_set_name": &c.PrimaryAvailabilitySetName,
@@ -1927,6 +1928,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 		acp["resource_group"] = cp.ResourceGroup
 		acp["location"] = cp.Location
 		acp["vnet_name"] = cp.VnetName
+		acp["subnet_name"] = cp.SubnetName
 		acp["vnet_resource_group"] = cp.VnetResourceGroup
 		acp["route_table_name"] = cp.RouteTableName
 		acp["primary_availability_set_name"] = cp.PrimaryAvailabilitySetName

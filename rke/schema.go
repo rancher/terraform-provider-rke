@@ -1158,6 +1158,11 @@ func ClusterSchema() map[string]*schema.Schema {
 									Optional:    true,
 									Description: "The name of the VNet that the cluster is deployed in",
 								},
+								"subnet_name": {
+									Type:        schema.TypeString,
+									Optional:    true,
+									Description: "The name of the Subnet that the cluster is deployed in",
+								},
 								"vnet_resource_group": {
 									Type:        schema.TypeString,
 									Optional:    true,
