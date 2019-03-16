@@ -1168,6 +1168,11 @@ func ClusterSchema() map[string]*schema.Schema {
 									Optional:    true,
 									Description: "The name of the Subnet that the cluster is deployed in",
 								},
+								"security_group_name": {
+									Type:        schema.TypeString,
+									Optional:    true,
+									Description: "The name of the security group attached to the cluster's subnet",
+								},
 								"route_table_name": {
 									Type:        schema.TypeString,
 									Optional:    true,
