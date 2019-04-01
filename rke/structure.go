@@ -275,7 +275,7 @@ func setDNSFromResource(rkeConfig *v3.RancherKubernetesEngineConfig, d resourceD
 		return err
 	}
 	if dns != nil {
-		rkeConfig.DNS = *dns
+		rkeConfig.DNS = dns
 	}
 	return nil
 }
