@@ -418,7 +418,7 @@ EOF
 
 resource rke_cluster "cluster" {
   ignore_docker_version = true
-  nodes_conf = [data.rke_node_parameter.node.json]
+  nodes_conf = ["${data.rke_node_parameter.node.json}"]
 }
 	`, ip, user, sshKey)
 
@@ -442,7 +442,7 @@ EOF
 
 resource rke_cluster "cluster" {
   ignore_docker_version = true
-  nodes_conf = [data.rke_node_parameter.node.json]
+  nodes_conf = ["${data.rke_node_parameter.node.json}"]
 }
 	`, ip, user, sshKey)
 }

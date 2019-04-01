@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/hashicorp/terraform/plugin/discovery"
+	"github.com/hashicorp/terraform/plugin"
 )
 
 func main() {
-	fmt.Print(discovery.PluginInstallProtocolVersion)
+	fmt.Print(plugin.Handshake.ProtocolVersion)
+	//fmt.Print(discovery.PluginInstallProtocolVersion)
 }
