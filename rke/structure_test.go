@@ -1630,7 +1630,7 @@ func TestClusterToState(t *testing.T) {
 						CACertificates: true,
 						Services:       []string{"etcd", "kubelet"},
 					},
-					DNS: v3.DNSConfig{
+					DNS: &v3.DNSConfig{
 						Provider:            "core-dns",
 						UpstreamNameservers: []string{"8.8.8.8", "8.8.4.4"},
 						ReverseCIDRs:        []string{"1.0.2.192.in-addr.arpa", "2.0.2.192.in-addr.arpa"},
