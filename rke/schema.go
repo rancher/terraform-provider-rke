@@ -539,6 +539,7 @@ func ClusterSchema() map[string]*schema.Schema {
 					"options": {
 						Type:        schema.TypeMap,
 						Optional:    true,
+						Computed:    true,
 						Description: "Plugin options to configure network properties",
 					},
 				},
