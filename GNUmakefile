@@ -10,10 +10,8 @@ default: test build
 
 .PHONY: tools
 tools:
-	go get -u github.com/motemen/gobump/cmd/gobump
-	go get -u golang.org/x/tools/cmd/goimports
-	curl https://git.io/vp6lP | sh
-	gometalinter --install
+	GO111MODULE=off go get -u github.com/motemen/gobump/cmd/gobump
+	GO111MODULE=off go get -u golang.org/x/tools/cmd/goimports
 
 clean:
 	rm -Rf $(CURDIR)/bin/*
