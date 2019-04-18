@@ -83,16 +83,16 @@ docker-build: clean
 
 .PHONY: bump-patch bump-minor bump-major version
 bump-patch:
-	gobump patch -w
+	gobump patch -w rke
 
 bump-minor:
-	gobump minor -w
+	gobump minor -w rke
 
 bump-major:
-	gobump major -w
+	gobump major -w rke
 
 version:
-	gobump show
+	gobump show -r rke
 
 git-tag:
-	git tag v`gobump show -r`
+	git tag v`gobump show -r rke`
