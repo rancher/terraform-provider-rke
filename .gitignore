@@ -3,3 +3,4 @@ test/
 /**/.terraform*
 /**/terraform.tfstate*
 go.sum
+vendor/

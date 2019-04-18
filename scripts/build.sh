@@ -7,7 +7,7 @@ mkdir -p bin/ 2>/dev/null
 for GOOS in $OS; do
     for GOARCH in $ARCH; do
         arch="$GOOS-$GOARCH"
-        binary="terraform-provider-rke_v${CURRENT_VERSION}_x${PROTOCOL_VERSION}"
+        binary="terraform-provider-rke_v${CURRENT_VERSION}"
         if [ "$GOOS" = "windows" ]; then
           binary="${binary}.exe"
         fi
