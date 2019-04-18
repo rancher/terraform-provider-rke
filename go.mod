@@ -55,8 +55,8 @@ require (
 	github.com/posener/complete v1.2.1 // indirect
 	github.com/prometheus/client_golang v0.9.2 // indirect
 	github.com/rancher/norman v0.0.0-20181220035647-0557aa4ff31a // indirect
-	github.com/rancher/rke v0.2.1
-	github.com/rancher/types v0.0.0-20190326222017-58b8fb504c8a
+	github.com/rancher/rke v0.2.2
+	github.com/rancher/types v0.0.0-20190408185554-f2a77611764d
 	github.com/sirupsen/logrus v1.1.1
 	github.com/stretchr/testify v1.3.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
