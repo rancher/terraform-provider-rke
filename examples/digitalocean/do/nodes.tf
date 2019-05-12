@@ -7,6 +7,8 @@ resource "digitalocean_droplet" "rke-node" {
   ssh_keys = [digitalocean_ssh_key.key.id]
   count    = 4
 
+  private_networking = true
+
   provisioner "remote-exec" {
     connection {
       type        = "ssh"
