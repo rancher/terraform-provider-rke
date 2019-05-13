@@ -1,6 +1,6 @@
 # Droplet(ノード)の定義
 resource "digitalocean_droplet" "rke-node" {
-  image    = "ubuntu-16-04-x64"
+  image    = "ubuntu-18-04-x64"
   name     = "rke-nodes-${count.index + 1}"
   region   = var.region
   size     = var.droplet_size
@@ -18,7 +18,7 @@ resource "digitalocean_droplet" "rke-node" {
     }
 
     inline = [
-      "curl releases.rancher.com/install-docker/1.12.sh | bash",
+      "curl releases.rancher.com/install-docker/18.09.4.sh | bash",
     ]
   }
 }
