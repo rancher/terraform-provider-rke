@@ -2,14 +2,7 @@ variable "do_token" {
   default = ""
 }
 
-module "masters" {
-  source = "./do"
-  do_token = var.do_token
-  # region       = "nyc1"
-  # droplet_size = "t2.micro"
-}
-
-module "workers" {
+module "nodes" {
   source = "./do"
   do_token = var.do_token
   # region       = "nyc1"
@@ -18,31 +11,31 @@ module "workers" {
 
 resource "rke_cluster" "cluster" {
   nodes {
-    internal_address = module.masters.internal_addresses[0]
-    address          = module.masters.addresses[0]
-    user             = module.masters.ssh_username
-    ssh_key          = module.masters.private_key
+    internal_address = module.nodes.internal_addresses[0]
+    address          = module.nodes.addresses[0]
+    user             = module.nodes.ssh_username
+    ssh_key          = module.nodes.private_key
     role             = ["controlplane", "etcd"]
   }
   nodes {
-    internal_address = module.workers.internal_addresses[0]
-    address          = module.workers.addresses[0]
-    user             = module.workers.ssh_username
-    ssh_key          = module.workers.private_key
+    internal_address = module.nodes.internal_addresses[1]
+    address          = module.nodes.addresses[1]
+    user             = module.nodes.ssh_username
+    ssh_key          = module.nodes.private_key
     role             = ["worker"]
   }
   nodes {
-    internal_address = module.workers.internal_addresses[1]
-    address          = module.workers.addresses[1]
-    user             = module.workers.ssh_username
-    ssh_key          = module.workers.private_key
+    internal_address = module.nodes.internal_addresses[2]
+    address          = module.nodes.addresses[2]
+    user             = module.nodes.ssh_username
+    ssh_key          = module.nodes.private_key
     role             = ["worker"]
   }
   nodes {
-    internal_address = module.workers.internal_addresses[2]
-    address          = module.workers.addresses[2]
-    user             = module.workers.ssh_username
-    ssh_key          = module.workers.private_key
+    internal_address = module.nodes.internal_addresses[3]
+    address          = module.nodes.addresses[3]
+    user             = module.nodes.ssh_username
+    ssh_key          = module.nodes.private_key
     role             = ["worker"]
   }
 

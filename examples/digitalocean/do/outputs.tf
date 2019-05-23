@@ -11,5 +11,5 @@ output "addresses" {
 }
 
 output "internal_addresses" {
-  value = digitalocean_droplet.rke-node[*].ipv4_address
+  value = digitalocean_droplet.rke-node.*.ipv4_address_private
 }
