@@ -1,5 +1,3 @@
-# NOTE: this release is compatible with Kubernetes versions v1.9 - v1.12
-
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
@@ -31,7 +29,7 @@ spec:
         - key: "node-role.kubernetes.io/master"
           effect: NoSchedule
       containers:
-      - image: digitalocean/digitalocean-cloud-controller-manager:v0.1.9
+      - image: digitalocean/digitalocean-cloud-controller-manager:v0.1.13
         name: digitalocean-cloud-controller-manager
         command:
           - "/bin/digitalocean-cloud-controller-manager"
