@@ -1,3 +1,5 @@
+### Example works for RKE v1.13.5-rancher1-2
+
 variable "do_token" {
   default = ""
 }
@@ -59,7 +61,7 @@ resource "rke_cluster" "cluster" {
 
   addons_include = [
     # Cloud Controller Manager for DigitalOcean
-    "${path.module}/files/ccm-digitalocean-v0.1.9.yaml",
+    "${path.module}/files/ccm-digitalocean-v0.1.13.yaml",
     # CSI driver for DO, only v1.0.1 version works with rke v1.13.5-rancher1-2
     "${path.module}/files/csi-digitalocean-v1.0.1.yaml",
     # Ingess-nginx for generic cloud (with LoadBalancer type service)
