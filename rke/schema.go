@@ -1657,8 +1657,9 @@ func ClusterSchema() map[string]*schema.Schema {
 			Sensitive: true,
 		},
 		"certificates": {
-			Type:     schema.TypeList,
-			Computed: true,
+			Type:      schema.TypeList,
+			Computed:  true,
+			Sensitive: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"id": {
