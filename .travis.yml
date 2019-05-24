@@ -1,10 +1,12 @@
 language: go
 go:
   - '1.12'
+install:
+  - make tools
 script:
   - make test
 before_deploy:
-  - make tools build-x
+  - make build-x
 deploy:
   provider: releases
   api_key:
