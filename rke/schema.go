@@ -128,6 +128,7 @@ func ClusterSchema() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MinItems:    1,
 			Optional:    true,
+			Sensitive:   true,
 			Description: "Kubernetes nodes(YAML or JSON)",
 			Elem: &schema.Schema{
 				Type:      schema.TypeString,
