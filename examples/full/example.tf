@@ -146,7 +146,7 @@ EOL
   services_kube_api {
     # IP range for any services created on Kubernetes
     # This must match the service_cluster_ip_range in kube-controller
-    service_cluster_ip_range = "10.43.0.0/1"
+    service_cluster_ip_range = "10.43.0.0/16"
 
     # Expose a different port range for NodePort services
     service_node_port_range = "30000-32767"
