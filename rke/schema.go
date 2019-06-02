@@ -119,6 +119,11 @@ func NodeSchema() map[string]*schema.Schema {
 // ClusterSchema returns schema of rke_cluster
 func ClusterSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
+		"delay_on_creation": {
+			Type:         schema.TypeInt,
+			Optional:     true,
+			ValidateFunc: validation.IntAtLeast(0),
+		},
 		"disable_port_check": {
 			Type:     schema.TypeBool,
 			Optional: true,

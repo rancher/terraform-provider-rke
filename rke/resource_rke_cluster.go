@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/hashicorp/go-getter/helper/url"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -43,6 +44,11 @@ func resourceRKECluster() *schema.Resource {
 }
 
 func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
+
+	if delay, ok := d.GetOk("delay_on_creation"); ok && delay.(int) > 0 {
+		time.Sleep(time.Duration(delay.(int)) * time.Second)
+	}
+
 	if err := clusterUp(d, true); err != nil {
 		return wrapErrWithRKEOutputs(err)
 	}
