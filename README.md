@@ -64,7 +64,7 @@ resource rke_cluster "cluster" {
 //}
 ```
 
-* default k8s version: `v1.13.5-rancher1-2`
+* default k8s version: `v1.13.5-rancher1-3"`
 * default network plugin: `canal`
 
 #### Dynamic multiple nodes example
