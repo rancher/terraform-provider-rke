@@ -1540,11 +1540,11 @@ func ClusterSchema() map[string]*schema.Schema {
 												Optional: true,
 											},
 											"monitor_delay": {
-												Type:     schema.TypeInt,
+												Type:     schema.TypeString,
 												Optional: true,
 											},
 											"monitor_timeout": {
-												Type:     schema.TypeInt,
+												Type:     schema.TypeString,
 												Optional: true,
 											},
 											"monitor_max_retries": {

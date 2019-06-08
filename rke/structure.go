@@ -1543,6 +1543,8 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 										"floating_network_id": &lb.FloatingNetworkID,
 										"lb_method":           &lb.LBMethod,
 										"lb_provider":         &lb.LBProvider,
+										"monitor_delay":       &lb.MonitorDelay,
+										"monitor_timeout":     &lb.MonitorTimeout,
 									},
 									boolMapping: map[string]*bool{
 										"use_octavia":            &lb.UseOctavia,
@@ -1550,8 +1552,6 @@ func parseResourceCloudProvider(d resourceData) (*v3.CloudProvider, error) {
 										"manage_security_groups": &lb.ManageSecurityGroups,
 									},
 									intMapping: map[string]*int{
-										"monitor_delay":       &lb.MonitorDelay,
-										"monitor_timeout":     &lb.MonitorTimeout,
 										"monitor_max_retries": &lb.MonitorMaxRetries,
 									},
 								})
