@@ -220,7 +220,7 @@ func ClusterSchema() map[string]*schema.Schema {
 					"snapshot": {
 						Type:        schema.TypeBool,
 						Optional:    true,
-						Computed:    true,
+						Default:     true,
 						Description: "Etcd Recurring snapshot Service",
 					},
 					"retention": {
