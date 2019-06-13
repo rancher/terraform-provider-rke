@@ -138,9 +138,18 @@ EOL
     #key       = file("key")
 
     # for etcd snapshots
-    #snapshot  = false
-    #retention = "24h"
-    #creation  = "5m0s"
+    #backup_config {
+    #  interval_hours = 12
+    #  retention = 6
+    #  # s3 specific parameters
+    #  #s3_backup_config {
+    #  #  access_key = "access-key"
+    #  #  secret_key = "secret_key"
+    #  #  bucket_name = "bucket-name"
+    #  #  region = "region"
+    #  #  endpoint = "s3.amazonaws.com"
+    #  #}
+    #}
   }
 
   services_kube_api {
