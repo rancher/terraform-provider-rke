@@ -22,7 +22,7 @@ $ cd terraform-provider-rke/examples/digialocean
 $ export DIGITALOCEAN_TOKEN="<your-token>"
 
 #deploy
-$ terraform init && terraform apply
+$ terraform init && terraform apply -var do_token=$DIGITALOCEAN_TOKEN
 
 ###########################################################################
 #When "terraform apply" is completed, 
