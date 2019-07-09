@@ -103,8 +103,8 @@ EOL
   # In case the kubernetes_version and kubernetes image in system_images are defined,
   # the system_images configuration will take precedence over kubernetes_version.
   #
-  # Allowed values: [v1.12.7-rancher1-2, v1.13.5-rancher1-2(default), v1.14.1-rancher1-1]
-  kubernetes_version = "v1.13.5-rancher1-2"
+  # Allowed values: [v1.11.9-rancher1-2, v1.12.7-rancher1-3, v1.13.5-rancher1-3(default), v1.14.1-rancher1-2]
+  kubernetes_version = "v1.13.5-rancher1-3"
 
   ################################################
   # System Images
@@ -138,15 +138,24 @@ EOL
     #key       = file("key")
 
     # for etcd snapshots
-    #snapshot  = false
-    #retention = "24h"
-    #creation  = "5m0s"
+    #backup_config {
+    #  interval_hours = 12
+    #  retention = 6
+    #  # s3 specific parameters
+    #  #s3_backup_config {
+    #  #  access_key = "access-key"
+    #  #  secret_key = "secret_key"
+    #  #  bucket_name = "bucket-name"
+    #  #  region = "region"
+    #  #  endpoint = "s3.amazonaws.com"
+    #  #}
+    #}
   }
 
   services_kube_api {
     # IP range for any services created on Kubernetes
     # This must match the service_cluster_ip_range in kube-controller
-    service_cluster_ip_range = "10.43.0.0/1"
+    service_cluster_ip_range = "10.43.0.0/16"
 
     # Expose a different port range for NodePort services
     service_node_port_range = "30000-32767"

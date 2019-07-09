@@ -119,6 +119,11 @@ func NodeSchema() map[string]*schema.Schema {
 // ClusterSchema returns schema of rke_cluster
 func ClusterSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
+		"delay_on_creation": {
+			Type:         schema.TypeInt,
+			Optional:     true,
+			ValidateFunc: validation.IntAtLeast(0),
+		},
 		"disable_port_check": {
 			Type:     schema.TypeBool,
 			Optional: true,
@@ -128,6 +133,7 @@ func ClusterSchema() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MinItems:    1,
 			Optional:    true,
+			Sensitive:   true,
 			Description: "Kubernetes nodes(YAML or JSON)",
 			Elem: &schema.Schema{
 				Type:      schema.TypeString,
@@ -214,7 +220,7 @@ func ClusterSchema() map[string]*schema.Schema {
 					"snapshot": {
 						Type:        schema.TypeBool,
 						Optional:    true,
-						Computed:    true,
+						Default:     true,
 						Description: "Etcd Recurring snapshot Service",
 					},
 					"retention": {
@@ -1534,11 +1540,11 @@ func ClusterSchema() map[string]*schema.Schema {
 												Optional: true,
 											},
 											"monitor_delay": {
-												Type:     schema.TypeInt,
+												Type:     schema.TypeString,
 												Optional: true,
 											},
 											"monitor_timeout": {
-												Type:     schema.TypeInt,
+												Type:     schema.TypeString,
 												Optional: true,
 											},
 											"monitor_max_retries": {
@@ -1657,8 +1663,9 @@ func ClusterSchema() map[string]*schema.Schema {
 			Sensitive: true,
 		},
 		"certificates": {
-			Type:     schema.TypeList,
-			Computed: true,
+			Type:      schema.TypeList,
+			Computed:  true,
+			Sensitive: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"id": {
