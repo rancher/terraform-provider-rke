@@ -31,7 +31,7 @@ require (
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/prometheus/client_golang v0.9.2 // indirect
 	github.com/rancher/norman v0.0.0-20190424024147-6e03f4578a4b // indirect
-	github.com/rancher/rke v0.2.4
+	github.com/rancher/rke v0.2.5
 	github.com/rancher/types v0.0.0-20190524173928-ccfbd4ea82b1
 	github.com/sirupsen/logrus v1.1.1
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
