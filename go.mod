@@ -30,9 +30,9 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pkg/errors v0.8.0 // indirect
 	github.com/prometheus/client_golang v0.9.2 // indirect
-	github.com/rancher/norman v0.0.0-20190424024147-6e03f4578a4b // indirect
-	github.com/rancher/rke v0.2.4
-	github.com/rancher/types v0.0.0-20190524173928-ccfbd4ea82b1
+	github.com/rancher/norman v0.0.0-20190529014815-f5744043a6fb // indirect
+	github.com/rancher/rke v0.2.5
+	github.com/rancher/types v0.0.0-20190715232223-966187a767e7
 	github.com/sirupsen/logrus v1.1.1
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
