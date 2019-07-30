@@ -540,7 +540,7 @@ func ClusterSchema() map[string]*schema.Schema {
 						Optional:     true,
 						Computed:     true,
 						Description:  "Network Plugin That will be used in kubernetes cluster",
-						ValidateFunc: validation.StringInSlice([]string{"flannel", "calico", "canal", "weave"}, false),
+						ValidateFunc: validation.StringInSlice([]string{"flannel", "calico", "canal", "weave", "none"}, false),
 					},
 					"options": {
 						Type:        schema.TypeMap,
