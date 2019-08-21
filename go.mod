@@ -32,7 +32,7 @@ require (
 	github.com/prometheus/client_golang v0.9.2 // indirect
 	github.com/rancher/norman v0.0.0-20190529014815-f5744043a6fb // indirect
 	github.com/rancher/rke v0.2.7
-	github.com/rancher/types v0.0.0-20190805200745-06743eb21e0f
+	github.com/rancher/types v0.0.0-20190819190701-5c4900572399
 	github.com/sirupsen/logrus v1.1.1
 	github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20181108003508-044398e4856c // indirect
