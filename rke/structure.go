@@ -1676,7 +1676,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 				"access_key":  v.AccessKey,
 				"secret_key":  v.SecretKey,
 				"bucket_name": v.BucketName,
-				"folder": v.Folder,
+				"folder":      v.Folder,
 				"region":      v.Region,
 				"endpoint":    v.Endpoint,
 			})
