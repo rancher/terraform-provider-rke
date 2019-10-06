@@ -1,4 +1,4 @@
-FROM golang:1.12 as builder
+FROM golang:1.13 as builder
 LABEL maintainer="Kazumichi Yamamoto <yamamoto.febc@gmail.com>"
 MAINTAINER Kazumichi Yamamoto <yamamoto.febc@gmail.com>
 
@@ -11,7 +11,7 @@ WORKDIR /go/src/github.com/yamamoto-febc/terraform-provider-rke
 RUN make build
 ###
 
-FROM hashicorp/terraform:0.12.6
+FROM hashicorp/terraform:0.12.9
 MAINTAINER Kazumichi Yamamoto <yamamoto.febc@gmail.com>
 LABEL MAINTAINER 'Kazumichi Yamamoto <yamamoto.febc@gmail.com>'
 
