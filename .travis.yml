@@ -6,7 +6,7 @@ before_install:
 install:
   - make tools
 script:
-  - make test
+  - make lint test
 before_deploy:
   - make build-x
 deploy:
