@@ -31,7 +31,9 @@
     "prealloc",
     "scopelint",
     "stylecheck",
-    "unparam"
+    "unparam",
+    "funlen",
+    "whitespace"
   ]
 
 [issues]
