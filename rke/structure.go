@@ -554,6 +554,9 @@ func parseResourceETCDService(d resourceData) (*v3.ETCDService, error) {
 							if v, ok := rawMap["bucket_name"]; ok {
 								etcd.BackupConfig.S3BackupConfig.BucketName = v.(string)
 							}
+							if v, ok := rawMap["folder"]; ok {
+								etcd.BackupConfig.S3BackupConfig.Folder = v.(string)
+							}
 							if v, ok := rawMap["region"]; ok {
 								etcd.BackupConfig.S3BackupConfig.Region = v.(string)
 							}
@@ -1673,6 +1676,7 @@ func clusterToState(cluster *cluster.Cluster, d stateBuilder) error {
 				"access_key":  v.AccessKey,
 				"secret_key":  v.SecretKey,
 				"bucket_name": v.BucketName,
+				"folder":      v.Folder,
 				"region":      v.Region,
 				"endpoint":    v.Endpoint,
 			})
