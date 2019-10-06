@@ -1,8 +1,8 @@
 package rke
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 )
 
