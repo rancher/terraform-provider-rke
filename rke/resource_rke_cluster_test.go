@@ -308,20 +308,20 @@ func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 		masterURL := fmt.Sprintf("https://%s:6443", rs.Primary.ID)
 		req, err := http.NewRequest("GET", masterURL, nil)
 		if err != nil {
-			return nil
+			continue
 		}
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 		hc := &http.Client{Timeout: 2 * time.Second, Transport: tr}
 		resp, err := hc.Do(req)
+		if resp != nil {
+			resp.Body.Close() // nolint
+		}
 		if err != nil {
-			return nil
+			continue
 		}
-		defer resp.Body.Close()
-		if err == nil {
-			return errors.New("RKE cluster still exists")
-		}
+		return errors.New("RKE cluster still exists")
 	}
 
 	// check tmp files
