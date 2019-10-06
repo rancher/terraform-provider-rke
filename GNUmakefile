@@ -70,7 +70,7 @@ testacc:
 
 .PHONY: lint
 lint: fmt
-	golangci-lint run
+	GOGC=10 golangci-lint run
 
 fmt:
 	gofmt -w $(GOFMT_FILES)
