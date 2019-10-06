@@ -44,19 +44,18 @@ func resourceRKECluster() *schema.Resource {
 }
 
 func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
-
 	if delay, ok := d.GetOk("delay_on_creation"); ok && delay.(int) > 0 {
 		time.Sleep(time.Duration(delay.(int)) * time.Second)
 	}
 
-	if err := clusterUp(d, true); err != nil {
+	if err := clusterUp(d); err != nil {
 		return wrapErrWithRKEOutputs(err)
 	}
 	return wrapErrWithRKEOutputs(resourceRKEClusterRead(d, meta))
 }
 
 func resourceRKEClusterUpdate(d *schema.ResourceData, meta interface{}) error {
-	if err := clusterUp(d, false); err != nil {
+	if err := clusterUp(d); err != nil {
 		return wrapErrWithRKEOutputs(err)
 	}
 	return wrapErrWithRKEOutputs(resourceRKEClusterRead(d, meta))
@@ -84,11 +83,7 @@ func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func clusterUp(d *schema.ResourceData, init bool) error {
-	if init {
-		clusterRemove(d) // nolint ignore error
-	}
-
+func clusterUp(d *schema.ResourceData) error {
 	rkeConfig, parseErr := parseResourceRKEConfig(d)
 	if parseErr != nil {
 		return parseErr
