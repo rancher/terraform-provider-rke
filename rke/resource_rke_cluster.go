@@ -34,7 +34,9 @@ func resourceRKECluster() *schema.Resource {
 					"rke_cluster_yaml",
 				}
 				for _, key := range computedFields {
-					d.SetNewComputed(key)
+					if err := d.SetNewComputed(key); err != nil {
+						return err
+					}
 				}
 			}
 			return nil
@@ -174,7 +176,7 @@ func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, client
 		return err
 	}
 	if rkeState != "" {
-		d.Set("rke_state", rkeState)
+		d.Set("rke_state", rkeState) // nolint
 	}
 
 	kubeConfig, err := readKubeConfig(configDir)

@@ -1,0 +1,49 @@
+[run]
+  deadline = "10m"
+  skip-files = []
+
+[linters-settings]
+
+  [linters-settings.govet]
+    check-shadowing = false
+
+  [linters-settings.gocyclo]
+    min-complexity = 15.0
+
+  [linters-settings.maligned]
+    suggest-new = true
+
+  [linters-settings.goconst]
+    min-len = 3.0
+    min-occurrences = 3.0
+
+  [linters-settings.misspell]
+    locale = "US"
+
+[linters]
+  enable-all = true
+  disable = [
+    "maligned",
+    "lll",
+    "gas",
+    "gochecknoglobals",
+    "dupl",
+    "prealloc",
+    "scopelint",
+    "stylecheck",
+    "unparam",
+    "funlen",
+    "whitespace"
+  ]
+
+[issues]
+  exclude-use-default = false
+  max-per-linter = 0
+  max-same-issues = 0
+  exclude = []
+  [[issues.exclude-rules]]
+    path = "rke/structure.go"
+    linters = ["gocyclo"]
+  [[issues.exclude-rules]]
+    path = "(.+)_test.go"
+    linters = ["gochecknoinits"]

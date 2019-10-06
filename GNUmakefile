@@ -6,7 +6,7 @@ BUILD_LDFLAGS = "-s -w \
 	  -X github.com/yamamoto-febc/terraform-provider-rke/rke.Revision=`git rev-parse --short HEAD`"
 export GO111MODULE=on
 
-default: test build
+default: fmt lint test build
 
 .PHONY: tools
 tools:
@@ -70,8 +70,7 @@ testacc:
 
 .PHONY: lint
 lint: fmt
-	gometalinter --config=gometalinter.json ./...
-	@echo
+	GOGC=10 golangci-lint run
 
 fmt:
 	gofmt -w $(GOFMT_FILES)
