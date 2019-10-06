@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-getter/helper/url"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/cmd"
 	"github.com/rancher/rke/hosts"
