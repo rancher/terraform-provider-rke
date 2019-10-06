@@ -274,6 +274,10 @@ func ClusterSchema() map[string]*schema.Schema {
 												Type:     schema.TypeString,
 												Optional: true,
 											},
+											"folder": {
+												Type:     schema.TypeString,
+												Optional: true,
+											},
 											"region": {
 												Type:     schema.TypeString,
 												Optional: true,
