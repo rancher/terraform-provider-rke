@@ -11,6 +11,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	rkeErrorTemplate = `
+%s
+
+============= RKE outputs ==============
+
+%s
+========================================
+`
+)
+
 var rkeLogBuf = &bytes.Buffer{}
 
 // Provider returns a terraform.ResourceProvider.
@@ -26,10 +37,8 @@ func Provider() terraform.ResourceProvider {
 		ResourcesMap: map[string]*schema.Resource{
 			"rke_cluster": resourceRKECluster(),
 		},
-		DataSourcesMap: map[string]*schema.Resource{
-			"rke_node_parameter": dataSourceRKENodeParameter(),
-		},
-		ConfigureFunc: providerConfigure,
+		DataSourcesMap: map[string]*schema.Resource{},
+		ConfigureFunc:  providerConfigure,
 	}
 }
 
@@ -56,4 +65,16 @@ type logFormatter struct{}
 
 func (l *logFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return []byte(fmt.Sprintf("[%s] %s\n", entry.Level, entry.Message)), nil
+}
+
+func wrapErrWithRKEOutputs(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	rkeLogLines := rkeLogBuf.String()
+	if rkeLogLines == "" {
+		return err
+	}
+	return fmt.Errorf(rkeErrorTemplate, err, rkeLogLines)
 }

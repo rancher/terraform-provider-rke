@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/plugin"
-	"github.com/yamamoto-febc/terraform-provider-rke/rke"
+	"github.com/rancher/terraform-provider-rke/rke"
 )
 
 func main() {
