@@ -144,6 +144,8 @@ type TemplateVersionSpec struct {
 	KubeVersion         string            `json:"kubeVersion,omitempty"`
 	UpgradeVersionLinks map[string]string `json:"upgradeVersionLinks,omitempty"`
 	Digest              string            `json:"digest,omitempty"`
+	RancherMinVersion   string            `json:"rancherMinVersion,omitempty"`
+	RancherMaxVersion   string            `json:"rancherMaxVersion,omitempty"`
 
 	// Deprecated: Do not use
 	Files map[string]string `json:"files,omitempty" norman:"nocreate,noupdate"`
@@ -186,6 +188,7 @@ type Question struct {
 	Subquestions      []SubQuestion `json:"subquestions,omitempty" yaml:"subquestions,omitempty"`
 	ShowIf            string        `json:"showIf,omitempty" yaml:"show_if,omitempty"`
 	ShowSubquestionIf string        `json:"showSubquestionIf,omitempty" yaml:"show_subquestion_if,omitempty"`
+	Satisfies         string        `json:"satisfies,omitempty" yaml:"satisfies,omitempty"`
 }
 
 type SubQuestion struct {
@@ -204,6 +207,7 @@ type SubQuestion struct {
 	ValidChars   string   `json:"validChars,omitempty" yaml:"valid_chars,omitempty"`
 	InvalidChars string   `json:"invalidChars,omitempty" yaml:"invalid_chars,omitempty"`
 	ShowIf       string   `json:"showIf,omitempty" yaml:"show_if,omitempty"`
+	Satisfies    string   `json:"satisfies,omitempty" yaml:"satisfies,omitempty"`
 }
 
 // TemplateContent is deprecated
@@ -231,4 +235,8 @@ type ClusterCatalog struct {
 
 	Catalog     `json:",inline" mapstructure:",squash"`
 	ClusterName string `json:"clusterName,omitempty" norman:"required,type=reference[cluster]"`
+}
+
+type CatalogRefresh struct {
+	Catalogs []string `json:"catalogs"`
 }

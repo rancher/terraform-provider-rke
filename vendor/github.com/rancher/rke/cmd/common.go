@@ -13,7 +13,7 @@ import (
 	"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
 	"github.com/rancher/rke/util"
-	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
@@ -75,8 +75,7 @@ func ClusterInit(ctx context.Context, rkeConfig *v3.RancherKubernetesEngineConfi
 		flags.CertificateDir = cluster.GetCertificateDirPath(flags.ClusterFilePath, flags.ConfigDir)
 	}
 	rkeFullState, _ := cluster.ReadStateFile(ctx, stateFilePath)
-
-	kubeCluster, err := cluster.InitClusterObject(ctx, rkeConfig, flags)
+	kubeCluster, err := cluster.InitClusterObject(ctx, rkeConfig, flags, rkeFullState.DesiredState.EncryptionConfig)
 	if err != nil {
 		return err
 	}
@@ -90,16 +89,21 @@ func ClusterInit(ctx context.Context, rkeConfig *v3.RancherKubernetesEngineConfi
 		if strings.Contains(err.Error(), "aborting upgrade") {
 			return err
 		}
-		log.Warnf(ctx, "[state] can't fetch legacy cluster state from Kubernetes")
+		log.Warnf(ctx, "[state] can't fetch legacy cluster state from Kubernetes: %v", err)
 	}
+
 	// check if certificate rotate or normal init
 	if kubeCluster.RancherKubernetesEngineConfig.RotateCertificates != nil {
 		fullState, err = rotateRKECertificates(ctx, kubeCluster, flags, rkeFullState)
 	} else {
-		fullState, err = cluster.RebuildState(ctx, &kubeCluster.RancherKubernetesEngineConfig, rkeFullState, flags)
+		fullState, err = cluster.RebuildState(ctx, kubeCluster, rkeFullState, flags)
 	}
 	if err != nil {
 		return err
+	}
+
+	if fullState.DesiredState.EncryptionConfig != "" {
+		kubeCluster.EncryptionConfig.EncryptionProviderFile = fullState.DesiredState.EncryptionConfig
 	}
 
 	rkeState := cluster.FullState{
@@ -200,7 +204,7 @@ func fetchAndUpdateStateFromLegacyCluster(ctx context.Context, kubeCluster *clus
 		// try to fetch certs from nodes
 		recoveredCerts, err = cluster.GetClusterCertsFromNodes(ctx, kubeCluster)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to fetch cluster certs from nodes, aborting upgrade: %v", err)
 		}
 	}
 	fullState.CurrentState.RancherKubernetesEngineConfig = kubeCluster.RancherKubernetesEngineConfig.DeepCopy()

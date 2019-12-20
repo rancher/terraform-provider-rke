@@ -162,6 +162,29 @@ type GithubConfigApplyInput struct {
 	Enabled      bool         `json:"enabled,omitempty"`
 }
 
+type GoogleOauthConfig struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+	AuthConfig        `json:",inline" mapstructure:",squash"`
+
+	OauthCredential              string `json:"oauthCredential,omitempty" norman:"required,type=password,notnullable"`
+	ServiceAccountCredential     string `json:"serviceAccountCredential,omitempty" norman:"required,type=password,notnullable"`
+	AdminEmail                   string `json:"adminEmail,omitempty" norman:"required,notnullable"`
+	Hostname                     string `json:"hostname,omitempty" norman:"required,notnullable,noupdate"`
+	UserInfoEndpoint             string `json:"userInfoEndpoint" norman:"default=https://openidconnect.googleapis.com/v1/userinfo,required,notnullable"`
+	NestedGroupMembershipEnabled bool   `json:"nestedGroupMembershipEnabled"    norman:"default=false"`
+}
+
+type GoogleOauthConfigTestOutput struct {
+	RedirectURL string `json:"redirectUrl"`
+}
+
+type GoogleOauthConfigApplyInput struct {
+	GoogleOauthConfig GoogleOauthConfig `json:"googleOauthConfig,omitempty"`
+	Code              string            `json:"code,omitempty"`
+	Enabled           bool              `json:"enabled,omitempty"`
+}
+
 type AzureADConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -239,6 +262,7 @@ type LdapConfig struct {
 	UserDisabledBitMask             int64    `json:"userDisabledBitMask,omitempty"`
 	UserSearchBase                  string   `json:"userSearchBase,omitempty"              norman:"notnullable,required"`
 	UserSearchAttribute             string   `json:"userSearchAttribute,omitempty"         norman:"default=uid|sn|givenName,notnullable,required"`
+	UserSearchFilter                string   `json:"userSearchFilter,omitempty"`
 	UserLoginAttribute              string   `json:"userLoginAttribute,omitempty"          norman:"default=uid,notnullable,required"`
 	UserObjectClass                 string   `json:"userObjectClass,omitempty"             norman:"default=inetOrgPerson,notnullable,required"`
 	UserNameAttribute               string   `json:"userNameAttribute,omitempty"           norman:"default=cn,notnullable,required"`
@@ -246,6 +270,7 @@ type LdapConfig struct {
 	UserEnabledAttribute            string   `json:"userEnabledAttribute,omitempty"`
 	GroupSearchBase                 string   `json:"groupSearchBase,omitempty"`
 	GroupSearchAttribute            string   `json:"groupSearchAttribute,omitempty"        norman:"default=cn,notnullable,required"`
+	GroupSearchFilter               string   `json:"groupSearchFilter,omitempty"`
 	GroupObjectClass                string   `json:"groupObjectClass,omitempty"            norman:"default=groupOfNames,notnullable,required"`
 	GroupNameAttribute              string   `json:"groupNameAttribute,omitempty"          norman:"default=cn,notnullable,required"`
 	GroupDNAttribute                string   `json:"groupDNAttribute,omitempty"            norman:"default=entryDN,notnullable"`

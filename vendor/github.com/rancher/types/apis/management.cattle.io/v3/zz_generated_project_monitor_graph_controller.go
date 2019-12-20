@@ -51,7 +51,7 @@ func NewProjectMonitorGraph(namespace, name string, obj ProjectMonitorGraph) *Pr
 type ProjectMonitorGraphList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ProjectMonitorGraph
+	Items           []ProjectMonitorGraph `json:"items"`
 }
 
 type ProjectMonitorGraphHandlerFunc func(key string, obj *ProjectMonitorGraph) (runtime.Object, error)
@@ -68,7 +68,9 @@ type ProjectMonitorGraphController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ProjectMonitorGraphLister
 	AddHandler(ctx context.Context, name string, handler ProjectMonitorGraphHandlerFunc)
+	AddFeatureHandler(ctx context.Context, enabled func() bool, name string, sync ProjectMonitorGraphHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ProjectMonitorGraphHandlerFunc)
+	AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, clusterName string, handler ProjectMonitorGraphHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
 	Start(ctx context.Context, threadiness int) error
@@ -87,9 +89,13 @@ type ProjectMonitorGraphInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ProjectMonitorGraphController
 	AddHandler(ctx context.Context, name string, sync ProjectMonitorGraphHandlerFunc)
+	AddFeatureHandler(ctx context.Context, enabled func() bool, name string, sync ProjectMonitorGraphHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectMonitorGraphLifecycle)
+	AddFeatureLifecycle(ctx context.Context, enabled func() bool, name string, lifecycle ProjectMonitorGraphLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectMonitorGraphHandlerFunc)
+	AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, clusterName string, sync ProjectMonitorGraphHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectMonitorGraphLifecycle)
+	AddClusterScopedFeatureLifecycle(ctx context.Context, enabled func() bool, name, clusterName string, lifecycle ProjectMonitorGraphLifecycle)
 }
 
 type projectMonitorGraphLister struct {
@@ -149,9 +155,37 @@ func (c *projectMonitorGraphController) AddHandler(ctx context.Context, name str
 	})
 }
 
+func (c *projectMonitorGraphController) AddFeatureHandler(ctx context.Context, enabled func() bool, name string, handler ProjectMonitorGraphHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled() {
+			return nil, nil
+		} else if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ProjectMonitorGraph); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
 func (c *projectMonitorGraphController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler ProjectMonitorGraphHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ProjectMonitorGraph); ok && controller.ObjectInCluster(cluster, obj) {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *projectMonitorGraphController) AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, cluster string, handler ProjectMonitorGraphHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled() {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ProjectMonitorGraph); ok && controller.ObjectInCluster(cluster, obj) {
 			return handler(key, v)
@@ -256,18 +290,36 @@ func (s *projectMonitorGraphClient) AddHandler(ctx context.Context, name string,
 	s.Controller().AddHandler(ctx, name, sync)
 }
 
+func (s *projectMonitorGraphClient) AddFeatureHandler(ctx context.Context, enabled func() bool, name string, sync ProjectMonitorGraphHandlerFunc) {
+	s.Controller().AddFeatureHandler(ctx, enabled, name, sync)
+}
+
 func (s *projectMonitorGraphClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectMonitorGraphLifecycle) {
 	sync := NewProjectMonitorGraphLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectMonitorGraphClient) AddFeatureLifecycle(ctx context.Context, enabled func() bool, name string, lifecycle ProjectMonitorGraphLifecycle) {
+	sync := NewProjectMonitorGraphLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(ctx, enabled, name, sync)
 }
 
 func (s *projectMonitorGraphClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectMonitorGraphHandlerFunc) {
 	s.Controller().AddClusterScopedHandler(ctx, name, clusterName, sync)
 }
 
+func (s *projectMonitorGraphClient) AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, clusterName string, sync ProjectMonitorGraphHandlerFunc) {
+	s.Controller().AddClusterScopedFeatureHandler(ctx, enabled, name, clusterName, sync)
+}
+
 func (s *projectMonitorGraphClient) AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectMonitorGraphLifecycle) {
 	sync := NewProjectMonitorGraphLifecycleAdapter(name+"_"+clusterName, true, s, lifecycle)
 	s.Controller().AddClusterScopedHandler(ctx, name, clusterName, sync)
+}
+
+func (s *projectMonitorGraphClient) AddClusterScopedFeatureLifecycle(ctx context.Context, enabled func() bool, name, clusterName string, lifecycle ProjectMonitorGraphLifecycle) {
+	sync := NewProjectMonitorGraphLifecycleAdapter(name+"_"+clusterName, true, s, lifecycle)
+	s.Controller().AddClusterScopedFeatureHandler(ctx, enabled, name, clusterName, sync)
 }
 
 type ProjectMonitorGraphIndexer func(obj *ProjectMonitorGraph) ([]string, error)

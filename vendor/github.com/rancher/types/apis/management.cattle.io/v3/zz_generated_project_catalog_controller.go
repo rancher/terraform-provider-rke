@@ -51,7 +51,7 @@ func NewProjectCatalog(namespace, name string, obj ProjectCatalog) *ProjectCatal
 type ProjectCatalogList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []ProjectCatalog
+	Items           []ProjectCatalog `json:"items"`
 }
 
 type ProjectCatalogHandlerFunc func(key string, obj *ProjectCatalog) (runtime.Object, error)
@@ -68,7 +68,9 @@ type ProjectCatalogController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() ProjectCatalogLister
 	AddHandler(ctx context.Context, name string, handler ProjectCatalogHandlerFunc)
+	AddFeatureHandler(ctx context.Context, enabled func() bool, name string, sync ProjectCatalogHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler ProjectCatalogHandlerFunc)
+	AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, clusterName string, handler ProjectCatalogHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
 	Start(ctx context.Context, threadiness int) error
@@ -87,9 +89,13 @@ type ProjectCatalogInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() ProjectCatalogController
 	AddHandler(ctx context.Context, name string, sync ProjectCatalogHandlerFunc)
+	AddFeatureHandler(ctx context.Context, enabled func() bool, name string, sync ProjectCatalogHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle ProjectCatalogLifecycle)
+	AddFeatureLifecycle(ctx context.Context, enabled func() bool, name string, lifecycle ProjectCatalogLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectCatalogHandlerFunc)
+	AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, clusterName string, sync ProjectCatalogHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectCatalogLifecycle)
+	AddClusterScopedFeatureLifecycle(ctx context.Context, enabled func() bool, name, clusterName string, lifecycle ProjectCatalogLifecycle)
 }
 
 type projectCatalogLister struct {
@@ -149,9 +155,37 @@ func (c *projectCatalogController) AddHandler(ctx context.Context, name string, 
 	})
 }
 
+func (c *projectCatalogController) AddFeatureHandler(ctx context.Context, enabled func() bool, name string, handler ProjectCatalogHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled() {
+			return nil, nil
+		} else if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ProjectCatalog); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
 func (c *projectCatalogController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler ProjectCatalogHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*ProjectCatalog); ok && controller.ObjectInCluster(cluster, obj) {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *projectCatalogController) AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, cluster string, handler ProjectCatalogHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled() {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*ProjectCatalog); ok && controller.ObjectInCluster(cluster, obj) {
 			return handler(key, v)
@@ -256,18 +290,36 @@ func (s *projectCatalogClient) AddHandler(ctx context.Context, name string, sync
 	s.Controller().AddHandler(ctx, name, sync)
 }
 
+func (s *projectCatalogClient) AddFeatureHandler(ctx context.Context, enabled func() bool, name string, sync ProjectCatalogHandlerFunc) {
+	s.Controller().AddFeatureHandler(ctx, enabled, name, sync)
+}
+
 func (s *projectCatalogClient) AddLifecycle(ctx context.Context, name string, lifecycle ProjectCatalogLifecycle) {
 	sync := NewProjectCatalogLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *projectCatalogClient) AddFeatureLifecycle(ctx context.Context, enabled func() bool, name string, lifecycle ProjectCatalogLifecycle) {
+	sync := NewProjectCatalogLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(ctx, enabled, name, sync)
 }
 
 func (s *projectCatalogClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync ProjectCatalogHandlerFunc) {
 	s.Controller().AddClusterScopedHandler(ctx, name, clusterName, sync)
 }
 
+func (s *projectCatalogClient) AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, clusterName string, sync ProjectCatalogHandlerFunc) {
+	s.Controller().AddClusterScopedFeatureHandler(ctx, enabled, name, clusterName, sync)
+}
+
 func (s *projectCatalogClient) AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle ProjectCatalogLifecycle) {
 	sync := NewProjectCatalogLifecycleAdapter(name+"_"+clusterName, true, s, lifecycle)
 	s.Controller().AddClusterScopedHandler(ctx, name, clusterName, sync)
+}
+
+func (s *projectCatalogClient) AddClusterScopedFeatureLifecycle(ctx context.Context, enabled func() bool, name, clusterName string, lifecycle ProjectCatalogLifecycle) {
+	sync := NewProjectCatalogLifecycleAdapter(name+"_"+clusterName, true, s, lifecycle)
+	s.Controller().AddClusterScopedFeatureHandler(ctx, enabled, name, clusterName, sync)
 }
 
 type ProjectCatalogIndexer func(obj *ProjectCatalog) ([]string, error)

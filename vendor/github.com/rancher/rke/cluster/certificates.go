@@ -10,15 +10,15 @@ import (
 	"github.com/rancher/rke/k8s"
 	"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
+	"github.com/rancher/rke/pki/cert"
 	"github.com/rancher/rke/services"
 	"github.com/sirupsen/logrus"
-	"k8s.io/client-go/util/cert"
 )
 
 func SetUpAuthentication(ctx context.Context, kubeCluster, currentCluster *Cluster, fullState *FullState) error {
 	if kubeCluster.AuthnStrategies[AuthnX509Provider] {
-		compareCerts(ctx, kubeCluster, currentCluster)
 		kubeCluster.Certificates = fullState.DesiredState.CertificatesBundle
+		compareCerts(ctx, kubeCluster, currentCluster)
 		return nil
 	}
 	return nil
@@ -59,13 +59,13 @@ func GetClusterCertsFromKubernetes(ctx context.Context, kubeCluster *Cluster) (m
 	}
 
 	for _, etcdHost := range kubeCluster.EtcdHosts {
-		etcdName := pki.GetEtcdCrtName(etcdHost.InternalAddress)
+		etcdName := pki.GetCrtNameForHost(etcdHost, pki.EtcdCertName)
 		certificatesNames = append(certificatesNames, etcdName)
 	}
 
 	certMap := make(map[string]pki.CertificatePKI)
 	for _, certName := range certificatesNames {
-		secret, err := k8s.GetSecret(k8sClient, certName)
+		secret, err := k8s.GetSystemSecret(k8sClient, certName)
 		if err != nil && !strings.HasPrefix(certName, "kube-etcd") &&
 			!strings.Contains(certName, pki.RequestHeaderCACertName) &&
 			!strings.Contains(certName, pki.APIProxyClientCertName) &&
@@ -154,13 +154,16 @@ func RotateRKECertificates(ctx context.Context, c *Cluster, flags ExternalFlags,
 	var (
 		serviceAccountTokenKey string
 	)
-	componentsCertsFuncMap := map[string]pki.GenFunc{
-		services.KubeAPIContainerName:        pki.GenerateKubeAPICertificate,
-		services.KubeControllerContainerName: pki.GenerateKubeControllerCertificate,
-		services.SchedulerContainerName:      pki.GenerateKubeSchedulerCertificate,
-		services.KubeproxyContainerName:      pki.GenerateKubeProxyCertificate,
-		services.KubeletContainerName:        pki.GenerateKubeNodeCertificate,
-		services.EtcdContainerName:           pki.GenerateEtcdCertificates,
+	componentsCertsFuncMap := map[string][]pki.GenFunc{
+		services.KubeAPIContainerName:        []pki.GenFunc{pki.GenerateKubeAPICertificate},
+		services.KubeControllerContainerName: []pki.GenFunc{pki.GenerateKubeControllerCertificate},
+		services.SchedulerContainerName:      []pki.GenFunc{pki.GenerateKubeSchedulerCertificate},
+		services.KubeproxyContainerName:      []pki.GenFunc{pki.GenerateKubeProxyCertificate},
+		services.KubeletContainerName:        []pki.GenFunc{pki.GenerateKubeNodeCertificate},
+		services.EtcdContainerName:           []pki.GenFunc{pki.GenerateEtcdCertificates},
+	}
+	if c.IsKubeletGenerateServingCertificateEnabled() {
+		componentsCertsFuncMap[services.KubeletContainerName] = append(componentsCertsFuncMap[services.KubeletContainerName], pki.GenerateKubeletCertificate)
 	}
 	rotateFlags := c.RancherKubernetesEngineConfig.RotateCertificates
 	if rotateFlags.CACertificates {
@@ -171,10 +174,12 @@ func RotateRKECertificates(ctx context.Context, c *Cluster, flags ExternalFlags,
 		rotateFlags.Services = nil
 	}
 	for _, k8sComponent := range rotateFlags.Services {
-		genFunc := componentsCertsFuncMap[k8sComponent]
-		if genFunc != nil {
-			if err := genFunc(ctx, c.Certificates, c.RancherKubernetesEngineConfig, flags.ClusterFilePath, flags.ConfigDir, true); err != nil {
-				return err
+		genFunctions := componentsCertsFuncMap[k8sComponent]
+		if genFunctions != nil {
+			for _, genFunc := range genFunctions {
+				if err := genFunc(ctx, c.Certificates, c.RancherKubernetesEngineConfig, flags.ClusterFilePath, flags.ConfigDir, true); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -184,7 +189,13 @@ func RotateRKECertificates(ctx context.Context, c *Cluster, flags ExternalFlags,
 		if c.Certificates[pki.ServiceAccountTokenKeyName].Key != nil {
 			serviceAccountTokenKey = string(cert.EncodePrivateKeyPEM(c.Certificates[pki.ServiceAccountTokenKeyName].Key))
 		}
-		if err := pki.GenerateRKEServicesCerts(ctx, c.Certificates, c.RancherKubernetesEngineConfig, flags.ClusterFilePath, flags.ConfigDir, true, flags.Legacy); err != nil {
+		// check for legacy clusters prior to requestheaderca
+		if c.Certificates[pki.RequestHeaderCACertName].Certificate == nil {
+			if err := pki.GenerateRKERequestHeaderCACert(ctx, c.Certificates, flags.ClusterFilePath, flags.ConfigDir); err != nil {
+				return err
+			}
+		}
+		if err := pki.GenerateRKEServicesCerts(ctx, c.Certificates, c.RancherKubernetesEngineConfig, flags.ClusterFilePath, flags.ConfigDir, true); err != nil {
 			return err
 		}
 		if serviceAccountTokenKey != "" {
@@ -242,4 +253,14 @@ func compareCerts(ctx context.Context, kubeCluster, currentCluster *Cluster) {
 			}
 		}
 	}
+}
+
+func (c *Cluster) IsKubeletGenerateServingCertificateEnabled() bool {
+	if c == nil {
+		return false
+	}
+	if c.Services.Kubelet.GenerateServingCertificate {
+		return true
+	}
+	return false
 }

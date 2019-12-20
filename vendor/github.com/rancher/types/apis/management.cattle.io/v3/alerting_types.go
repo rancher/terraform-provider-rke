@@ -203,8 +203,8 @@ type MetricRule struct {
 	Expression     string  `json:"expression,omitempty" norman:"required"`
 	Description    string  `json:"description,omitempty"`
 	Duration       string  `json:"duration,omitempty" norman:"required"`
-	Comparison     string  `json:"comparison,omitempty" norman:"type=enum,options=equal|not-equal|greater-than|less-than|greater-or-equal|less-or-equal,default=equal"`
-	ThresholdValue float64 `json:"thresholdValue,omitempty" norman:"required,type=float"`
+	Comparison     string  `json:"comparison,omitempty" norman:"type=enum,options=equal|not-equal|greater-than|less-than|greater-or-equal|less-or-equal|has-value,default=equal"`
+	ThresholdValue float64 `json:"thresholdValue,omitempty" norman:"type=float"`
 }
 
 type TimingField struct {
@@ -262,6 +262,7 @@ type NotifierSpec struct {
 
 	DisplayName     string           `json:"displayName,omitempty" norman:"required"`
 	Description     string           `json:"description,omitempty"`
+	SendResolved    bool             `json:"sendResolved,omitempty"`
 	SMTPConfig      *SMTPConfig      `json:"smtpConfig,omitempty"`
 	SlackConfig     *SlackConfig     `json:"slackConfig,omitempty"`
 	PagerdutyConfig *PagerdutyConfig `json:"pagerdutyConfig,omitempty"`
@@ -289,7 +290,7 @@ type SMTPConfig struct {
 }
 
 type SlackConfig struct {
-	DefaultRecipient string `json:"defaultRecipient,omitempty" norman:"required"`
+	DefaultRecipient string `json:"defaultRecipient,omitempty"`
 	URL              string `json:"url,omitempty" norman:"required"`
 	*HTTPClientConfig
 }
@@ -314,11 +315,6 @@ type WechatConfig struct {
 }
 
 type NotifierStatus struct {
-}
-
-type AlertSystemImages struct {
-	AlertManager       string `json:"alertManager,omitempty"`
-	AlertManagerHelper string `json:"alertManagerHelper,omitempty"`
 }
 
 // HTTPClientConfig configures an HTTP client.
