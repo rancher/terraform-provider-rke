@@ -1,0 +1,60 @@
+---
+kind: pipeline
+name: default
+
+steps:
+- name: build
+  image: golang:1.12.3
+  commands:
+  - apt-get update
+  - apt-get install -y xz-utils zip rsync jq curl ca-certificates
+  - mkdir -p /go/src/github.com/rancher
+  - ln -s /drone/src /go/src/github.com/rancher/terraform-provider-rke
+  - cd /go/src/github.com/rancher/terraform-provider-rke
+  - make build-rancher
+  - make test
+  - make package-rancher
+
+- name: build-all-binaries
+  image: golang:1.12.3
+  environment:
+    CROSS: 1
+  commands:
+  - mkdir -p /go/src/github.com/rancher
+  - ln -s /drone/src /go/src/github.com/rancher/terraform-provider-rke
+  - cd /go/src/github.com/rancher/terraform-provider-rke
+  - make build-rancher
+  when:
+    event: tag
+
+- name: github_binary_prerelease
+  image: plugins/github-release
+  settings:
+    prerelease: true
+    files:
+    - build/bin/terraform-provider-rke_*
+    - dist/artifacts/${DRONE_TAG}/*
+    checksum:
+    - sha256
+    api_key: 
+      from_secret: github_token
+  when:
+    event: tag
+    ref:
+      include: [ refs/tags/*rc* ]
+
+- name: github_binary_release
+  image: plugins/github-release
+  settings:
+    files:
+    - build/bin/terraform-provider-rke_*
+    - dist/artifacts/${DRONE_TAG}/*
+    checksum:
+    - sha256
+    api_key: 
+      from_secret: github_token
+  when:
+    event: tag
+    ref:
+      exclude: [ refs/tags/*rc* ]
+
