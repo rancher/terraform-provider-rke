@@ -130,76 +130,74 @@ EOL
   ###############################################
   # Kubernetes services
   ###############################################
-  services_etcd {
-    # if external etcd used
-    #path      = "/etcdcluster"
-    #ca_cert   = file("ca_cert")
-    #cert      = file("cert")
-    #key       = file("key")
+  services {
+    etcd {
+      # if external etcd used
+      #path      = "/etcdcluster"
+      #ca_cert   = file("ca_cert")
+      #cert      = file("cert")
+      #key       = file("key")
 
-    # for etcd snapshots
-    #backup_config {
-    #  interval_hours = 12
-    #  retention = 6
-    #  # s3 specific parameters
-    #  #s3_backup_config {
-    #  #  access_key = "access-key"
-    #  #  secret_key = "secret_key"
-    #  #  bucket_name = "bucket-name"
-    #  #  region = "region"
-    #  #  endpoint = "s3.amazonaws.com"
-    #  #}
-    #}
-  }
-
-  services_kube_api {
-    # IP range for any services created on Kubernetes
-    # This must match the service_cluster_ip_range in kube-controller
-    service_cluster_ip_range = "10.43.0.0/16"
-
-    # Expose a different port range for NodePort services
-    service_node_port_range = "30000-32767"
-
-    pod_security_policy = false
-
-    # Add additional arguments to the kubernetes API server
-    # This WILL OVERRIDE any existing defaults
-    extra_args = {
-      audit-log-path            = "-"
-      delete-collection-workers = 3
-      v                         = 4
+      # for etcd snapshots
+      #backup_config {
+      #  interval_hours = 12
+      #  retention = 6
+      #  # s3 specific parameters
+      #  #s3_backup_config {
+      #  #  access_key = "access-key"
+      #  #  secret_key = "secret_key"
+      #  #  bucket_name = "bucket-name"
+      #  #  region = "region"
+      #  #  endpoint = "s3.amazonaws.com"
+      #  #}
+      #}
     }
-  }
+    kube_api {
+      # IP range for any services created on Kubernetes
+      # This must match the service_cluster_ip_range in kube-controller
+      service_cluster_ip_range = "10.43.0.0/16"
 
-  services_kube_controller {
-    # CIDR pool used to assign IP addresses to pods in the cluster
-    cluster_cidr = "10.42.0.0/16"
+      # Expose a different port range for NodePort services
+      service_node_port_range = "30000-32767"
 
-    # IP range for any services created on Kubernetes
-    # This must match the service_cluster_ip_range in kube-api
-    service_cluster_ip_range = "10.43.0.0/16"
-  }
+      pod_security_policy = false
 
-  services_scheduler {
-  }
+      # Add additional arguments to the kubernetes API server
+      # This WILL OVERRIDE any existing defaults
+      extra_args = {
+        audit-log-path            = "-"
+        delete-collection-workers = 3
+        v                         = 4
+      }
+    }
+    kube_controller {
+      # CIDR pool used to assign IP addresses to pods in the cluster
+      cluster_cidr = "10.42.0.0/16"
 
-  services_kubelet {
-    # Base domain for the cluster
-    cluster_domain = "cluster.local"
+      # IP range for any services created on Kubernetes
+      # This must match the service_cluster_ip_range in kube-api
+      service_cluster_ip_range = "10.43.0.0/16"
+    }
+    scheduler {
+    }
 
-    # IP address for the DNS service endpoint
-    cluster_dns_server = "10.43.0.10"
+    kubelet {
+      # Base domain for the cluster
+      cluster_domain = "cluster.local"
 
-    # Fail if swap is on
-    fail_swap_on = false
+      # IP address for the DNS service endpoint
+      cluster_dns_server = "10.43.0.10"
 
-    # Optionally define additional volume binds to a service
-    extra_binds = [
-      "/usr/libexec/kubernetes/kubelet-plugins:/usr/libexec/kubernetes/kubelet-plugins",
-    ]
-  }
+      # Fail if swap is on
+      fail_swap_on = false
 
-  services_kubeproxy {
+      # Optionally define additional volume binds to a service
+      extra_binds = [
+        "/usr/libexec/kubernetes/kubelet-plugins:/usr/libexec/kubernetes/kubelet-plugins",
+      ]
+    }
+    kubeproxy {
+    }
   }
 
   ################################################
