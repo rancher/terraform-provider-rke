@@ -13,17 +13,19 @@ steps:
   - cd /go/src/github.com/rancher/terraform-provider-rke
   - make build-rancher
   - make test
-  - make package-rancher
 
 - name: build-all-binaries
   image: golang:1.12.3
   environment:
     CROSS: 1
   commands:
+  - apt-get update
+  - apt-get install -y xz-utils zip rsync jq curl ca-certificates
   - mkdir -p /go/src/github.com/rancher
   - ln -s /drone/src /go/src/github.com/rancher/terraform-provider-rke
   - cd /go/src/github.com/rancher/terraform-provider-rke
   - make build-rancher
+  - make package-rancher
   when:
     event: tag
 
