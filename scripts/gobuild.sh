@@ -17,7 +17,7 @@ BIN_NAME="terraform-provider-rke"
 BUILD_DIR=$(dirname $0)"/../build/bin"
 
 
-CGO_ENABLED=0 go build -ldflags="-w -s -X main.VERSION=$VERSION -linkmode external -extldflags -static" -o bin/${BIN_NAME}
+CGO_ENABLED=0 go build -ldflags="-w -s -X main.VERSION=$VERSION -extldflags -static" -o bin/${BIN_NAME}
 
 if [ -n "$CROSS" ]; then
     rm -rf ${BUILD_DIR}
