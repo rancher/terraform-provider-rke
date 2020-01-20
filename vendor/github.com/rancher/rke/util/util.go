@@ -2,10 +2,12 @@ package util
 
 import (
 	"fmt"
-	"github.com/rancher/types/apis/management.cattle.io/v3"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
+
+	"github.com/rancher/rke/metadata"
 
 	"github.com/coreos/go-semver/semver"
 	ref "github.com/docker/distribution/reference"
@@ -15,6 +17,8 @@ import (
 const (
 	WorkerThreads = 50
 )
+
+var proxyEnvVars = [3]string{"HTTP_PROXY", "HTTPS_PROXY", "NO_PROXY"}
 
 func StrToSemVer(version string) (*semver.Version, error) {
 	v, err := semver.NewVersion(strings.TrimPrefix(version, "v"))
@@ -86,13 +90,18 @@ func IsFileExists(filePath string) (bool, error) {
 }
 
 func GetDefaultRKETools(image string) (string, error) {
+	// don't override tag of custom system images
+	if !strings.Contains(image, "rancher/rke-tools") {
+		return image, nil
+	}
 	tag, err := GetImageTagFromImage(image)
 	if err != nil || tag == "" {
 		return "", fmt.Errorf("defaultRKETools: no tag %s", image)
 	}
-	toReplaceTag, err := GetImageTagFromImage(v3.AllK8sVersions[v3.DefaultK8s].Alpine)
+	defaultImage := metadata.K8sVersionToRKESystemImages[metadata.DefaultK8sVersion].Alpine
+	toReplaceTag, err := GetImageTagFromImage(defaultImage)
 	if err != nil || toReplaceTag == "" {
-		return "", fmt.Errorf("defaultRKETools: no replace tag %s", v3.AllK8sVersions[v3.DefaultK8s].Alpine)
+		return "", fmt.Errorf("defaultRKETools: no replace tag %s", defaultImage)
 	}
 	image = strings.Replace(image, tag, toReplaceTag, 1)
 	return image, nil
@@ -106,4 +115,49 @@ func GetImageTagFromImage(image string) (string, error) {
 	imageTag := parsedImage.(ref.Tagged).Tag()
 	logrus.Debugf("Extracted version [%s] from image [%s]", imageTag, image)
 	return imageTag, nil
+}
+
+func StripPasswordFromURL(URL string) (string, error) {
+	u, err := url.Parse(URL)
+	if err != nil {
+		return "", err
+	}
+	_, passSet := u.User.Password()
+	if passSet {
+		return strings.Replace(u.String(), u.User.String()+"@", u.User.Username()+":***@", 1), nil
+	}
+	return u.String(), nil
+}
+
+// GetEnvVar will lookup a given environment variable by key and return the key and value (to show what case got matched) with uppercase key being preferred
+func GetEnvVar(key string) (string, string, bool) {
+	// Uppercase (has precedence over lowercase)
+	if value, ok := os.LookupEnv(strings.ToUpper(key)); ok {
+		return strings.ToUpper(key), value, true
+	}
+	// Lowercase
+	if value, ok := os.LookupEnv(strings.ToLower(key)); ok {
+		return strings.ToLower(key), value, true
+	}
+	return "", "", false
+}
+
+func PrintProxyEnvVars() {
+	// Print proxy related environment variables
+	for _, proxyEnvVar := range proxyEnvVars {
+		var err error
+		// Lookup environment variable
+		if key, value, ok := GetEnvVar(proxyEnvVar); ok {
+			// If it can contain a password, strip it (HTTP_PROXY or HTTPS_PROXY)
+			if strings.HasPrefix(strings.ToUpper(proxyEnvVar), "HTTP") {
+				value, err = StripPasswordFromURL(value)
+				if err != nil {
+					// Don't error out of provisioning when parsing of environment variable fails
+					logrus.Warnf("Error parsing proxy environment variable %s", key)
+					continue
+				}
+			}
+			logrus.Infof("Using proxy environment variable %s with value [%s]", key, value)
+		}
+	}
 }

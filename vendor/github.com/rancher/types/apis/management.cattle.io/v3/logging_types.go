@@ -151,6 +151,10 @@ type SyslogConfig struct {
 type FluentForwarderConfig struct {
 	EnableTLS     bool           `json:"enableTls,omitempty" norman:"default=false"`
 	Certificate   string         `json:"certificate,omitempty"`
+	ClientCert    string         `json:"clientCert,omitempty"`
+	ClientKey     string         `json:"clientKey,omitempty"`
+	ClientKeyPass string         `json:"clientKeyPass,omitempty"`
+	SSLVerify     bool           `json:"sslVerify,omitempty"`
 	Compress      bool           `json:"compress,omitempty" norman:"default=true"`
 	FluentServers []FluentServer `json:"fluentServers,omitempty" norman:"required"`
 }
@@ -170,15 +174,6 @@ type CustomTargetConfig struct {
 	Certificate string `json:"certificate,omitempty"`
 	ClientCert  string `json:"clientCert,omitempty"`
 	ClientKey   string `json:"clientKey,omitempty"`
-}
-
-type LoggingSystemImages struct {
-	Fluentd                       string `json:"fluentd,omitempty"`
-	FluentdHelper                 string `json:"fluentdHelper,omitempty"`
-	Elaticsearch                  string `json:"elaticsearch,omitempty"`
-	Kibana                        string `json:"kibana,omitempty"`
-	Busybox                       string `json:"busybox,omitempty"`
-	LogAggregatorFlexVolumeDriver string `json:"logAggregatorFlexVolumeDriver,omitempty"`
 }
 
 type ClusterTestInput struct {

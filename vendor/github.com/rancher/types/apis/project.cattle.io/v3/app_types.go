@@ -23,6 +23,8 @@ type AppSpec struct {
 	ExternalID          string            `json:"externalId,omitempty"`
 	Files               map[string]string `json:"files,omitempty"`
 	Answers             map[string]string `json:"answers,omitempty"`
+	Wait                bool              `json:"wait,omitempty"`
+	Timeout             int               `json:"timeout,omitempty" norman:"min=1,default=300"`
 	AppRevisionName     string            `json:"appRevisionName,omitempty" norman:"type=reference[/v3/project/schemas/apprevision]"`
 	Prune               bool              `json:"prune,omitempty"`
 	MultiClusterAppName string            `json:"multiClusterAppName,omitempty" norman:"type=reference[/v3/schemas/multiclusterapp]"`
@@ -30,11 +32,12 @@ type AppSpec struct {
 }
 
 var (
-	AppConditionInstalled           condition.Cond = "Installed"
-	AppConditionMigrated            condition.Cond = "Migrated"
-	AppConditionDeployed            condition.Cond = "Deployed"
-	AppConditionForceUpgrade        condition.Cond = "ForceUpgrade"
-	AppConditionUserTriggeredAction condition.Cond = "UserTriggeredAction"
+	AppConditionInstalled                  condition.Cond = "Installed"
+	AppConditionMigrated                   condition.Cond = "Migrated"
+	AppConditionDeployed                   condition.Cond = "Deployed"
+	AppConditionForceUpgrade               condition.Cond = "ForceUpgrade"
+	AppConditionUserTriggeredAction        condition.Cond = "UserTriggeredAction"
+	IstioConditionMetricExpressionDeployed condition.Cond = "MetricExpressionDeployed"
 )
 
 type AppStatus struct {
@@ -68,7 +71,9 @@ type AppRevision struct {
 	Status AppRevisionStatus `json:"status,omitempty"`
 }
 
-type AppRevisionSpec struct{}
+type AppRevisionSpec struct {
+	ProjectName string `json:"projectName,omitempty" norman:"type=reference[/v3/schemas/project]"`
+}
 
 type AppRevisionStatus struct {
 	ProjectName string            `json:"projectName,omitempty" norman:"type=reference[/v3/schemas/project]"`

@@ -1,97 +1,86 @@
-TEST?=./...
-VETARGS?=-all
-GOFMT_FILES?=$$(find . -name '*.go' | grep -v vendor)
-CURRENT_VERSION = $(shell gobump show -r rke/)
-BUILD_LDFLAGS = "-s -w \
-	  -X github.com/yamamoto-febc/terraform-provider-rke/rke.Revision=`git rev-parse --short HEAD`"
-export GO111MODULE=on
+GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
+WEBSITE_REPO=github.com/hashicorp/terraform-website
+PKG_NAME=rke
+TEST?="./${PKG_NAME}"
+PROVIDER_NAME=terraform-provider-rke
 
-default: fmt lint test build
+default: build
 
-.PHONY: tools
-tools:
-	GO111MODULE=off go get -u github.com/motemen/gobump/cmd/gobump
-	GO111MODULE=off go get -u golang.org/x/tools/cmd/goimports
+build: fmtcheck
+	go install
 
-clean:
-	rm -Rf $(CURDIR)/bin/*
+build-rancher: validate-rancher
+	@sh -c "'$(CURDIR)/scripts/gobuild.sh'"
 
-build: clean
-	OS="`go env GOOS`" ARCH="`go env GOARCH`" ARCHIVE= BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
+validate-rancher: vet lint fmtcheck
 
-build-x: build-darwin build-windows build-linux build-bsd shasum
+package-rancher:
+	@sh -c "'$(CURDIR)/scripts/gopackage.sh'"
 
-build-darwin: bin/terraform-provider-rke_$(CURRENT_VERSION)_darwin-386.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_darwin-amd64.zip
+test: fmtcheck
+	go test -i $(TEST) || exit 1
+	echo $(TEST) | \
+		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
-build-windows: bin/terraform-provider-rke_$(CURRENT_VERSION)_windows-386.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_windows-amd64.zip
+testacc: 
+	@sh -c "'$(CURDIR)/scripts/gotestacc.sh'"
 
-build-linux: bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-386.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-amd64.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-arm.zip
+vet:
+	@echo "==> Checking that code complies with go vet requirements..."
+	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -eq 1 ]; then \
+		echo ""; \
+		echo "Vet found suspicious constructs. Please check the reported constructs"; \
+		echo "and fix them if necessary before submitting the code for review."; \
+		exit 1; \
+	fi
 
-build-bsd: bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-386.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-amd64.zip bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-arm.zip
+lint:
+	@echo "==> Checking that code complies with golint requirements..."
+	@go get -u golang.org/x/lint/golint
+	@if [ -n "$$(golint $$(go list ./...) | grep -v 'should have comment.*or be unexported' | tee /dev/stderr)" ]; then \
+		echo ""; \
+		echo "golint found style issues. Please check the reported issues"; \
+		echo "and fix them if necessary before submitting the code for review."; \
+    	exit 1; \
+	fi
 
-bin/terraform-provider-rke_$(CURRENT_VERSION)_darwin-386.zip:
-	OS="darwin"  ARCH="386"   ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-bin/terraform-provider-rke_$(CURRENT_VERSION)_darwin-amd64.zip:
-	OS="darwin"  ARCH="amd64" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-bin/terraform-provider-rke_$(CURRENT_VERSION)_windows-386.zip:
-	OS="windows" ARCH="386"   ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-bin/terraform-provider-rke_$(CURRENT_VERSION)_windows-amd64.zip:
-	OS="windows" ARCH="amd64" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-386.zip:
-	OS="linux"   ARCH="386"   ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-amd64.zip:
-	OS="linux"   ARCH="amd64" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-bin/terraform-provider-rke_$(CURRENT_VERSION)_linux-arm.zip:
-	OS="linux"   ARCH="arm" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-386.zip:
-	OS="openbsd" ARCH="386"   ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-amd64.zip:
-	OS="openbsd" ARCH="amd64" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-bin/terraform-provider-rke_$(CURRENT_VERSION)_openbsd-arm.zip:
-	OS="openbsd" ARCH="arm" ARCHIVE=1 BUILD_LDFLAGS=$(BUILD_LDFLAGS) CURRENT_VERSION=$(CURRENT_VERSION) sh -c "'$(CURDIR)/scripts/build.sh'"
-
-shasum:
-	(cd bin/; shasum -a 256 * > terraform-provider-rke_$(CURRENT_VERSION)_SHA256SUMS)
-
-test: fmt
-	TF_ACC=  go test $(TEST) -v $(TESTARGS) -timeout=30s -parallel=4 ; \
-
-testacc:
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 240m ; \
-
-.PHONY: lint
-lint: fmt
-	GOGC=10 golangci-lint run
+bin:
+	go build -o $(PROVIDER_NAME)
 
 fmt:
-	gofmt -w $(GOFMT_FILES)
+	gofmt -w -s $(GOFMT_FILES)
 
-docker-build: clean
-	sh -c "'$(CURDIR)/scripts/build_on_docker.sh' 'build-x'"
+fmtcheck:
+	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
-.PHONY: default test testacc fmt fmtcheck
+errcheck:
+	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
 
-.PHONY: bump-patch bump-minor bump-major version
-bump-patch:
-	gobump patch -w rke
+vendor-status:
+	@govendor status
 
-bump-minor:
-	gobump minor -w rke
+test-compile:
+	@if [ "$(TEST)" = "./..." ]; then \
+		echo "ERROR: Set TEST to a specific package. For example,"; \
+		echo "  make test-compile TEST=./$(PKG_NAME)"; \
+		exit 1; \
+	fi
+	go test -c $(TEST) $(TESTARGS)
 
-bump-major:
-	gobump major -w rke
+website:
+ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
+	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
+	git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
+endif
+	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-version:
-	gobump show -r rke
+website-test:
+ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
+	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
+	git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
+endif
+	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-git-tag:
-	git tag v`gobump show -r rke`
+.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-status test-compile website website-test
+
+

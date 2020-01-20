@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-getter/helper/url"
+	//"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/cmd"
@@ -41,7 +42,12 @@ func resourceRKECluster() *schema.Resource {
 			}
 			return nil
 		},
-		Schema: ClusterSchema(),
+		Schema: rkeClusterFields(),
+		Timeouts: &schema.ResourceTimeout{
+			Create: schema.DefaultTimeout(30 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
+			Delete: schema.DefaultTimeout(30 * time.Minute),
+		},
 	}
 }
 
@@ -72,7 +78,7 @@ func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
 		}
 		return wrapErrWithRKEOutputs(err)
 	}
-	return wrapErrWithRKEOutputs(clusterToState(currentCluster, d))
+	return wrapErrWithRKEOutputs(flattenRKECluster(d, currentCluster))
 }
 
 func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
@@ -86,9 +92,9 @@ func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 func clusterUp(d *schema.ResourceData) error {
-	rkeConfig, parseErr := parseResourceRKEConfig(d)
-	if parseErr != nil {
-		return parseErr
+	rkeConfig, err := expandRKECluster(d)
+	if err != nil {
+		return err
 	}
 	disablePortCheck := d.Get("disable_port_check").(bool)
 
@@ -104,7 +110,7 @@ func clusterUp(d *schema.ResourceData) error {
 		return err
 	}
 
-	apiURL, caCrt, clientCert, clientKey, _, clusterUpErr := cmd.ClusterUp(context.Background(), hosts.DialersOptions{}, flags)
+	apiURL, caCrt, clientCert, clientKey, _, clusterUpErr := cmd.ClusterUp(context.Background(), hosts.DialersOptions{}, flags, map[string]interface{}{})
 	if clusterUpErr != nil {
 		return clusterUpErr
 	}
@@ -114,9 +120,9 @@ func clusterUp(d *schema.ResourceData) error {
 }
 
 func clusterRemove(d *schema.ResourceData) error {
-	rkeConfig, parseErr := parseResourceRKEConfig(d)
-	if parseErr != nil {
-		return parseErr
+	rkeConfig, err := expandRKECluster(d)
+	if err != nil {
+		return err
 	}
 
 	clusterFilePath, tempDir, err := prepareTempRKEConfigFiles(rkeConfig, d)
@@ -138,7 +144,7 @@ func realClusterRemove(
 	flags cluster.ExternalFlags) error {
 
 	log.Infof(ctx, "Tearing down Kubernetes cluster")
-	kubeCluster, err := cluster.InitClusterObject(ctx, rkeConfig, flags)
+	kubeCluster, err := cluster.InitClusterObject(ctx, rkeConfig, flags, "")
 	if err != nil {
 		return err
 	}
@@ -212,9 +218,9 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 		}
 	}
 
-	rkeConfig, parseErr := parseResourceRKEConfig(d)
-	if parseErr != nil {
-		return nil, parseErr
+	rkeConfig, err := expandRKECluster(d)
+	if err != nil {
+		return nil, err
 	}
 
 	yamlRkeConfig, err := yaml.Marshal(*rkeConfig)
@@ -265,7 +271,7 @@ func realClusterRead(ctx context.Context, dialersOptions hosts.DialersOptions, f
 		return nil, nil, newStateNotFoundError(err)
 	}
 
-	kubeCluster, err := cluster.InitClusterObject(ctx, fullState.DesiredState.RancherKubernetesEngineConfig.DeepCopy(), flags)
+	kubeCluster, err := cluster.InitClusterObject(ctx, fullState.DesiredState.RancherKubernetesEngineConfig.DeepCopy(), flags, "")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -286,7 +292,7 @@ func realClusterRead(ctx context.Context, dialersOptions hosts.DialersOptions, f
 	return fullState, clusterState, nil
 }
 
-func prepareTempRKEConfigFiles(rkeConfig *v3.RancherKubernetesEngineConfig, d resourceData) (string, string, error) {
+func prepareTempRKEConfigFiles(rkeConfig *v3.RancherKubernetesEngineConfig, d *schema.ResourceData) (string, string, error) {
 	tempDir, tempDirErr := createTempDir()
 	if tempDirErr != nil {
 		return "", "", tempDirErr
@@ -332,7 +338,7 @@ func readRKEStateFile(dir string) (string, error) {
 	return "", nil
 }
 
-func writeRKEStateFile(dir string, d resourceData) error {
+func writeRKEStateFile(dir string, d *schema.ResourceData) error {
 	if rawRKEState, ok := d.GetOk("rke_state"); ok {
 		strState := rawRKEState.(string)
 		if strState != "" {
@@ -346,7 +352,7 @@ func writeRKEStateFile(dir string, d resourceData) error {
 	return nil
 }
 
-func writeKubeConfigFile(dir string, d resourceData) error {
+func writeKubeConfigFile(dir string, d *schema.ResourceData) error {
 	if rawKubeConfig, ok := d.GetOk("internal_kube_config_yaml"); ok {
 		strConf := rawKubeConfig.(string)
 		if strConf != "" {
@@ -382,38 +388,33 @@ func createTempDir() (string, error) {
 	return tempDir, nil
 }
 
-type resourceDiffer interface {
-	HasChange(string) bool
-}
-
-func isRKEConfigChanged(d resourceDiffer) bool {
+func isRKEConfigChanged(d *schema.ResourceDiff) bool {
 	targetKeys := []string{
-		"nodes_conf",
-		"nodes",
-		"services_etcd",
-		"services_kube_api",
-		"services_kube_controller",
-		"services_scheduler",
-		"services_kubelet",
-		"services_kubeproxy",
-		"network",
-		"authentication",
+		"addon_job_timeout",
 		"addons",
 		"addons_include",
-		"addon_job_timeout",
-		"system_images",
-		"ssh_key_path",
-		"ssh_agent_auth",
-		"bastion_host",
-		"monitoring",
+		"authentication",
 		"authorization",
-		"ignore_docker_version",
-		"kubernetes_version",
-		"private_registries",
-		"ingress",
-		"cluster_name",
+		"bastion_host",
 		"cloud_provider",
+		"cluster_name",
+		"dns",
+		"ignore_docker_version",
+		"ingress",
+		"kubernetes_version",
+		"monitoring",
+		"network",
+		"nodes",
+		"nodes_conf",
 		"prefix_path",
+		"private_registries",
+		"restore",
+		"rotate_certificates",
+		"services",
+		"ssh_agent_auth",
+		"ssh_cert_path",
+		"ssh_key_path",
+		"system_images",
 	}
 	for _, key := range targetKeys {
 		if d.HasChange(key) {

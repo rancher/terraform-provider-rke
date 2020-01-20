@@ -41,21 +41,25 @@ resource "rke_cluster" "cluster" {
     role             = ["worker"]
   }
 
-  services_kube_api {
-    extra_args = {
-      kubelet-preferred-address-types = "InternalIP,ExternalIP,Hostname"
-      feature-gates = "VolumeSnapshotDataSource=true,KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true"
+  services {
+    kube_api {
+      extra_args = {
+        kubelet-preferred-address-types = "InternalIP,ExternalIP,Hostname"
+        feature-gates = "VolumeSnapshotDataSource=true,KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true"
+      }
+    }
+    kubelet {
+      extra_args = {
+        cloud-provider = "external"
+        feature-gates = "VolumeSnapshotDataSource=true,KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true"
+      }
     }
   }
-  services_kubelet {
-    extra_args = {
-      cloud-provider = "external"
-      feature-gates = "VolumeSnapshotDataSource=true,KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true"
-    }
-  }
+
   ingress {
     provider = "none"
   }
+  
   addon_job_timeout = 60
   addons = "${data.template_file.addons.rendered}"
 

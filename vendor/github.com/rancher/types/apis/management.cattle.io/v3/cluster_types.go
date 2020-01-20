@@ -20,6 +20,19 @@ func init() {
 type ClusterConditionType string
 
 const (
+	ClusterActionGenerateKubeconfig    = "generateKubeconfig"
+	ClusterActionImportYaml            = "importYaml"
+	ClusterActionExportYaml            = "exportYaml"
+	ClusterActionViewMonitoring        = "viewMonitoring"
+	ClusterActionEditMonitoring        = "editMonitoring"
+	ClusterActionEnableMonitoring      = "enableMonitoring"
+	ClusterActionDisableMonitoring     = "disableMonitoring"
+	ClusterActionBackupEtcd            = "backupEtcd"
+	ClusterActionRestoreFromEtcdBackup = "restoreFromEtcdBackup"
+	ClusterActionRotateCertificates    = "rotateCertificates"
+	ClusterActionRunCISScan            = "runSecurityScan"
+	ClusterActionSaveAsTemplate        = "saveAsTemplate"
+
 	// ClusterConditionReady Cluster ready to serve API (healthy when true, unhealthy when false)
 	ClusterConditionReady          condition.Cond = "Ready"
 	ClusterConditionPending        condition.Cond = "Pending"
@@ -73,25 +86,34 @@ type Cluster struct {
 	Status ClusterStatus `json:"status"`
 }
 
-type ClusterSpec struct {
-	DisplayName                          string                         `json:"displayName" norman:"required"`
-	Description                          string                         `json:"description"`
-	Internal                             bool                           `json:"internal" norman:"nocreate,noupdate"`
+type ClusterSpecBase struct {
 	DesiredAgentImage                    string                         `json:"desiredAgentImage"`
 	DesiredAuthImage                     string                         `json:"desiredAuthImage"`
-	ImportedConfig                       *ImportedConfig                `json:"importedConfig,omitempty" norman:"nocreate,noupdate"`
-	GoogleKubernetesEngineConfig         *MapStringInterface            `json:"googleKubernetesEngineConfig,omitempty"`
-	AzureKubernetesServiceConfig         *MapStringInterface            `json:"azureKubernetesServiceConfig,omitempty"`
 	RancherKubernetesEngineConfig        *RancherKubernetesEngineConfig `json:"rancherKubernetesEngineConfig,omitempty"`
-	AmazonElasticContainerServiceConfig  *MapStringInterface            `json:"amazonElasticContainerServiceConfig,omitempty"`
-	GenericEngineConfig                  *MapStringInterface            `json:"genericEngineConfig,omitempty"`
 	DefaultPodSecurityPolicyTemplateName string                         `json:"defaultPodSecurityPolicyTemplateName,omitempty" norman:"type=reference[podSecurityPolicyTemplate]"`
 	DefaultClusterRoleForProjectMembers  string                         `json:"defaultClusterRoleForProjectMembers,omitempty" norman:"type=reference[roleTemplate]"`
 	DockerRootDir                        string                         `json:"dockerRootDir,omitempty" norman:"default=/var/lib/docker"`
 	EnableNetworkPolicy                  *bool                          `json:"enableNetworkPolicy" norman:"default=false"`
 	EnableClusterAlerting                bool                           `json:"enableClusterAlerting" norman:"default=false"`
 	EnableClusterMonitoring              bool                           `json:"enableClusterMonitoring" norman:"default=false"`
+	WindowsPreferedCluster               bool                           `json:"windowsPreferedCluster" norman:"noupdate"`
 	LocalClusterAuthEndpoint             LocalClusterAuthEndpoint       `json:"localClusterAuthEndpoint,omitempty"`
+}
+
+type ClusterSpec struct {
+	ClusterSpecBase
+	DisplayName                         string              `json:"displayName" norman:"required"`
+	Description                         string              `json:"description"`
+	Internal                            bool                `json:"internal" norman:"nocreate,noupdate"`
+	ImportedConfig                      *ImportedConfig     `json:"importedConfig,omitempty" norman:"nocreate,noupdate"`
+	GoogleKubernetesEngineConfig        *MapStringInterface `json:"googleKubernetesEngineConfig,omitempty"`
+	AzureKubernetesServiceConfig        *MapStringInterface `json:"azureKubernetesServiceConfig,omitempty"`
+	AmazonElasticContainerServiceConfig *MapStringInterface `json:"amazonElasticContainerServiceConfig,omitempty"`
+	GenericEngineConfig                 *MapStringInterface `json:"genericEngineConfig,omitempty"`
+	ClusterTemplateName                 string              `json:"clusterTemplateName,omitempty" norman:"type=reference[clusterTemplate],nocreate,noupdate"`
+	ClusterTemplateRevisionName         string              `json:"clusterTemplateRevisionName,omitempty" norman:"type=reference[clusterTemplateRevision]"`
+	ClusterTemplateAnswers              Answer              `json:"answers,omitempty"`
+	ClusterTemplateQuestions            []Question          `json:"questions,omitempty" norman:"nocreate,noupdate"`
 }
 
 type ImportedConfig struct {
@@ -122,6 +144,7 @@ type ClusterStatus struct {
 	AppliedEnableNetworkPolicy           bool                      `json:"appliedEnableNetworkPolicy" norman:"nocreate,noupdate,default=false"`
 	Capabilities                         Capabilities              `json:"capabilities,omitempty"`
 	MonitoringStatus                     *MonitoringStatus         `json:"monitoringStatus,omitempty" norman:"nocreate,noupdate"`
+	IstioEnabled                         bool                      `json:"istioEnabled,omitempty" norman:"nocreate,noupdate,default=false"`
 	CertificatesExpiration               map[string]CertExpiration `json:"certificatesExpiration,omitempty"`
 }
 
@@ -219,6 +242,8 @@ type Capabilities struct {
 	IngressCapabilities      []IngressCapabilities    `json:"ingressCapabilities,omitempty"`
 	NodePoolScalingSupported bool                     `json:"nodePoolScalingSupported,omitempty"`
 	NodePortRange            string                   `json:"nodePortRange,omitempty"`
+	TaintSupport             *bool                    `json:"taintSupport,omitempty"`
+	PspEnabled               bool                     `json:"pspEnabled,omitempty"`
 }
 
 type LoadBalancerCapabilities struct {
@@ -230,14 +255,16 @@ type LoadBalancerCapabilities struct {
 
 type IngressCapabilities struct {
 	IngressProvider      string `json:"ingressProvider,omitempty"`
-	CustomDefaultBackend bool   `json:"customDefaultBackend,omitempty"`
+	CustomDefaultBackend *bool  `json:"customDefaultBackend,omitempty"`
 }
 
 type MonitoringInput struct {
+	Version string            `json:"version,omitempty"`
 	Answers map[string]string `json:"answers,omitempty"`
 }
 
 type MonitoringOutput struct {
+	Version string            `json:"version,omitempty"`
 	Answers map[string]string `json:"answers,omitempty"`
 }
 
@@ -262,4 +289,9 @@ type LocalClusterAuthEndpoint struct {
 
 type CertExpiration struct {
 	ExpirationDate string `json:"expirationDate,omitempty"`
+}
+
+type SaveAsTemplateInput struct {
+	ClusterTemplateName         string `json:"clusterTemplateName,omitempty"`
+	ClusterTemplateRevisionName string `json:"clusterTemplateRevisionName,omitempty"`
 }

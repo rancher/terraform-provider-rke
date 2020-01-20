@@ -125,6 +125,11 @@ func (c *threadSafeMap) Replace(items map[string]interface{}, resourceVersion st
 	c.items = items
 
 	// rebuild any index
+	c.rebuildIndices()
+}
+
+// rebuildIndices rebuilds all indices for the current set c.items. Assumes that c.lock is held by caller
+func (c *threadSafeMap) rebuildIndices() {
 	c.indices = Indices{}
 	for key, item := range c.items {
 		c.updateIndices(nil, item, key)
@@ -148,12 +153,19 @@ func (c *threadSafeMap) Index(indexName string, obj interface{}) ([]interface{},
 	}
 	index := c.indices[indexName]
 
-	// need to de-dupe the return list.  Since multiple keys are allowed, this can happen.
-	returnKeySet := sets.String{}
-	for _, indexKey := range indexKeys {
-		set := index[indexKey]
-		for _, key := range set.UnsortedList() {
-			returnKeySet.Insert(key)
+	var returnKeySet sets.String
+	if len(indexKeys) == 1 {
+		// In majority of cases, there is exactly one value matching.
+		// Optimize the most common path - deduping is not needed here.
+		returnKeySet = index[indexKeys[0]]
+	} else {
+		// Need to de-dupe the return list.
+		// Since multiple keys are allowed, this can happen.
+		returnKeySet = sets.String{}
+		for _, indexKey := range indexKeys {
+			for key := range index[indexKey] {
+				returnKeySet.Insert(key)
+			}
 		}
 	}
 
@@ -178,7 +190,7 @@ func (c *threadSafeMap) ByIndex(indexName, indexKey string) ([]interface{}, erro
 
 	set := index[indexKey]
 	list := make([]interface{}, 0, set.Len())
-	for _, key := range set.List() {
+	for key := range set {
 		list = append(list, c.items[key])
 	}
 
@@ -222,10 +234,6 @@ func (c *threadSafeMap) AddIndexers(newIndexers Indexers) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	if len(c.items) > 0 {
-		return fmt.Errorf("cannot add indexers to running index")
-	}
-
 	oldKeys := sets.StringKeySet(c.indexers)
 	newKeys := sets.StringKeySet(newIndexers)
 
@@ -236,6 +244,11 @@ func (c *threadSafeMap) AddIndexers(newIndexers Indexers) error {
 	for k, v := range newIndexers {
 		c.indexers[k] = v
 	}
+
+	if len(c.items) > 0 {
+		c.rebuildIndices()
+	}
+
 	return nil
 }
 
@@ -295,6 +308,7 @@ func (c *threadSafeMap) Resync() error {
 	return nil
 }
 
+// NewThreadSafeStore creates a new instance of ThreadSafeStore.
 func NewThreadSafeStore(indexers Indexers, indices Indices) ThreadSafeStore {
 	return &threadSafeMap{
 		items:    map[string]interface{}{},

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/docker/docker/api/types/container"
@@ -27,14 +28,16 @@ const (
 	CPPortListenContainer     = "rke-cp-port-listener"
 	WorkerPortListenContainer = "rke-worker-port-listener"
 
-	KubeAPIPort         = "6443"
-	EtcdPort1           = "2379"
-	EtcdPort2           = "2380"
-	ScedulerPort        = "10251"
-	ControllerPort      = "10252"
-	KubeletPort         = "10250"
-	KubeProxyPort       = "10256"
-	FlannetVXLANPortUDP = "8472"
+	KubeAPIPort      = "6443"
+	EtcdPort1        = "2379"
+	EtcdPort2        = "2380"
+	ScedulerPort     = "10251"
+	ControllerPort   = "10252"
+	KubeletPort      = "10250"
+	KubeProxyPort    = "10256"
+	FlannelVxLanPort = 8472
+
+	FlannelVxLanNetworkIdentify = 1
 
 	ProtocolTCP = "TCP"
 	ProtocolUDP = "UDP"
@@ -44,16 +47,26 @@ const (
 	FlannelNetworkPlugin = "flannel"
 	FlannelIface         = "flannel_iface"
 	FlannelBackendType   = "flannel_backend_type"
+	// FlannelBackendPort must be 4789 if using VxLan mode in the cluster with Windows nodes
+	FlannelBackendPort = "flannel_backend_port"
+	// FlannelBackendVxLanNetworkIdentify should be greater than or equal to 4096 if using VxLan mode in the cluster with Windows nodes
+	FlannelBackendVxLanNetworkIdentify = "flannel_backend_vni"
 
-	CalicoNetworkPlugin = "calico"
-	CalicoCloudProvider = "calico_cloud_provider"
+	CalicoNetworkPlugin   = "calico"
+	CalicoNodeLabel       = "calico-node"
+	CalicoControllerLabel = "calico-kube-controllers"
+	CalicoCloudProvider   = "calico_cloud_provider"
 
 	CanalNetworkPlugin      = "canal"
 	CanalIface              = "canal_iface"
 	CanalFlannelBackendType = "canal_flannel_backend_type"
+	// CanalFlannelBackendPort must be 4789 if using Flannel VxLan mode in the cluster with Windows nodes
+	CanalFlannelBackendPort = "canal_flannel_backend_port"
+	// CanalFlannelBackendVxLanNetworkIdentify should be greater than or equal to 4096 if using Flannel VxLan mode in the cluster with Windows nodes
+	CanalFlannelBackendVxLanNetworkIdentify = "canal_flannel_backend_vni"
 
 	WeaveNetworkPlugin  = "weave"
-	WeaveNetowrkAppName = "weave-net"
+	WeaveNetworkAppName = "weave-net"
 	// List of map keys to be used with network templates
 
 	// EtcdEndpoints is the server address for Etcd, used by calico
@@ -83,6 +96,7 @@ const (
 	NodeImage          = "NodeImage"
 	ControllersImage   = "ControllersImage"
 	CanalFlannelImg    = "CanalFlannelImg"
+	FlexVolImg         = "FlexVolImg"
 	WeaveLoopbackImage = "WeaveLoopbackImage"
 
 	Calicoctl = "Calicoctl"
@@ -93,6 +107,8 @@ const (
 	WeavePassword    = "WeavePassword"
 	RBACConfig       = "RBACConfig"
 	ClusterVersion   = "ClusterVersion"
+
+	NodeSelector = "NodeSelector"
 )
 
 var EtcdPortList = []string{
@@ -112,17 +128,19 @@ var EtcdClientPortList = []string{
 	EtcdPort1,
 }
 
-func (c *Cluster) deployNetworkPlugin(ctx context.Context) error {
+var CalicoNetworkLabels = []string{CalicoNodeLabel, CalicoControllerLabel}
+
+func (c *Cluster) deployNetworkPlugin(ctx context.Context, data map[string]interface{}) error {
 	log.Infof(ctx, "[network] Setting up network plugin: %s", c.Network.Plugin)
 	switch c.Network.Plugin {
 	case FlannelNetworkPlugin:
-		return c.doFlannelDeploy(ctx)
+		return c.doFlannelDeploy(ctx, data)
 	case CalicoNetworkPlugin:
-		return c.doCalicoDeploy(ctx)
+		return c.doCalicoDeploy(ctx, data)
 	case CanalNetworkPlugin:
-		return c.doCanalDeploy(ctx)
+		return c.doCanalDeploy(ctx, data)
 	case WeaveNetworkPlugin:
-		return c.doWeaveDeploy(ctx)
+		return c.doWeaveDeploy(ctx, data)
 	case NoNetworkPlugin:
 		log.Infof(ctx, "[network] Not deploying a cluster network, expecting custom CNI")
 		return nil
@@ -131,7 +149,16 @@ func (c *Cluster) deployNetworkPlugin(ctx context.Context) error {
 	}
 }
 
-func (c *Cluster) doFlannelDeploy(ctx context.Context) error {
+func (c *Cluster) doFlannelDeploy(ctx context.Context, data map[string]interface{}) error {
+	vni, err := atoiWithDefault(c.Network.Options[FlannelBackendVxLanNetworkIdentify], FlannelVxLanNetworkIdentify)
+	if err != nil {
+		return err
+	}
+	port, err := atoiWithDefault(c.Network.Options[FlannelBackendPort], FlannelVxLanPort)
+	if err != nil {
+		return err
+	}
+
 	flannelConfig := map[string]interface{}{
 		ClusterCIDR:      c.ClusterCIDR,
 		Image:            c.SystemImages.Flannel,
@@ -139,19 +166,23 @@ func (c *Cluster) doFlannelDeploy(ctx context.Context) error {
 		FlannelInterface: c.Network.Options[FlannelIface],
 		FlannelBackend: map[string]interface{}{
 			"Type": c.Network.Options[FlannelBackendType],
+			"VNI":  vni,
+			"Port": port,
 		},
 		RBACConfig:     c.Authorization.Mode,
 		ClusterVersion: util.GetTagMajorVersion(c.Version),
+		NodeSelector:   c.Network.NodeSelector,
 	}
-	pluginYaml, err := c.getNetworkPluginManifest(flannelConfig)
+	pluginYaml, err := c.getNetworkPluginManifest(flannelConfig, data)
 	if err != nil {
 		return err
 	}
 	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName, true)
 }
 
-func (c *Cluster) doCalicoDeploy(ctx context.Context) error {
+func (c *Cluster) doCalicoDeploy(ctx context.Context, data map[string]interface{}) error {
 	clientConfig := pki.GetConfigPath(pki.KubeNodeCertName)
+
 	calicoConfig := map[string]interface{}{
 		KubeCfg:          clientConfig,
 		ClusterCIDR:      c.ClusterCIDR,
@@ -160,16 +191,27 @@ func (c *Cluster) doCalicoDeploy(ctx context.Context) error {
 		Calicoctl:        c.SystemImages.CalicoCtl,
 		ControllersImage: c.SystemImages.CalicoControllers,
 		CloudProvider:    c.Network.Options[CalicoCloudProvider],
+		FlexVolImg:       c.SystemImages.CalicoFlexVol,
 		RBACConfig:       c.Authorization.Mode,
+		NodeSelector:     c.Network.NodeSelector,
 	}
-	pluginYaml, err := c.getNetworkPluginManifest(calicoConfig)
+	pluginYaml, err := c.getNetworkPluginManifest(calicoConfig, data)
 	if err != nil {
 		return err
 	}
 	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName, true)
 }
 
-func (c *Cluster) doCanalDeploy(ctx context.Context) error {
+func (c *Cluster) doCanalDeploy(ctx context.Context, data map[string]interface{}) error {
+	flannelVni, err := atoiWithDefault(c.Network.Options[CanalFlannelBackendVxLanNetworkIdentify], FlannelVxLanNetworkIdentify)
+	if err != nil {
+		return err
+	}
+	flannelPort, err := atoiWithDefault(c.Network.Options[CanalFlannelBackendPort], FlannelVxLanPort)
+	if err != nil {
+		return err
+	}
+
 	clientConfig := pki.GetConfigPath(pki.KubeNodeCertName)
 	canalConfig := map[string]interface{}{
 		ClientCertPath:  pki.GetCertPath(pki.KubeNodeCertName),
@@ -183,18 +225,22 @@ func (c *Cluster) doCanalDeploy(ctx context.Context) error {
 		CanalFlannelImg: c.SystemImages.CanalFlannel,
 		RBACConfig:      c.Authorization.Mode,
 		CanalInterface:  c.Network.Options[CanalIface],
+		FlexVolImg:      c.SystemImages.CanalFlexVol,
 		FlannelBackend: map[string]interface{}{
 			"Type": c.Network.Options[CanalFlannelBackendType],
+			"VNI":  flannelVni,
+			"Port": flannelPort,
 		},
+		NodeSelector: c.Network.NodeSelector,
 	}
-	pluginYaml, err := c.getNetworkPluginManifest(canalConfig)
+	pluginYaml, err := c.getNetworkPluginManifest(canalConfig, data)
 	if err != nil {
 		return err
 	}
 	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName, true)
 }
 
-func (c *Cluster) doWeaveDeploy(ctx context.Context) error {
+func (c *Cluster) doWeaveDeploy(ctx context.Context, data map[string]interface{}) error {
 	weaveConfig := map[string]interface{}{
 		ClusterCIDR:        c.ClusterCIDR,
 		WeavePassword:      c.Network.Options[WeavePassword],
@@ -202,24 +248,23 @@ func (c *Cluster) doWeaveDeploy(ctx context.Context) error {
 		CNIImage:           c.SystemImages.WeaveCNI,
 		WeaveLoopbackImage: c.SystemImages.Alpine,
 		RBACConfig:         c.Authorization.Mode,
+		NodeSelector:       c.Network.NodeSelector,
 	}
-	pluginYaml, err := c.getNetworkPluginManifest(weaveConfig)
+	pluginYaml, err := c.getNetworkPluginManifest(weaveConfig, data)
 	if err != nil {
 		return err
 	}
 	return c.doAddonDeploy(ctx, pluginYaml, NetworkPluginResourceName, true)
 }
 
-func (c *Cluster) getNetworkPluginManifest(pluginConfig map[string]interface{}) (string, error) {
+func (c *Cluster) getNetworkPluginManifest(pluginConfig, data map[string]interface{}) (string, error) {
 	switch c.Network.Plugin {
-	case FlannelNetworkPlugin:
-		return templates.CompileTemplateFromMap(templates.GetVersionedTemplates(FlannelNetworkPlugin, c.Version), pluginConfig)
-	case CalicoNetworkPlugin:
-		return templates.CompileTemplateFromMap(templates.GetVersionedTemplates(CalicoNetworkPlugin, c.Version), pluginConfig)
-	case CanalNetworkPlugin:
-		return templates.CompileTemplateFromMap(templates.GetVersionedTemplates(CanalNetworkPlugin, c.Version), pluginConfig)
-	case WeaveNetworkPlugin:
-		return templates.CompileTemplateFromMap(templates.WeaveTemplate, pluginConfig)
+	case CanalNetworkPlugin, FlannelNetworkPlugin, CalicoNetworkPlugin, WeaveNetworkPlugin:
+		tmplt, err := templates.GetVersionedTemplates(c.Network.Plugin, data, c.Version)
+		if err != nil {
+			return "", err
+		}
+		return templates.CompileTemplateFromMap(tmplt, pluginConfig)
 	default:
 		return "", fmt.Errorf("[network] Unsupported network plugin: %s", c.Network.Plugin)
 	}
@@ -228,12 +273,12 @@ func (c *Cluster) getNetworkPluginManifest(pluginConfig map[string]interface{}) 
 func (c *Cluster) CheckClusterPorts(ctx context.Context, currentCluster *Cluster) error {
 	if currentCluster != nil {
 		newEtcdHost := hosts.GetToAddHosts(currentCluster.EtcdHosts, c.EtcdHosts)
-		newControlPlanHosts := hosts.GetToAddHosts(currentCluster.ControlPlaneHosts, c.ControlPlaneHosts)
+		newControlPlaneHosts := hosts.GetToAddHosts(currentCluster.ControlPlaneHosts, c.ControlPlaneHosts)
 		newWorkerHosts := hosts.GetToAddHosts(currentCluster.WorkerHosts, c.WorkerHosts)
 
 		if len(newEtcdHost) == 0 &&
 			len(newWorkerHosts) == 0 &&
-			len(newControlPlanHosts) == 0 {
+			len(newControlPlaneHosts) == 0 {
 			log.Infof(ctx, "[network] No hosts added existing cluster, skipping port check")
 			return nil
 		}
@@ -510,4 +555,17 @@ func getPortBindings(hostAddress string, portList []string) []nat.PortBinding {
 		portBindingList = append(portBindingList, portMapping[0].Binding)
 	}
 	return portBindingList
+}
+
+func atoiWithDefault(val string, defaultVal int) (int, error) {
+	if val == "" {
+		return defaultVal, nil
+	}
+
+	ret, err := strconv.Atoi(val)
+	if err != nil {
+		return 0, err
+	}
+
+	return ret, nil
 }

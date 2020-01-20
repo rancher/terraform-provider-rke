@@ -9,7 +9,7 @@ This repository is an examples for building a Kubernetes cluster using Terraform
 ### Requirements
 
 - [terraform](https://terraform.io) v0.11+
-- [terraform-provider-rke](https://github.com/yamamoto-febc/terraform-provider-rke)
+- [terraform-provider-rke](https://github.com/rancher/terraform-provider-rke)
 - Valid AWS access_key and secret_key
 - [optional] `kubectl` command
 
@@ -17,7 +17,7 @@ This repository is an examples for building a Kubernetes cluster using Terraform
 
 ```console
 #clone this repo
-$ git clone https://github.com/yamamoto-febc/terraform-provider-rke
+$ git clone https://github.com/rancher/terraform-provider-rke
 $ cd terraform-provider-rke/examples/aws_ec2
 
 #set API keys to environment variables

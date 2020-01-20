@@ -52,12 +52,14 @@ const (
 	LogCleanerContainerName = "rke-log-cleaner"
 	RKELogsPath             = "/var/lib/rancher/rke/log"
 
-	B2DOS            = "Boot2Docker"
-	B2DPrefixPath    = "/mnt/sda1/rke"
-	ROS              = "RancherOS"
-	ROSPrefixPath    = "/opt/rke"
-	CoreOS           = "CoreOS"
-	CoreOSPrefixPath = "/opt/rke"
+	B2DOS             = "Boot2Docker"
+	B2DPrefixPath     = "/mnt/sda1/rke"
+	ROS               = "RancherOS"
+	ROSPrefixPath     = "/opt/rke"
+	CoreOS            = "CoreOS"
+	CoreOSPrefixPath  = "/opt/rke"
+	WindowsOS         = "Windows"
+	WindowsPrefixPath = "c:/"
 )
 
 func (h *Host) CleanUpAll(ctx context.Context, cleanerImage string, prsMap map[string]v3.PrivateRegistry, externalEtcd bool) error {
@@ -272,6 +274,16 @@ func buildCleanerConfig(host *Host, toCleanDirs []string, cleanerImage string) (
 
 func NodesToHosts(rkeNodes []v3.RKEConfigNode, nodeRole string) []*Host {
 	hostList := make([]*Host, 0)
+	// Return all nodes if there is no noderole passed to the function
+	if nodeRole == "" {
+		for _, node := range rkeNodes {
+			newHost := Host{
+				RKEConfigNode: node,
+			}
+			hostList = append(hostList, &newHost)
+		}
+		return hostList
+	}
 	for _, node := range rkeNodes {
 		for _, role := range node.Role {
 			if role == nodeRole {
@@ -314,6 +326,8 @@ func GetPrefixPath(osType, ClusterPrefixPath string) string {
 		prefixPath = ROSPrefixPath
 	case strings.Contains(osType, CoreOS):
 		prefixPath = CoreOSPrefixPath
+	case strings.Contains(osType, WindowsOS):
+		prefixPath = WindowsPrefixPath
 	default:
 		prefixPath = ClusterPrefixPath
 	}
@@ -333,6 +347,7 @@ func DoRunLogCleaner(ctx context.Context, host *Host, alpineImage string, prsMap
 	}
 	hostCfg := &container.HostConfig{
 		Binds: []string{
+			host.DockerInfo.DockerRootDir + ":" + host.DockerInfo.DockerRootDir,
 			"/var/lib:/var/lib",
 		},
 		Privileged: true,

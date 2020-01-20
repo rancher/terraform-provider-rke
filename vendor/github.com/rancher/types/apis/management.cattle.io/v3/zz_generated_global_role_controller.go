@@ -50,7 +50,7 @@ func NewGlobalRole(namespace, name string, obj GlobalRole) *GlobalRole {
 type GlobalRoleList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []GlobalRole
+	Items           []GlobalRole `json:"items"`
 }
 
 type GlobalRoleHandlerFunc func(key string, obj *GlobalRole) (runtime.Object, error)
@@ -67,7 +67,9 @@ type GlobalRoleController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() GlobalRoleLister
 	AddHandler(ctx context.Context, name string, handler GlobalRoleHandlerFunc)
+	AddFeatureHandler(ctx context.Context, enabled func() bool, name string, sync GlobalRoleHandlerFunc)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, handler GlobalRoleHandlerFunc)
+	AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, clusterName string, handler GlobalRoleHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
 	Start(ctx context.Context, threadiness int) error
@@ -86,9 +88,13 @@ type GlobalRoleInterface interface {
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() GlobalRoleController
 	AddHandler(ctx context.Context, name string, sync GlobalRoleHandlerFunc)
+	AddFeatureHandler(ctx context.Context, enabled func() bool, name string, sync GlobalRoleHandlerFunc)
 	AddLifecycle(ctx context.Context, name string, lifecycle GlobalRoleLifecycle)
+	AddFeatureLifecycle(ctx context.Context, enabled func() bool, name string, lifecycle GlobalRoleLifecycle)
 	AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GlobalRoleHandlerFunc)
+	AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, clusterName string, sync GlobalRoleHandlerFunc)
 	AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle GlobalRoleLifecycle)
+	AddClusterScopedFeatureLifecycle(ctx context.Context, enabled func() bool, name, clusterName string, lifecycle GlobalRoleLifecycle)
 }
 
 type globalRoleLister struct {
@@ -148,9 +154,37 @@ func (c *globalRoleController) AddHandler(ctx context.Context, name string, hand
 	})
 }
 
+func (c *globalRoleController) AddFeatureHandler(ctx context.Context, enabled func() bool, name string, handler GlobalRoleHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled() {
+			return nil, nil
+		} else if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*GlobalRole); ok {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
 func (c *globalRoleController) AddClusterScopedHandler(ctx context.Context, name, cluster string, handler GlobalRoleHandlerFunc) {
 	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
 		if obj == nil {
+			return handler(key, nil)
+		} else if v, ok := obj.(*GlobalRole); ok && controller.ObjectInCluster(cluster, obj) {
+			return handler(key, v)
+		} else {
+			return nil, nil
+		}
+	})
+}
+
+func (c *globalRoleController) AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, cluster string, handler GlobalRoleHandlerFunc) {
+	c.GenericController.AddHandler(ctx, name, func(key string, obj interface{}) (interface{}, error) {
+		if !enabled() {
+			return nil, nil
+		} else if obj == nil {
 			return handler(key, nil)
 		} else if v, ok := obj.(*GlobalRole); ok && controller.ObjectInCluster(cluster, obj) {
 			return handler(key, v)
@@ -255,18 +289,36 @@ func (s *globalRoleClient) AddHandler(ctx context.Context, name string, sync Glo
 	s.Controller().AddHandler(ctx, name, sync)
 }
 
+func (s *globalRoleClient) AddFeatureHandler(ctx context.Context, enabled func() bool, name string, sync GlobalRoleHandlerFunc) {
+	s.Controller().AddFeatureHandler(ctx, enabled, name, sync)
+}
+
 func (s *globalRoleClient) AddLifecycle(ctx context.Context, name string, lifecycle GlobalRoleLifecycle) {
 	sync := NewGlobalRoleLifecycleAdapter(name, false, s, lifecycle)
 	s.Controller().AddHandler(ctx, name, sync)
+}
+
+func (s *globalRoleClient) AddFeatureLifecycle(ctx context.Context, enabled func() bool, name string, lifecycle GlobalRoleLifecycle) {
+	sync := NewGlobalRoleLifecycleAdapter(name, false, s, lifecycle)
+	s.Controller().AddFeatureHandler(ctx, enabled, name, sync)
 }
 
 func (s *globalRoleClient) AddClusterScopedHandler(ctx context.Context, name, clusterName string, sync GlobalRoleHandlerFunc) {
 	s.Controller().AddClusterScopedHandler(ctx, name, clusterName, sync)
 }
 
+func (s *globalRoleClient) AddClusterScopedFeatureHandler(ctx context.Context, enabled func() bool, name, clusterName string, sync GlobalRoleHandlerFunc) {
+	s.Controller().AddClusterScopedFeatureHandler(ctx, enabled, name, clusterName, sync)
+}
+
 func (s *globalRoleClient) AddClusterScopedLifecycle(ctx context.Context, name, clusterName string, lifecycle GlobalRoleLifecycle) {
 	sync := NewGlobalRoleLifecycleAdapter(name+"_"+clusterName, true, s, lifecycle)
 	s.Controller().AddClusterScopedHandler(ctx, name, clusterName, sync)
+}
+
+func (s *globalRoleClient) AddClusterScopedFeatureLifecycle(ctx context.Context, enabled func() bool, name, clusterName string, lifecycle GlobalRoleLifecycle) {
+	sync := NewGlobalRoleLifecycleAdapter(name+"_"+clusterName, true, s, lifecycle)
+	s.Controller().AddClusterScopedFeatureHandler(ctx, enabled, name, clusterName, sync)
 }
 
 type GlobalRoleIndexer func(obj *GlobalRole) ([]string, error)
