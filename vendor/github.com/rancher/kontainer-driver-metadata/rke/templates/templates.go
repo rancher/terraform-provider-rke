@@ -21,11 +21,13 @@ const (
 	calicov113 = "calico-v1.13"
 	calicov115 = "calico-v1.15"
 	calicov116 = "calico-v1.16"
+	calicov117 = "calico-v1.17"
 
 	canalv18  = "canal-v1.8"
 	canalv113 = "canal-v1.13"
 	canalv115 = "canal-v1.15"
 	canalv116 = "canal-v1.16"
+	canalv117 = "canal-v1.17"
 
 	flannelv18  = "flannel-v1.8"
 	flannelv115 = "flannel-v1.15"
@@ -33,6 +35,7 @@ const (
 
 	coreDnsv18  = "coredns-v1.8"
 	coreDnsv116 = "coredns-v1.16"
+	coreDnsv117 = "coredns-v1.17"
 
 	kubeDnsv18  = "kubedns-v1.8"
 	kubeDnsv116 = "kubedns-v1.16"
@@ -49,13 +52,15 @@ const (
 func LoadK8sVersionedTemplates() map[string]map[string]string {
 	return map[string]map[string]string{
 		Calico: {
-			">=1.16.0-alpha":                     calicov116,
+			">=1.16.4-rancher1":                  calicov117,
+			">=1.16.0-alpha <1.16.4-rancher1":    calicov116,
 			">=1.15.0-rancher0 <1.16.0-alpha":    calicov115,
 			">=1.13.0-rancher0 <1.15.0-rancher0": calicov113,
 			">=1.8.0-rancher0 <1.13.0-rancher0":  calicov18,
 		},
 		Canal: {
-			">=1.16.0-alpha":                     canalv116,
+			">=1.16.4-rancher1":                  canalv117,
+			">=1.16.0-alpha <1.16.4-rancher1":    canalv116,
 			">=1.15.0-rancher0 <1.16.0-alpha":    canalv115,
 			">=1.13.0-rancher0 <1.15.0-rancher0": canalv113,
 			">=1.8.0-rancher0 <1.13.0-rancher0":  canalv18,
@@ -66,7 +71,8 @@ func LoadK8sVersionedTemplates() map[string]map[string]string {
 			">=1.8.0-rancher0 <1.15.0-rancher0": flannelv18,
 		},
 		CoreDNS: {
-			">=1.16.0-alpha":                 coreDnsv116,
+			">=1.17.0-alpha":                 coreDnsv117,
+			">=1.16.0-alpha <1.17.0-alpha":   coreDnsv116,
 			">=1.8.0-rancher0 <1.16.0-alpha": coreDnsv18,
 		},
 		KubeDNS: {
@@ -97,6 +103,7 @@ func getTemplates() map[string]string {
 		calicov113: CalicoTemplateV113,
 		calicov115: CalicoTemplateV115,
 		calicov116: CalicoTemplateV116,
+		calicov117: CalicoTemplateV117,
 		calicov18:  CalicoTemplateV112,
 
 		flannelv115: FlannelTemplateV115,
@@ -107,9 +114,11 @@ func getTemplates() map[string]string {
 		canalv18:  CanalTemplateV112,
 		canalv115: CanalTemplateV115,
 		canalv116: CanalTemplateV116,
+		canalv117: CanalTemplateV117,
 
 		coreDnsv18:  CoreDNSTemplate,
 		coreDnsv116: CoreDNSTemplateV116,
+		coreDnsv117: CoreDNSTemplateV117,
 
 		kubeDnsv18:  KubeDNSTemplate,
 		kubeDnsv116: KubeDNSTemplateV116,
