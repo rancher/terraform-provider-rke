@@ -91,3 +91,4 @@ Provider examples
 
 You can view some tf file examples, [here](examples).
 
+On Openstack you can use [terraform-openstack-rke](https://github.com/remche/terraform-openstack-rke) module.
