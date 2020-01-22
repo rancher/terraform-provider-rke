@@ -1,4 +1,17 @@
 ## 1.0.0-rc2 (Unreleased)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Updated go modules and vendor files to support RKE v1.0.2
+
+BUG FIXES:
+
+
+
 ## 1.0.0-rc1 (January 21, 2020)
 
 FEATURES:
@@ -31,7 +44,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
-* Compatible with RKE v1.0.2
+* Compatible with RKE v1.0.0
 
 BUG FIXES:
 

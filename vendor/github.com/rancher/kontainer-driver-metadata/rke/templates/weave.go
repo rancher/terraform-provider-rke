@@ -59,6 +59,10 @@ items:
                 - name: WEAVE_PASSWORD
                   value: "{{.WeavePassword}}"
                 {{- end}}
+                {{- if ne (default 0 .MTU) 0}}
+                - name: WEAVE_MTU
+                  value: "{{.MTU}}"
+                {{- end }}
               image: {{.Image}}
               readinessProbe:
                 httpGet:
@@ -308,6 +312,10 @@ items:
                 - name: WEAVE_PASSWORD
                   value: "{{.WeavePassword}}"
                 {{- end}}
+                {{- if ne (default 0 .MTU) 0}}
+                - name: WEAVE_MTU
+                  value: "{{.MTU}}"
+                {{- end }}
               image: {{.Image}}
               readinessProbe:
                 httpGet:

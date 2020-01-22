@@ -1,4 +1,5 @@
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
+GO111MODULE=on
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=rke
 TEST?="./${PKG_NAME}"
@@ -36,7 +37,7 @@ vet:
 
 lint:
 	@echo "==> Checking that code complies with golint requirements..."
-	@go get -u golang.org/x/lint/golint
+	@GO111MODULE=${GO111MODULE} go get -u golang.org/x/lint/golint
 	@if [ -n "$$(golint $$(go list ./...) | grep -v 'should have comment.*or be unexported' | tee /dev/stderr)" ]; then \
 		echo ""; \
 		echo "golint found style issues. Please check the reported issues"; \
@@ -67,6 +68,10 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
+vendor:
+	@echo "==> Updating vendor modules..."
+	@GO111MODULE=${GO111MODULE} go mod vendor
+
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
@@ -81,6 +86,6 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-status test-compile website website-test
+.PHONY: bin build test testacc vet fmt fmtcheck errcheck vendor-status test-compile vendor website website-test
 
 

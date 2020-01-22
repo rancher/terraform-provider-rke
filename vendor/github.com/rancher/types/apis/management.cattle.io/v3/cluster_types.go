@@ -128,6 +128,7 @@ type ClusterStatus struct {
 	// https://kubernetes.io/docs/api-reference/v1.8/#componentstatus-v1-core
 	Driver                               string                    `json:"driver"`
 	AgentImage                           string                    `json:"agentImage"`
+	AgentImageOverride                   string                    `json:"agentImageOverride"`
 	AuthImage                            string                    `json:"authImage"`
 	ComponentStatuses                    []ClusterComponentStatus  `json:"componentStatuses,omitempty"`
 	APIEndpoint                          string                    `json:"apiEndpoint,omitempty"`
@@ -292,6 +293,11 @@ type CertExpiration struct {
 }
 
 type SaveAsTemplateInput struct {
+	ClusterTemplateName         string `json:"clusterTemplateName,omitempty"`
+	ClusterTemplateRevisionName string `json:"clusterTemplateRevisionName,omitempty"`
+}
+
+type SaveAsTemplateOutput struct {
 	ClusterTemplateName         string `json:"clusterTemplateName,omitempty"`
 	ClusterTemplateRevisionName string `json:"clusterTemplateRevisionName,omitempty"`
 }
