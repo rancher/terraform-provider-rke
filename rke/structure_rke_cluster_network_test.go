@@ -117,6 +117,7 @@ func init() {
 	}
 	testRKEClusterNetworkConfWeave = rancher.NetworkConfig{
 		WeaveNetworkProvider: testRKEClusterNetworkWeaveConf,
+		MTU:                  1500,
 		Options: map[string]string{
 			"option1": "value1",
 			"option2": "value2",
@@ -126,6 +127,7 @@ func init() {
 	testRKEClusterNetworkInterfaceWeave = []interface{}{
 		map[string]interface{}{
 			"weave_network_provider": testRKEClusterNetworkWeaveInterface,
+			"mtu":                    1500,
 			"options": map[string]interface{}{
 				"option1": "value1",
 				"option2": "value2",
