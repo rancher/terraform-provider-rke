@@ -7,6 +7,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * Updated go modules and vendor files to support RKE v1.0.2
+* Added `mtu` argument to network configuration
 
 BUG FIXES:
 
