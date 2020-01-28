@@ -10,7 +10,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-
+* Fix `nodes.port` argument definition on `rke_cluster` resource
 
 ## 1.0.0-rc1 (January 21, 2020)
 
