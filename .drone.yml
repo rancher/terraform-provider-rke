@@ -35,7 +35,7 @@ steps:
     prerelease: true
     files:
     - build/bin/terraform-provider-rke_*
-    - dist/artifacts/${DRONE_TAG}/*
+    - dist/artifacts/latest/*
     checksum:
     - sha256
     api_key: 
@@ -50,7 +50,7 @@ steps:
   settings:
     files:
     - build/bin/terraform-provider-rke_*
-    - dist/artifacts/${DRONE_TAG}/*
+    - dist/artifacts/latest/*
     checksum:
     - sha256
     api_key: 
