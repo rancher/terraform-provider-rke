@@ -111,12 +111,13 @@ func clusterUp(d *schema.ResourceData) error {
 	}
 
 	apiURL, caCrt, clientCert, clientKey, _, clusterUpErr := cmd.ClusterUp(context.Background(), hosts.DialersOptions{}, flags, map[string]interface{}{})
+	// set keys to resourceData
+	err = setRKEClusterKeys(d, apiURL, caCrt, clientCert, clientKey, tempDir, rkeConfig)
 	if clusterUpErr != nil {
 		return clusterUpErr
 	}
 
-	// set keys to resourceData
-	return setRKEClusterKeys(d, apiURL, caCrt, clientCert, clientKey, tempDir, rkeConfig)
+	return err
 }
 
 func clusterRemove(d *schema.ResourceData) error {
