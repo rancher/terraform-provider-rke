@@ -1,4 +1,4 @@
-## 1.0.0-rc2 (Unreleased)
+## 1.0.0-rc2 (February 6, 2020)
 
 FEATURES:
 
@@ -6,7 +6,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
-* Updated go modules and vendor files to support RKE v1.0.2
+* Updated go modules and vendor files to support RKE v1.0.4
 * Added `mtu` argument to network configuration
 * Save `rke_cluster` resource data in tfstate even if `clusterUp` fails, to be able to retry
 
