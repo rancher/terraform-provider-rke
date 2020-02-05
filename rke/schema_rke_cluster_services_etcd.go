@@ -120,6 +120,7 @@ func rkeClusterServicesEtcdFields() map[string]*schema.Schema {
 		"extra_binds": {
 			Type:     schema.TypeList,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
@@ -127,6 +128,7 @@ func rkeClusterServicesEtcdFields() map[string]*schema.Schema {
 		"extra_env": {
 			Type:     schema.TypeList,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
@@ -139,6 +141,7 @@ func rkeClusterServicesEtcdFields() map[string]*schema.Schema {
 		"image": {
 			Type:     schema.TypeString,
 			Optional: true,
+			Computed: true,
 		},
 		"key": {
 			Type:      schema.TypeString,

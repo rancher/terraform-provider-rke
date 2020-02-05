@@ -23,6 +23,11 @@ var (
 
 func rkeClusterCloudProviderFields() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
+		"name": {
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validation.StringInSlice(rkeClusterCloudProviderList, true),
+		},
 		"aws_cloud_config": {
 			Type:       schema.TypeList,
 			MaxItems:   1,
@@ -68,11 +73,6 @@ func rkeClusterCloudProviderFields() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Custom Cloud Provider config",
-		},
-		"name": {
-			Type:         schema.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringInSlice(rkeClusterCloudProviderList, true),
 		},
 		"openstack_cloud_config": {
 			Type:       schema.TypeList,

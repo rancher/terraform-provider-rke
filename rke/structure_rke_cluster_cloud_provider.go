@@ -7,12 +7,18 @@ import (
 // Flatteners
 
 func flattenRKEClusterCloudProvider(in rancher.CloudProvider, p []interface{}) []interface{} {
+	if len(in.Name) == 0 {
+		return nil
+	}
+
 	var obj map[string]interface{}
 	if len(p) == 0 || p[0] == nil {
 		obj = make(map[string]interface{})
 	} else {
 		obj = p[0].(map[string]interface{})
 	}
+
+	obj["name"] = in.Name
 
 	if in.AWSCloudProvider != nil {
 		obj["aws_cloud_provider"] = flattenRKEClusterCloudProviderAws(in.AWSCloudProvider)
@@ -28,10 +34,6 @@ func flattenRKEClusterCloudProvider(in rancher.CloudProvider, p []interface{}) [
 
 	if len(in.CustomCloudProvider) > 0 {
 		obj["custom_cloud_provider"] = in.CustomCloudProvider
-	}
-
-	if len(in.Name) > 0 {
-		obj["name"] = in.Name
 	}
 
 	if in.OpenstackCloudProvider != nil {

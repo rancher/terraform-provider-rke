@@ -37,8 +37,8 @@ The following arguments are supported:
 * `addons_include` - (Optional) RKE k8s cluster user addons YAML manifest urls or paths to be deployed (list)
 * `authentication` - (Optional/Computed) RKE k8s cluster authentication configuration (list maxitems:1)
 * `authorization` - (Optional/Computed) RKE k8s cluster authorization mode configuration (list maxitems:1)
-* `bastion_host` - (Optional/Computed) RKE k8s cluster bastion Host configuration (list maxitems:1)
-* `cloud_provider` - (Optional/Computed) RKE k8s cluster cloud provider configuration [rke-cloud-providers](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/) (list maxitems:1)
+* `bastion_host` - (Optional) RKE k8s cluster bastion Host configuration (list maxitems:1)
+* `cloud_provider` - (Optional) RKE k8s cluster cloud provider configuration [rke-cloud-providers](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/) (list maxitems:1)
 * `cluster_name` - (Optional/Computed) RKE k8s cluster name used in the kube config (string)
 * `dns` - (Optional/Computed) RKE k8s cluster DNS Config (list maxitems:1)
 * `ignore_docker_version` - (Optional) Enable/Disable RKE k8s cluster strict docker version checking. Default `false` (bool)
@@ -127,13 +127,13 @@ The following attributes are exported:
 
 #### Arguments
 
+* `name` - (Required) Cloud Provider name. `aws`, `azure`, `custom`, `openstack`, `vsphere` are supported (string)
 * `aws_cloud_config` - (DEPRECATED) Use aws_cloud_provider instead
 * `aws_cloud_provider` - (Optional) AWS Cloud Provider config [rke-aws-cloud-provider](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/) (list maxitems:1)
 * `azure_cloud_config` - (DEPRECATED) Use azure_cloud_provider instead
 * `azure_cloud_provider` - (Optional) Azure Cloud Provider config [rke-azure-cloud-provider](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/azure/) (list maxitems:1)
 * `custom_cloud_config` - (DEPRECATED) Use custom_cloud_provider instead
 * `custom_cloud_provider` - (Optional) Custom Cloud Provider config (string)
-* `name` - (Optional/Computed) Cloud Provider name. `aws`, `azure`, `custom`, `openstack`, `vsphere` are supported (string)
 * `openstack_cloud_config` - (DEPRECATED) Use openstack_cloud_provider instead
 * `openstack_cloud_provider` - (Optional/Computed) Openstack Cloud Provider config [rke-openstack-cloud-provider](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/openstack/) (list maxitems:1)
 * `vsphere_cloud_config` - (DEPRECATED) Use vsphere_cloud_provider instead
@@ -397,8 +397,8 @@ The following attributes are exported:
 * `role` - (Required) Node roles in k8s cluster. `controlplane`, `etcd` and `worker` are supported. (list)
 * `user` - (Required/Sensitive) SSH user that will be used by RKE (string)
 * `docker_socket` - (Optional/Computed) Docker socket on the node that will be used in tunneling (string)
-* `hostname_override` - (Optional) Hostname override for node (string)
-* `internal_address` - (Optional) Internal address that will be used for components communication (string)
+* `hostname_override` - (Optional/Computed) Hostname override for node (string)
+* `internal_address` - (Optional/Computed) Internal address that will be used for components communication (string)
 * `labels` - (Optional) Node labels (map)
 * `node_name` - (Optional) Name of the host provisioned via docker machine (string)
 * `port` - (Optional) Port used for SSH communication. Default `22` (string)
@@ -461,10 +461,10 @@ The following attributes are exported:
 * `creation` - (Optional/Computed) Creation option for etcd service (string)
 * `external_urls` - (Optional/Computed) External urls for etcd service (list)
 * `extra_args` - (Optional/Computed) Extra arguments for etcd service (map)
-* `extra_binds` - (Optional) Extra binds for etcd service (list)
-* `extra_env` - (Optional) Extra environment for etcd service (list)
+* `extra_binds` - (Optional/Computed) Extra binds for etcd service (list)
+* `extra_env` - (Optional/Computed) Extra environment for etcd service (list)
 * `gid` - (Optional) Etcd service GID. Default: `0`. For Rancher v2.3.x or above (int)
-* `image` - (Optional) Docker image for etcd service (string)
+* `image` - (Optional/Computed) Docker image for etcd service (string)
 * `key` - (Optional/Computed/Sensitive) TLS key for etcd service (string)
 * `path` - (Optional/Computed) Path for etcd service (string)
 * `retention` - (Optional/Computed) Retention option for etcd service (string)
@@ -501,9 +501,9 @@ The following attributes are exported:
 * `audit_log` - (Optional) K8s audit log configuration. (list maxitem: 1)
 * `event_rate_limit` - (Optional) K8s event rate limit configuration. (list maxitem: 1)
 * `extra_args` - (Optional/Computed) Extra arguments for kube API service (map)
-* `extra_binds` - (Optional) Extra binds for kube API service (list)
-* `extra_env` - (Optional) Extra environment for kube API service (list)
-* `image` - (Optional) Docker image for kube API service (string)
+* `extra_binds` - (Optional/Computed) Extra binds for kube API service (list)
+* `extra_env` - (Optional/Computed) Extra environment for kube API service (list)
+* `image` - (Optional/Computed) Docker image for kube API service (string)
 * `pod_security_policy` - (Optional) Pod Security Policy option for kube API service. Default `false` (bool)
 * `secrets_encryption_config` - (Optional) [Encrypt k8s secret data configration](https://rancher.com/docs/rke/latest/en/config-options/secrets-encryption/). (list maxitem: 1)
 * `service_cluster_ip_range` - (Optional/Computed) Service Cluster IP Range option for kube API service (string)
@@ -544,9 +544,9 @@ The following attributes are exported:
 
 * `cluster_cidr` - (Optional/Computed) Cluster CIDR option for kube controller service (string)
 * `extra_args` - (Optional/Computed) Extra arguments for kube controller service (map)
-* `extra_binds` - (Optional) Extra binds for kube controller service (list)
-* `extra_env` - (Optional) Extra environment for kube controller service (list)
-* `image` - (Optional) Docker image for kube controller service (string)
+* `extra_binds` - (Optional/Computed) Extra binds for kube controller service (list)
+* `extra_env` - (Optional/Computed) Extra environment for kube controller service (list)
+* `image` - (Optional/Computed) Docker image for kube controller service (string)
 * `service_cluster_ip_range` - (Optional/Computed) Service Cluster ip Range option for kube controller service (string)
 
 #### `kubelet`
@@ -556,30 +556,30 @@ The following attributes are exported:
 * `cluster_dns_server` - (Optional/Computed) Cluster DNS Server option for kubelet service (string)
 * `cluster_domain` - (Optional) Cluster Domain option for kubelet service. Default `cluster.local` (string)
 * `extra_args` - (Optional/Computed) Extra arguments for kubelet service (map)
-* `extra_binds` - (Optional) Extra binds for kubelet service (list)
-* `extra_env` - (Optional) Extra environment for kubelet service (list)
+* `extra_binds` - (Optional/Computed) Extra binds for kubelet service (list)
+* `extra_env` - (Optional/Computed) Extra environment for kubelet service (list)
 * `fail_swap_on` - (Optional/Computed) Enable or disable failing when swap on is not supported (bool)
 * `generate_serving_certificate` [Generate a certificate signed by the kube-ca](https://rancher.com/docs/rke/latest/en/config-options/services/#kubelet-serving-certificate-requirements). Default `false` (bool)
-* `image` - (Optional) Docker image for kubelet service (string)
-* `infra_container_image` - (Optional) Infra container image for kubelet service (string)
+* `image` - (Optional/Computed) Docker image for kubelet service (string)
+* `infra_container_image` - (Optional/Computed) Infra container image for kubelet service (string)
 
 #### `kubeproxy`
 
 ##### Arguments
 
 * `extra_args` - (Optional/Computed) Extra arguments for kubeproxy service (map)
-* `extra_binds` - (Optional) Extra binds for kubeproxy service (list)
-* `extra_env` - (Optional) Extra environment for kubeproxy service (list)
-* `image` - (Optional) Docker image for kubeproxy service (string)
+* `extra_binds` - (Optional/Computed) Extra binds for kubeproxy service (list)
+* `extra_env` - (Optional/Computed) Extra environment for kubeproxy service (list)
+* `image` - (Optional/Computed) Docker image for kubeproxy service (string)
 
 #### `scheduler`
 
 ##### Arguments
 
 * `extra_args` - (Optional/Computed) Extra arguments for scheduler service (map)
-* `extra_binds` - (Optional) Extra binds for scheduler service (list)
-* `extra_env` - (Optional) Extra environment for scheduler service (list)
-* `image` - (Optional) Docker image for scheduler service (string)
+* `extra_binds` - (Optional/Computed) Extra binds for scheduler service (list)
+* `extra_env` - (Optional/Computed) Extra environment for scheduler service (list)
+* `image` - (Optional/Computed) Docker image for scheduler service (string)
 
 ### `system_images`
 

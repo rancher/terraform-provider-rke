@@ -29,6 +29,7 @@ func rkeClusterServicesKubeletFields() map[string]*schema.Schema {
 		"extra_binds": {
 			Type:        schema.TypeList,
 			Optional:    true,
+			Computed:    true,
 			Description: "Extra binds added to the worker nodes",
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
@@ -37,6 +38,7 @@ func rkeClusterServicesKubeletFields() map[string]*schema.Schema {
 		"extra_env": {
 			Type:        schema.TypeList,
 			Optional:    true,
+			Computed:    true,
 			Description: "Extra env added to the nodes",
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
@@ -56,11 +58,13 @@ func rkeClusterServicesKubeletFields() map[string]*schema.Schema {
 		"image": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "Docker image of the kubelet service",
 		},
 		"infra_container_image": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "The image whose network/ipc namespaces containers in each pod will use",
 		},
 	}
