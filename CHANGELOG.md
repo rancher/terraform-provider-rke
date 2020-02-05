@@ -7,6 +7,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * Updated go modules and vendor files to support RKE v1.0.2
+* Save `rke_cluster` resource data in tfstate even if `clusterUp` fails, to be able to retry
 
 BUG FIXES:
 
