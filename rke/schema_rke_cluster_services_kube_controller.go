@@ -23,6 +23,7 @@ func rkeClusterServicesKubeControllerFields() map[string]*schema.Schema {
 		"extra_binds": {
 			Type:        schema.TypeList,
 			Optional:    true,
+			Computed:    true,
 			Description: "Extra binds added to the controlplane nodes",
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
@@ -31,6 +32,7 @@ func rkeClusterServicesKubeControllerFields() map[string]*schema.Schema {
 		"extra_env": {
 			Type:        schema.TypeList,
 			Optional:    true,
+			Computed:    true,
 			Description: "Extra env added to the controlplane nodes",
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
@@ -39,6 +41,7 @@ func rkeClusterServicesKubeControllerFields() map[string]*schema.Schema {
 		"image": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "Docker image of the kube-controller service",
 		},
 		"service_cluster_ip_range": {

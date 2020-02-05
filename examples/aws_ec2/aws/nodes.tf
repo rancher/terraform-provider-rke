@@ -53,7 +53,7 @@ resource "aws_instance" "rke-node" {
     }
 
     inline = [
-      "curl releases.rancher.com/install-docker/1.12.sh | bash",
+      "curl ${var.docker_install_url} | sh",
       "sudo usermod -a -G docker ubuntu",
     ]
   }

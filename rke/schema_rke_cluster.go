@@ -65,7 +65,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"bastion_host": {
 			Type:        schema.TypeList,
 			Optional:    true,
-			Computed:    true,
 			MaxItems:    1,
 			Description: "RKE k8s cluster bastion Host configuration",
 			Elem: &schema.Resource{
@@ -76,7 +75,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster cloud provider configuration",
 			Elem: &schema.Resource{
 				Schema: rkeClusterCloudProviderFields(),

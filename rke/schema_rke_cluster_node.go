@@ -49,11 +49,13 @@ func rkeClusterNodeFields() map[string]*schema.Schema {
 		"hostname_override": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "Hostname override",
 		},
 		"internal_address": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "Internal address that will be used for components communication",
 		},
 		"labels": {
