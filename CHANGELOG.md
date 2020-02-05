@@ -10,6 +10,7 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
+* Fix `nodes.port` argument definition on `rke_cluster` resource
 * Fix false diffs setting: 
   * set `extra_*` and `image` arguments as computed on all `services` nested arguments
   * set `bastion_host` and `cloud_provider` arguments as non computed
