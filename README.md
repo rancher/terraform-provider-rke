@@ -21,11 +21,14 @@ Requirements
 Building The Provider
 ---------------------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-rancher2`
+Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-rke`
 
 ```sh
-$ mkdir -p $GOPATH/src/github.com/rancher; cd $GOPATH/src/github.com/rancher
-$ git clone git@github.com:rancher/terraform-provider-rancher2
+$ mkdir -p $GOPATH/src/github.com/rancher
+$ cd $GOPATH/src/github.com/rancher
+
+$ go get github.com/rancher/terraform-provider-rke
+$ go install github.com/rancher/terraform-provider-rke
 ```
 
 Enter the provider directory and build the provider
