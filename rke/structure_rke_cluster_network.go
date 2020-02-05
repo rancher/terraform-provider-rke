@@ -77,6 +77,10 @@ func flattenRKEClusterNetwork(in rancher.NetworkConfig) []interface{} {
 		obj["weave_network_provider"] = flattenRKEClusterNetworkWeave(in.WeaveNetworkProvider)
 	}
 
+	if in.MTU > 0 {
+		obj["mtu"] = in.MTU
+	}
+
 	if len(in.Options) > 0 {
 		obj["options"] = toMapInterface(in.Options)
 	}
@@ -168,6 +172,10 @@ func expandRKEClusterNetwork(p []interface{}) rancher.NetworkConfig {
 
 	if v, ok := in["weave_network_provider"].([]interface{}); ok && len(v) > 0 {
 		obj.WeaveNetworkProvider = expandRKEClusterNetworkWeave(v)
+	}
+
+	if v, ok := in["mtu"].(int); ok && v > 0 {
+		obj.MTU = v
 	}
 
 	if v, ok := in["options"].(map[string]interface{}); ok && len(v) > 0 {

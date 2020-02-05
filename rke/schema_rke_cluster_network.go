@@ -107,6 +107,13 @@ func rkeClusterNetworkFields() map[string]*schema.Schema {
 				Schema: rkeClusterNetworkWeaveFields(),
 			},
 		},
+		"mtu": {
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Default:      0,
+			Description:  "Network provider MTU",
+			ValidateFunc: validation.IntBetween(0, 9000),
+		},
 		"options": {
 			Type:        schema.TypeMap,
 			Optional:    true,

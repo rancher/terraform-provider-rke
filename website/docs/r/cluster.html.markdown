@@ -362,6 +362,7 @@ The following attributes are exported:
 * `canal_network_provider` - (Optional) Canal network provider config (list maxitems:1)
 * `flannel_network_provider` - (Optional) Flannel network provider config (list maxitems:1)
 * `weave_network_provider` - (Optional) Weave network provider config (list maxitems:1)
+* `mtu` - (Optional) Network provider MTU. Default `0` (int)
 * `options` - (Optional/Computed) Network provider options (map)
 * `plugin` - (Optional) Network provider plugin. `calico`, `canal` (default), `flannel`, `none` and `weave` are supported. (string)
 
