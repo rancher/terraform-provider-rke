@@ -7,11 +7,14 @@ import (
 // Flatteners
 
 func flattenRKEClusterBastionHost(in rancher.BastionHost) []interface{} {
+	if len(in.Address) == 0 || len(in.User) == 0 {
+		return nil
+	}
+
 	obj := make(map[string]interface{})
 
-	if len(in.Address) > 0 {
-		obj["address"] = in.Address
-	}
+	obj["address"] = in.Address
+	obj["user"] = in.User
 
 	if len(in.Port) > 0 {
 		obj["port"] = in.Port
@@ -25,10 +28,6 @@ func flattenRKEClusterBastionHost(in rancher.BastionHost) []interface{} {
 
 	if len(in.SSHKeyPath) > 0 {
 		obj["ssh_key_path"] = in.SSHKeyPath
-	}
-
-	if len(in.User) > 0 {
-		obj["user"] = in.User
 	}
 
 	return []interface{}{obj}

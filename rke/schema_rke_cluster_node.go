@@ -49,11 +49,13 @@ func rkeClusterNodeFields() map[string]*schema.Schema {
 		"hostname_override": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "Hostname override",
 		},
 		"internal_address": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "Internal address that will be used for components communication",
 		},
 		"labels": {
@@ -67,11 +69,10 @@ func rkeClusterNodeFields() map[string]*schema.Schema {
 			Description: "Name of the host provisioned via docker machine",
 		},
 		"port": {
-			Type:         schema.TypeString,
-			Optional:     true,
-			Default:      "22",
-			ValidateFunc: validation.IntBetween(1, 65535),
-			Description:  "Port used for SSH communication",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "22",
+			Description: "Port used for SSH communication",
 		},
 		"ssh_agent_auth": {
 			Type:        schema.TypeBool,
