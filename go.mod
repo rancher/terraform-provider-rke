@@ -8,8 +8,8 @@ require (
 	github.com/hashicorp/go-getter v1.4.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/hashicorp/terraform-plugin-sdk v1.0.0
-	github.com/rancher/kontainer-driver-metadata v0.0.0-20200116174051-6b21affb3bdd
-	github.com/rancher/rke v1.0.2
+	github.com/rancher/kontainer-driver-metadata v0.0.0-20200125025425-eef1fdc7ca9c
+	github.com/rancher/rke v1.0.4
 	github.com/rancher/types v0.0.0-20191220141556-ad31d6815bbd
 	github.com/sirupsen/logrus v1.4.2
 	gopkg.in/ini.v1 v1.48.0 // indirect
