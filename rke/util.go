@@ -88,7 +88,7 @@ func jsonToMapInterface(in string) (map[string]interface{}, error) {
 	return out, err
 }
 
-func mapInterfaceToJson(in map[string]interface{}) (string, error) {
+func mapInterfaceToJSON(in map[string]interface{}) (string, error) {
 	if in == nil {
 		return "", nil
 	}
@@ -125,7 +125,7 @@ func interfaceToMap(in interface{}) (map[string]interface{}, error) {
 	return out, nil
 }
 
-func interfaceToJson(in interface{}) (string, error) {
+func interfaceToJSON(in interface{}) (string, error) {
 	if in == nil {
 		return "", nil
 	}
@@ -163,6 +163,17 @@ func interfaceToYaml(in interface{}) (string, error) {
 		return "", nil
 	}
 	out, err := yaml.Marshal(in)
+	if err != nil {
+		return "", err
+	}
+	return string(out), err
+}
+
+func interfaceToGhodssyaml(in interface{}) (string, error) {
+	if in == nil {
+		return "", nil
+	}
+	out, err := ghodssyaml.Marshal(in)
 	if err != nil {
 		return "", err
 	}

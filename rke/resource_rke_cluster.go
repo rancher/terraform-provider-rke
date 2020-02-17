@@ -2,24 +2,20 @@ package rke
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/hashicorp/go-getter/helper/url"
-	//"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/cmd"
 	"github.com/rancher/rke/hosts"
-	"github.com/rancher/rke/log"
+	//"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
 	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
-	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	//log "github.com/sirupsen/logrus"
 )
 
 func resourceRKECluster() *schema.Resource {
@@ -28,20 +24,6 @@ func resourceRKECluster() *schema.Resource {
 		Read:   resourceRKEClusterRead,
 		Update: resourceRKEClusterUpdate,
 		Delete: resourceRKEClusterDelete,
-		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
-			if isRKEConfigChanged(d) {
-				computedFields := []string{
-					"kube_config_yaml",
-					"rke_cluster_yaml",
-				}
-				for _, key := range computedFields {
-					if err := d.SetNewComputed(key); err != nil {
-						return err
-					}
-				}
-			}
-			return nil
-		},
 		Schema: rkeClusterFields(),
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),
@@ -52,8 +34,8 @@ func resourceRKECluster() *schema.Resource {
 }
 
 func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
-	if delay, ok := d.GetOk("delay_on_creation"); ok && delay.(int) > 0 {
-		time.Sleep(time.Duration(delay.(int)) * time.Second)
+	if delay, ok := d.Get("delay_on_creation").(int); ok && delay > 0 {
+		time.Sleep(time.Duration(delay) * time.Second)
 	}
 
 	if err := clusterUp(d); err != nil {
@@ -72,47 +54,34 @@ func resourceRKEClusterUpdate(d *schema.ResourceData, meta interface{}) error {
 func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
 	currentCluster, err := readClusterState(d)
 	if err != nil {
-		if _, ok := err.(*nodeUnreachableError); ok {
-			d.SetId("")
-			return nil
-		}
 		return wrapErrWithRKEOutputs(err)
 	}
 	return wrapErrWithRKEOutputs(flattenRKECluster(d, currentCluster))
 }
 
 func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
-	if err := clusterRemove(d); err != nil {
-		if _, ok := err.(*nodeUnreachableError); !ok {
-			return wrapErrWithRKEOutputs(err)
-		}
-	}
+	clusterRemove(d)
 	d.SetId("")
 	return nil
 }
 
 func clusterUp(d *schema.ResourceData) error {
-	rkeConfig, err := expandRKECluster(d)
+	rkeConfig, _, clusterFilePath, tempDir, err := getRKEClusterConfig(d)
+	defer removeTempDir(tempDir)
 	if err != nil {
 		return err
 	}
-	disablePortCheck := d.Get("disable_port_check").(bool)
-
-	clusterFilePath, tempDir, err := prepareTempRKEConfigFiles(rkeConfig, d)
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(tempDir) // nolint
 
 	// setting up the flags
-	flags := cluster.GetExternalFlags(false, false, disablePortCheck, "", clusterFilePath)
+	flags := expandRKEClusterFlag(d, clusterFilePath)
+
 	if err := cmd.ClusterInit(context.Background(), rkeConfig, hosts.DialersOptions{}, flags); err != nil {
 		return err
 	}
 
-	apiURL, caCrt, clientCert, clientKey, _, clusterUpErr := cmd.ClusterUp(context.Background(), hosts.DialersOptions{}, flags, map[string]interface{}{})
-	// set keys to resourceData
-	err = setRKEClusterKeys(d, apiURL, caCrt, clientCert, clientKey, tempDir, rkeConfig)
+	_, _, _, _, _, clusterUpErr := cmd.ClusterUp(context.Background(), hosts.DialersOptions{}, flags, map[string]interface{}{})
+	// set cluster state to resourceData
+	err = setRKEClusterState(d, tempDir)
 	if clusterUpErr != nil {
 		return clusterUpErr
 	}
@@ -121,63 +90,40 @@ func clusterUp(d *schema.ResourceData) error {
 }
 
 func clusterRemove(d *schema.ResourceData) error {
-	rkeConfig, err := expandRKECluster(d)
+	rkeConfig, _, clusterFilePath, tempDir, err := getRKEClusterConfig(d)
+	defer removeTempDir(tempDir)
 	if err != nil {
 		return err
 	}
-
-	clusterFilePath, tempDir, err := prepareTempRKEConfigFiles(rkeConfig, d)
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(tempDir) // nolint
 
 	// setting up the flags
 	flags := cluster.GetExternalFlags(false, false, false, "", clusterFilePath)
 
-	return realClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)
+	return cmd.ClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)
 }
 
-func realClusterRemove(
-	ctx context.Context,
-	rkeConfig *v3.RancherKubernetesEngineConfig,
-	dialersOptions hosts.DialersOptions,
-	flags cluster.ExternalFlags) error {
-
-	log.Infof(ctx, "Tearing down Kubernetes cluster")
-	kubeCluster, err := cluster.InitClusterObject(ctx, rkeConfig, flags, "")
+func getRKEClusterConfig(d *schema.ResourceData) (*v3.RancherKubernetesEngineConfig, string, string, string, error) {
+	rkeClusterYaml, err := expandRKECluster(d)
 	if err != nil {
-		return err
-	}
-	if err := kubeCluster.SetupDialers(ctx, dialersOptions); err != nil {
-		return err
+		return nil, "", "", "", err
 	}
 
-	err = kubeCluster.TunnelHosts(ctx, flags)
+	rkeConfig, err := cluster.ParseConfig(rkeClusterYaml)
 	if err != nil {
-		return newNodeUnreachableError(err)
+		return nil, "", "", "", fmt.Errorf("Failed to parse cluster config: %v\n%s", err, rkeClusterYaml)
 	}
 
-	logrus.Debugf("Starting Cluster removal")
-	err = kubeCluster.ClusterRemove(ctx)
+	d.Set("rke_cluster_yaml", rkeClusterYaml)
+
+	clusterFilePath, tempDir, err := writeRKEConfigFiles(d)
 	if err != nil {
-		return err
+		return nil, "", "", "", err
 	}
+	return rkeConfig, rkeClusterYaml, clusterFilePath, tempDir, err
 
-	log.Infof(ctx, "Cluster removed successfully")
-	return nil
 }
 
-func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, clientKey string, configDir string, rkeConfig *v3.RancherKubernetesEngineConfig) error {
-
-	parsedURL, err := url.Parse(apiURL)
-	if err != nil {
-		return err
-	}
-	d.Set("ca_crt", caCrt)           // nolint
-	d.Set("client_cert", clientCert) // nolint
-	d.Set("client_key", clientKey)   // nolint
-
+func setRKEClusterState(d *schema.ResourceData, configDir string) error {
 	rkeState, err := readRKEStateFile(configDir)
 	if err != nil {
 		return err
@@ -195,78 +141,34 @@ func setRKEClusterKeys(d *schema.ResourceData, apiURL, caCrt, clientCert, client
 		d.Set("internal_kube_config_yaml", kubeConfig) // nolint
 	}
 
-	yamlRkeConfig, err := yaml.Marshal(*rkeConfig)
-	if err != nil {
-		return err
+	if len(d.Id()) == 0 {
+		d.SetId(getNewUUID())
 	}
-	d.Set("rke_cluster_yaml", string(yamlRkeConfig)) // nolint
-
-	d.SetId(parsedURL.Hostname())
 	return nil
 }
 
 func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
-	apiURL := fmt.Sprintf("https://%s:6443", d.Id())
-	caCrt := d.Get("ca_crt").(string)
-	clientCert := d.Get("client_cert").(string)
-	clientKey := d.Get("client_key").(string)
-
-	requiredValues := []string{apiURL, caCrt, clientCert, clientKey}
-	for _, v := range requiredValues {
-		if v == "" {
-			d.SetId("")
-			return nil, nil
-		}
-	}
-
-	rkeConfig, err := expandRKECluster(d)
+	_, _, clusterFilePath, tempDir, err := getRKEClusterConfig(d)
+	defer removeTempDir(tempDir)
 	if err != nil {
 		return nil, err
 	}
-
-	yamlRkeConfig, err := yaml.Marshal(*rkeConfig)
-	if err != nil {
-		return nil, err
-	}
-	d.Set("rke_cluster_yaml", string(yamlRkeConfig)) // nolint
-
-	clusterFilePath, tempDir, err := prepareTempRKEConfigFiles(rkeConfig, d)
-	if err != nil {
-		return nil, err
-	}
-	defer os.RemoveAll(tempDir) // nolint
 
 	// setting up the flags
-	flags := cluster.GetExternalFlags(false, false, d.Get("disable_port_check").(bool), "", clusterFilePath)
-	fullState, readedCluster, err := realClusterRead(context.Background(), hosts.DialersOptions{}, flags)
+	flags := expandRKEClusterFlag(d, clusterFilePath)
+	_, readedCluster, err := getClusterState(context.Background(), hosts.DialersOptions{}, flags)
 	if err != nil {
 		switch err.(type) {
-		case *stateNotFoundError, *nodeUnreachableError:
+		case *stateNotFoundError:
 			d.SetId("")
 			return nil, nil
 		}
 	}
-
-	kubeConfig, err := readKubeConfig(tempDir)
-	if err != nil {
-		return nil, err
-	}
-	if kubeConfig != "" {
-		d.Set("kube_config_yaml", kubeConfig)          // nolint
-		d.Set("internal_kube_config_yaml", kubeConfig) // nolint
-	}
-
-	strRKEState, err := json.MarshalIndent(fullState, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("Failed to Marshal state object: %v", err)
-	}
-	d.Set("rke_state", strRKEState) // nolint
 
 	return readedCluster, err
 }
 
-func realClusterRead(ctx context.Context, dialersOptions hosts.DialersOptions, flags cluster.ExternalFlags) (*cluster.FullState, *cluster.Cluster, error) {
-
+func getClusterState(ctx context.Context, dialersOptions hosts.DialersOptions, flags cluster.ExternalFlags) (*cluster.FullState, *cluster.Cluster, error) {
 	fullState, err := cluster.ReadStateFile(ctx, cluster.GetStateFilePath(flags.ClusterFilePath, flags.ConfigDir))
 	if err != nil {
 		return nil, nil, newStateNotFoundError(err)
@@ -276,41 +178,22 @@ func realClusterRead(ctx context.Context, dialersOptions hosts.DialersOptions, f
 	if err != nil {
 		return nil, nil, err
 	}
+
 	err = kubeCluster.SetupDialers(ctx, hosts.DialersOptions{})
 	if err != nil {
 		return nil, nil, err
 	}
 
-	err = kubeCluster.TunnelHosts(ctx, flags)
-	if err != nil {
-		return nil, nil, newNodeUnreachableError(err)
+	if fullState.CurrentState.RancherKubernetesEngineConfig == nil && fullState.DesiredState.RancherKubernetesEngineConfig != nil {
+		fullState.CurrentState = fullState.DesiredState
 	}
 
 	clusterState, err := kubeCluster.GetClusterState(ctx, fullState)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return fullState, clusterState, nil
-}
-
-func prepareTempRKEConfigFiles(rkeConfig *v3.RancherKubernetesEngineConfig, d *schema.ResourceData) (string, string, error) {
-	tempDir, tempDirErr := createTempDir()
-	if tempDirErr != nil {
-		return "", "", tempDirErr
-	}
-	if err := writeKubeConfigFile(tempDir, d); err != nil {
-		return "", "", err
-	}
-	if err := writeRKEStateFile(tempDir, d); err != nil {
-		return "", "", err
-	}
-
-	clusterFilePath := filepath.Join(tempDir, pki.ClusterConfig)
-	if err := writeClusterConfig(rkeConfig, clusterFilePath); err != nil {
-		return "", "", err
-	}
-
-	return clusterFilePath, tempDir, nil
 }
 
 func readKubeConfig(dir string) (string, error) {
@@ -339,102 +222,67 @@ func readRKEStateFile(dir string) (string, error) {
 	return "", nil
 }
 
-func writeRKEStateFile(dir string, d *schema.ResourceData) error {
-	if rawRKEState, ok := d.GetOk("rke_state"); ok {
-		strState := rawRKEState.(string)
-		if strState != "" {
-			configPath := filepath.Join(dir, pki.ClusterConfig)
-			stateFilePath := cluster.GetStateFilePath(configPath, "")
-			if err := ioutil.WriteFile(stateFilePath, []byte(strState), 0640); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func writeKubeConfigFile(dir string, d *schema.ResourceData) error {
-	if rawKubeConfig, ok := d.GetOk("internal_kube_config_yaml"); ok {
-		strConf := rawKubeConfig.(string)
-		if strConf != "" {
-			configPath := filepath.Join(dir, pki.ClusterConfig)
-			localKubeConfigPath := pki.GetLocalKubeConfig(configPath, "")
-			if err := ioutil.WriteFile(localKubeConfigPath, []byte(strConf), 0640); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func writeClusterConfig(cluster *v3.RancherKubernetesEngineConfig, configFile string) error {
-	yamlConfig, err := yaml.Marshal(*cluster)
+func writeRKEConfigFiles(d *schema.ResourceData) (string, string, error) {
+	tempDir, err := createTempDir()
 	if err != nil {
-		return err
+		return "", "", err
 	}
-	return ioutil.WriteFile(configFile, []byte(string(yamlConfig)), 0640)
+	clusterFilePath := filepath.Join(tempDir, pki.ClusterConfig)
+	if err = writeRKEConfig(clusterFilePath, d); err != nil {
+		return "", tempDir, err
+	}
+
+	if err = writeKubeConfig(clusterFilePath, d); err != nil {
+		return "", tempDir, err
+	}
+	if err = writeRKEState(clusterFilePath, d); err != nil {
+		return "", tempDir, err
+	}
+
+	return clusterFilePath, tempDir, err
+}
+
+func writeRKEState(dir string, d *schema.ResourceData) error {
+	if strState, ok := d.Get("rke_state").(string); ok && len(strState) > 0 {
+		stateFilePath := cluster.GetStateFilePath(dir, "")
+		return ioutil.WriteFile(stateFilePath, []byte(strState), 0640)
+	}
+	return nil
+}
+
+func writeKubeConfig(dir string, d *schema.ResourceData) error {
+	if strConf, ok := d.Get("internal_kube_config_yaml").(string); ok && len(strConf) > 0 {
+		localKubeConfigPath := pki.GetLocalKubeConfig(dir, "")
+		return ioutil.WriteFile(localKubeConfigPath, []byte(strConf), 0640)
+	}
+	return nil
+}
+
+func writeRKEConfig(configFile string, d *schema.ResourceData) error {
+	if strConf, ok := d.Get("rke_cluster_yaml").(string); ok && len(strConf) > 0 {
+		return ioutil.WriteFile(configFile, []byte(strConf), 0640)
+	}
+	return nil
 
 }
 
 func createTempDir() (string, error) {
 	// create tmp dir for configDir
-	var workDir, tempDir string
-	var err error
-	if workDir, err = os.Getwd(); err != nil {
+	workDir, err := os.Getwd()
+	if err != nil {
 		return "", err
 	}
-	if tempDir, err = ioutil.TempDir(workDir, "terraform-provider-rke-"); err != nil {
+	tempDir, err := ioutil.TempDir(workDir, "terraform-provider-rke-tmp-")
+	if err != nil {
 		return "", err
 	}
 	return tempDir, nil
 }
 
-func isRKEConfigChanged(d *schema.ResourceDiff) bool {
-	targetKeys := []string{
-		"addon_job_timeout",
-		"addons",
-		"addons_include",
-		"authentication",
-		"authorization",
-		"bastion_host",
-		"cloud_provider",
-		"cluster_name",
-		"dns",
-		"ignore_docker_version",
-		"ingress",
-		"kubernetes_version",
-		"monitoring",
-		"network",
-		"nodes",
-		"nodes_conf",
-		"prefix_path",
-		"private_registries",
-		"restore",
-		"rotate_certificates",
-		"services",
-		"ssh_agent_auth",
-		"ssh_cert_path",
-		"ssh_key_path",
-		"system_images",
+func removeTempDir(tempDir string) {
+	if len(tempDir) > 0 {
+		os.RemoveAll(tempDir)
 	}
-	for _, key := range targetKeys {
-		if d.HasChange(key) {
-			return true
-		}
-	}
-	return false
-}
-
-type nodeUnreachableError struct {
-	actual error
-}
-
-func newNodeUnreachableError(actual error) *nodeUnreachableError {
-	return &nodeUnreachableError{actual: actual}
-}
-
-func (n *nodeUnreachableError) Error() string {
-	return n.actual.Error()
 }
 
 type stateNotFoundError struct {

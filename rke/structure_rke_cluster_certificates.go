@@ -10,8 +10,10 @@ const (
 
 // Flatteners
 
-func flattenRKEClusterCertificates(in map[string]pki.CertificatePKI) []interface{} {
+func flattenRKEClusterCertificates(in map[string]pki.CertificatePKI) (string, string, string, []interface{}) {
 	out := []interface{}{}
+
+	var caCrt, clientCrt, clientKey string
 
 	for k, v := range in {
 		/*certPEM := ""
@@ -22,6 +24,15 @@ func flattenRKEClusterCertificates(in map[string]pki.CertificatePKI) []interface
 		if v.Key != nil {
 			privateKeyPEM = privateKeyToPEM(v.Key)
 		}*/
+
+		if k == pki.CACertName {
+			caCrt = v.CertificatePEM
+		}
+
+		if k == pki.KubeAdminCertName {
+			clientCrt = v.CertificatePEM
+			clientKey = v.KeyPEM
+		}
 
 		obj := map[string]interface{}{
 			"id":              k,
@@ -42,5 +53,5 @@ func flattenRKEClusterCertificates(in map[string]pki.CertificatePKI) []interface
 		out = append(out, obj)
 	}
 
-	return out
+	return caCrt, clientCrt, clientKey, out
 }

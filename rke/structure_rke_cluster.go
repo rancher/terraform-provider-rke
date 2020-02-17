@@ -13,7 +13,6 @@ import (
 func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 
 	if in == nil {
-		d.SetId("")
 		return nil
 	}
 
@@ -119,7 +118,11 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 	if !ok {
 		v = []interface{}{}
 	}
-	err = d.Set("services", flattenRKEClusterServices(in.Services, v))
+	services, err := flattenRKEClusterServices(in.Services, v)
+	if err != nil {
+		return err
+	}
+	err = d.Set("services", services)
 	if err != nil {
 		return err
 	}
@@ -134,22 +137,22 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		d.Set("ssh_key_path", in.SSHKeyPath)
 	}
 
-	err = d.Set("system_images", flattenRKEClusterSystemImages(in.SystemImages))
-	if err != nil {
-		return err
-	}
-
 	// computed values
 	d.Set("api_server_url", "") // nolint
-	if in.ControlPlaneHosts != nil {
+	if in.ControlPlaneHosts != nil && len(in.ControlPlaneHosts) > 0 {
 		apiServerURL := fmt.Sprintf("https://" + in.ControlPlaneHosts[0].Address + ":6443")
 		d.Set("api_server_url", apiServerURL)
 	}
+
+	caCrt, clientCrt, clientKey, certificates := flattenRKEClusterCertificates(in.Certificates)
+	d.Set("ca_crt", caCrt)          // nolint
+	d.Set("client_cert", clientCrt) // nolint
+	d.Set("client_key", clientKey)  // nolint
+	d.Set("certificates", certificates)
 	d.Set("kube_admin_user", rkeClusterCertificatesKubeAdminCertName)
-	d.Set("certificates", flattenRKEClusterCertificates(in.Certificates)) // nolint
-	d.Set("cluster_domain", in.ClusterDomain)                             // nolint
-	d.Set("cluster_cidr", in.ClusterCIDR)                                 // nolint
-	d.Set("cluster_dns_server", in.ClusterDNSServer)                      // nolint
+	d.Set("cluster_domain", in.ClusterDomain)        // nolint
+	d.Set("cluster_cidr", in.ClusterCIDR)            // nolint
+	d.Set("cluster_dns_server", in.ClusterDNSServer) // nolint
 
 	err = d.Set("etcd_hosts", flattenRKEClusterNodesComputed(in.EtcdHosts))
 	if err != nil {
@@ -171,16 +174,22 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		return err
 	}
 
+	err = d.Set("running_system_images", flattenRKEClusterSystemImages(in.SystemImages))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Expanders
 
-func expandRKECluster(in *schema.ResourceData) (*rancher.RancherKubernetesEngineConfig, error) {
-	obj := &rancher.RancherKubernetesEngineConfig{}
+func expandRKECluster(in *schema.ResourceData) (string, error) {
 	if in == nil {
-		return nil, nil
+		return "", nil
 	}
+
+	obj := &rancher.RancherKubernetesEngineConfig{}
 
 	if v, ok := in.Get("addon_job_timeout").(int); ok && v > 0 {
 		obj.AddonJobTimeout = v
@@ -258,14 +267,6 @@ func expandRKECluster(in *schema.ResourceData) (*rancher.RancherKubernetesEngine
 		obj.RotateCertificates = expandRKEClusterRotateCertificates(v)
 	}
 
-	if v, ok := in.Get("services").([]interface{}); ok && len(v) > 0 {
-		services, err := expandRKEClusterServices(v)
-		if err != nil {
-			return obj, err
-		}
-		obj.Services = services
-	}
-
 	if v, ok := in.Get("ssh_agent_auth").(bool); ok {
 		obj.SSHAgentAuth = v
 	}
@@ -282,5 +283,85 @@ func expandRKECluster(in *schema.ResourceData) (*rancher.RancherKubernetesEngine
 		obj.SystemImages = expandRKEClusterSystemImages(v)
 	}
 
-	return obj, nil
+	policyJSON := ""
+	if v, ok := in.Get("services").([]interface{}); ok && len(v) > 0 {
+		services, err := expandRKEClusterServices(v)
+		if err != nil {
+			return "", err
+		}
+		obj.Services = services
+		if obj.Services.KubeAPI.AuditLog != nil && obj.Services.KubeAPI.AuditLog.Configuration != nil {
+			policyJSON, err = interfaceToJSON(obj.Services.KubeAPI.AuditLog.Configuration.Policy)
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
+	objYml, err := interfaceToYaml(obj)
+	if err != nil {
+		return "", fmt.Errorf("Failed to marshal yaml RKE cluster: %v", err)
+	}
+
+	objFixed, err := patchRKEClusterYaml(objYml, policyJSON)
+	if err != nil {
+		return "", fmt.Errorf("Failed to patch RKE cluster yaml: %v", err)
+	}
+
+	return objFixed, nil
+}
+
+// patchRKEClusterYaml is needed due to auditv1.Policy{} doesn't provide yaml tags
+func patchRKEClusterYaml(str, policyJSON string) (string, error) {
+	if len(policyJSON) == 0 {
+		return str, nil
+	}
+
+	fixedPolicy := make(map[string]interface{})
+	err := jsonToInterface(policyJSON, &fixedPolicy)
+	if err != nil {
+		return "", fmt.Errorf("ummarshalling policy json: %s", err)
+	}
+
+	out := make(map[string]interface{})
+	err = ghodssyamlToInterface(str, &out)
+	if err != nil {
+		return "", fmt.Errorf("ummarshalling RKE cluster yaml: %s", err)
+	}
+
+	if services, ok := out["services"].(map[string]interface{}); ok {
+		if kubeapi, ok := services["kube-api"].(map[string]interface{}); ok {
+			if auditlog, ok := kubeapi["audit_log"].(map[string]interface{}); ok {
+				if _, ok := auditlog["configuration"].(map[string]interface{}); ok {
+					out["services"].(map[string]interface{})["kube-api"].(map[string]interface{})["audit_log"].(map[string]interface{})["configuration"].(map[string]interface{})["policy"] = fixedPolicy
+				}
+			}
+		}
+	}
+
+	outYaml, err := interfaceToGhodssyaml(out)
+	if err != nil {
+		return "", fmt.Errorf("marshalling RKE cluster patched yaml: %s", err)
+	}
+
+	return outYaml, nil
+}
+
+func expandRKEClusterFlag(in *schema.ResourceData, clusterFilePath string) cluster.ExternalFlags {
+	if in == nil {
+		return cluster.ExternalFlags{}
+	}
+
+	updateOnly := in.Get("update_only").(bool)
+	disablePortCheck := in.Get("disable_port_check").(bool)
+
+	// setting up the flags
+	obj := cluster.GetExternalFlags(false, updateOnly, disablePortCheck, "", clusterFilePath)
+	// Custom certificates and certificate dir flags
+	if v, ok := in.Get("cert_dir").(string); ok && len(v) > 0 {
+		obj.CertificateDir = v
+	}
+	obj.CustomCerts = in.Get("custom_certs").(bool)
+
+	return obj
 }

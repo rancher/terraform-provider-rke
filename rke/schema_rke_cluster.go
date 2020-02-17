@@ -1,6 +1,9 @@
 package rke
 
 import (
+	"sort"
+
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/rancher/kontainer-driver-metadata/rke"
@@ -10,6 +13,17 @@ import (
 
 func rkeClusterFields() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
+		"cert_dir": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Specify a certificate dir path",
+		},
+		"custom_certs": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Use custom certificates from a cert dir",
+		},
 		"delay_on_creation": {
 			Type:         schema.TypeInt,
 			Optional:     true,
@@ -119,9 +133,15 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Description: "K8s version to deploy (if kubernetes image is specified, image version takes precedence)",
 			ValidateFunc: validation.StringInSlice(func() []string {
 				rkeData := rke.DriverData
-				keys := make([]string, 0, len(rkeData.K8sVersionRKESystemImages))
+				versions := make([]*version.Version, 0, len(rkeData.K8sVersionRKESystemImages))
 				for k := range rkeData.K8sVersionRKESystemImages {
-					keys = append(keys, k)
+					v, _ := version.NewVersion(k)
+					versions = append(versions, v)
+				}
+				sort.Sort(sort.Reverse(version.Collection(versions)))
+				keys := make([]string, len(versions))
+				for i := range versions {
+					keys[i] = "v" + versions[i].String()
 				}
 				return keys
 			}(), false),
@@ -287,11 +307,16 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster system images list",
 			Elem: &schema.Resource{
 				Schema: rkeClusterSystemImagesFields(),
 			},
+		},
+		"update_only": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Skip idempotent deployment of control and etcd plane",
 		},
 		// Computed fields
 		"ca_crt": {
@@ -400,6 +425,15 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Description: "RKE k8s cluster worker nodes",
 			Elem: &schema.Resource{
 				Schema: rkeClusterNodeComputedFields(),
+			},
+		},
+		"running_system_images": {
+			Type:        schema.TypeList,
+			MaxItems:    1,
+			Computed:    true,
+			Description: "RKE k8s cluster running system images list",
+			Elem: &schema.Resource{
+				Schema: rkeClusterSystemImagesFields(),
 			},
 		},
 	}
