@@ -3,19 +3,21 @@ module github.com/rancher/terraform-provider-rke
 go 1.12
 
 require (
+	github.com/ghodss/yaml v1.0.0
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
-	github.com/hashicorp/go-getter v1.4.0
 	github.com/hashicorp/go-version v1.2.0
 	github.com/hashicorp/terraform-plugin-sdk v1.0.0
 	github.com/rancher/kontainer-driver-metadata v0.0.0-20200125025425-eef1fdc7ca9c
 	github.com/rancher/rke v1.0.4
 	github.com/rancher/types v0.0.0-20191220141556-ad31d6815bbd
+	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/sirupsen/logrus v1.4.2
 	gopkg.in/ini.v1 v1.48.0 // indirect
 	gopkg.in/yaml.v2 v2.2.4
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
+	k8s.io/apiserver v0.0.0
 	k8s.io/client-go v11.0.1-0.20190805182715-88a2adca7e76+incompatible
 )
 

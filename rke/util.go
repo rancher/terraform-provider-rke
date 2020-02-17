@@ -5,11 +5,15 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"os"
 	"sort"
 
+	ghodssyaml "github.com/ghodss/yaml"
 	gover "github.com/hashicorp/go-version"
+	uuid "github.com/satori/go.uuid"
+	"gopkg.in/yaml.v2"
 )
 
 func base64Encode(s string) string {
@@ -75,6 +79,96 @@ func toMapInterface(in map[string]string) map[string]interface{} {
 	return out
 }
 
+func jsonToMapInterface(in string) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	err := json.Unmarshal([]byte(in), &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, err
+}
+
+func mapInterfaceToJson(in map[string]interface{}) (string, error) {
+	if in == nil {
+		return "", nil
+	}
+	out, err := json.Marshal(in)
+	if err != nil {
+		return "", err
+	}
+	return string(out), err
+}
+
+func jsonToInterface(in string, out interface{}) error {
+	if out == nil {
+		return nil
+	}
+	err := json.Unmarshal([]byte(in), out)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func interfaceToMap(in interface{}) (map[string]interface{}, error) {
+	bytes, err := json.Marshal(in)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]interface{})
+
+	err = json.Unmarshal(bytes, &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func interfaceToJson(in interface{}) (string, error) {
+	if in == nil {
+		return "", nil
+	}
+	out, err := json.Marshal(in)
+	if err != nil {
+		return "", err
+	}
+	return string(out), err
+}
+
+func yamlToInterface(in string, out interface{}) error {
+	if out == nil {
+		return nil
+	}
+	err := yaml.Unmarshal([]byte(in), out)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func ghodssyamlToInterface(in string, out interface{}) error {
+	if out == nil {
+		return nil
+	}
+	err := ghodssyaml.Unmarshal([]byte(in), out)
+	if err != nil {
+		return err
+	}
+	return err
+}
+
+func interfaceToYaml(in interface{}) (string, error) {
+	if in == nil {
+		return "", nil
+	}
+	out, err := yaml.Marshal(in)
+	if err != nil {
+		return "", err
+	}
+	return string(out), err
+}
+
 func fileExist(path string) (bool, error) {
 	if path == "" {
 		return false, nil
@@ -121,6 +215,11 @@ func getLatestVersion(list map[string]string) (string, error) {
 	}
 
 	return sorted[len(sorted)-1].String(), nil
+}
+
+func getNewUUID() string {
+	newuid, _ := uuid.NewV4()
+	return newuid.String()
 }
 
 func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
