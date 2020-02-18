@@ -1,7 +1,23 @@
 package rke
 
 import (
+	"fmt"
+	"reflect"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
+)
+
+const (
+	clusterServicesKubeAPIAuditLogConfigPolicyApiversionTag = "apiVersion"
+	clusterServicesKubeAPIAuditLogConfigPolicyKindDefault   = "Policy"
+	clusterServicesKubeAPIAuditLogConfigPolicyKindTag       = "kind"
+)
+
+var (
+	clusterServicesKubeAPIAuditLogConfigPolicyRequired = []string{
+		clusterServicesKubeAPIAuditLogConfigPolicyApiversionTag,
+		clusterServicesKubeAPIAuditLogConfigPolicyKindTag}
 )
 
 //Schemas
@@ -33,6 +49,45 @@ func rkeClusterServicesKubeAPIAuditLogConfigFields() map[string]*schema.Schema {
 			Optional: true,
 			Default:  "/var/log/kube-audit/audit-log.json",
 		},
+		"policy": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Computed: true,
+			ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				v, ok := val.(string)
+				if !ok || len(v) == 0 {
+					return
+				}
+				m, err := jsonToMapInterface(v)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("%q must be in json format, error: %v", key, err))
+					return
+				}
+				for _, k := range clusterServicesKubeAPIAuditLogConfigPolicyRequired {
+					check, ok := m[k].(string)
+					if !ok || len(check) == 0 {
+						errs = append(errs, fmt.Errorf("%s is required on json", k))
+					}
+					if k == clusterServicesKubeAPIAuditLogConfigPolicyKindTag {
+						if check != clusterServicesKubeAPIAuditLogConfigPolicyKindDefault {
+							errs = append(errs, fmt.Errorf("%s value %s should be: %s", k, check, clusterServicesKubeAPIAuditLogConfigPolicyKindDefault))
+						}
+					}
+
+				}
+				return
+			},
+			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				if old == "" || new == "" {
+					return false
+				}
+				oldPolicy := &auditv1.Policy{}
+				newPolicy := &auditv1.Policy{}
+				jsonToInterface(old, oldPolicy)
+				jsonToInterface(new, newPolicy)
+				return reflect.DeepEqual(oldPolicy, newPolicy)
+			},
+		},
 	}
 	return s
 }
@@ -43,6 +98,7 @@ func rkeClusterServicesKubeAPIAuditLogFields() map[string]*schema.Schema {
 			Type:     schema.TypeList,
 			MaxItems: 1,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Resource{
 				Schema: rkeClusterServicesKubeAPIAuditLogConfigFields(),
 			},

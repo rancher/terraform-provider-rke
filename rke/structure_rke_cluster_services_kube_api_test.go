@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 )
 
 var (
@@ -27,6 +29,23 @@ func init() {
 		MaxBackup: 10,
 		MaxSize:   100,
 		Path:      "path",
+		Policy: &auditv1.Policy{
+			Rules: []auditv1.PolicyRule{
+				{
+					Level: "RequestResponse",
+					Resources: []auditv1.GroupResources{
+						{
+							Group:     "*",
+							Resources: []string{"pods"},
+						},
+					},
+				},
+			},
+		},
+	}
+	testRKEClusterServicesKubeAPIAuditLogConfigConf.Policy.TypeMeta = metav1.TypeMeta{
+		Kind:       "Policy",
+		APIVersion: "audit.k8s.io/v1",
 	}
 	testRKEClusterServicesKubeAPIAuditLogConfigInterface = []interface{}{
 		map[string]interface{}{
@@ -35,6 +54,7 @@ func init() {
 			"max_backup": 10,
 			"max_size":   100,
 			"path":       "path",
+			"policy":     `{"apiVersion":"audit.k8s.io/v1","kind":"Policy","metadata":{"creationTimestamp":null},"rules":[{"level":"RequestResponse","resources":[{"group":"*","resources":["pods"]}]}]}`,
 		},
 	}
 	testRKEClusterServicesKubeAPIAuditLogConf = &rancher.AuditLog{
@@ -112,7 +132,10 @@ func TestFlattenRKEClusterServicesKubeAPIAuditLogConfig(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterServicesKubeAPIAuditLogConfig(tc.Input)
+		output, err := flattenRKEClusterServicesKubeAPIAuditLogConfig(tc.Input)
+		if err != nil {
+			t.Fatalf("[ERROR] on flattener: %#v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
@@ -133,7 +156,10 @@ func TestFlattenRKEClusterServicesKubeAPIAuditLog(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterServicesKubeAPIAuditLog(tc.Input)
+		output, err := flattenRKEClusterServicesKubeAPIAuditLog(tc.Input)
+		if err != nil {
+			t.Fatalf("[ERROR] on flattener: %#v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
@@ -196,7 +222,10 @@ func TestFlattenRKEClusterServicesKubeAPI(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterServicesKubeAPI(tc.Input)
+		output, err := flattenRKEClusterServicesKubeAPI(tc.Input)
+		if err != nil {
+			t.Fatalf("[ERROR] on flattener: %#v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
@@ -217,10 +246,13 @@ func TestExpandRKEClusterServicesKubeAPIAuditLogConfig(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := expandRKEClusterServicesKubeAPIAuditLogConfig(tc.Input)
+		output, err := expandRKEClusterServicesKubeAPIAuditLogConfig(tc.Input)
+		if err != nil {
+			t.Fatalf("[ERROR] on expander: %#v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
-				tc.ExpectedOutput, output)
+				tc.ExpectedOutput.Policy, output.Policy)
 		}
 	}
 }
@@ -238,7 +270,10 @@ func TestExpandRKEClusterServicesKubeAPIAuditLog(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := expandRKEClusterServicesKubeAPIAuditLog(tc.Input)
+		output, err := expandRKEClusterServicesKubeAPIAuditLog(tc.Input)
+		if err != nil {
+			t.Fatalf("[ERROR] on expander: %#v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
@@ -301,7 +336,10 @@ func TestExpandRKEClusterServicesKubeAPI(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := expandRKEClusterServicesKubeAPI(tc.Input)
+		output, err := expandRKEClusterServicesKubeAPI(tc.Input)
+		if err != nil {
+			t.Fatalf("[ERROR] on expander: %#v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)

@@ -47,7 +47,7 @@ func flattenRKEClusterSystemImages(in rancher.RKESystemImages) []interface{} {
 
 func expandRKEClusterSystemImages(p []interface{}) rancher.RKESystemImages {
 	obj := rancher.RKESystemImages{}
-	if len(p) == 0 || p[0] == nil {
+	if p == nil || len(p) == 0 || p[0] == nil {
 		return obj
 	}
 	in := p[0].(map[string]interface{})

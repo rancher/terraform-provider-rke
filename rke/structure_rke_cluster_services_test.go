@@ -46,7 +46,10 @@ func TestFlattenRKEClusterServices(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterServices(tc.Input, testRKEClusterServicesInterface)
+		output, err := flattenRKEClusterServices(tc.Input, testRKEClusterServicesInterface)
+		if err != nil {
+			t.Fatalf("[ERROR] on flattener: %#v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)

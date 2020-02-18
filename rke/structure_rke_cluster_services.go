@@ -6,7 +6,7 @@ import (
 
 // Flatteners
 
-func flattenRKEClusterServices(in rancher.RKEConfigServices, p []interface{}) []interface{} {
+func flattenRKEClusterServices(in rancher.RKEConfigServices, p []interface{}) ([]interface{}, error) {
 	var obj map[string]interface{}
 	if len(p) == 0 || p[0] == nil {
 		obj = make(map[string]interface{})
@@ -19,20 +19,24 @@ func flattenRKEClusterServices(in rancher.RKEConfigServices, p []interface{}) []
 		v = []interface{}{}
 	}
 	obj["etcd"] = flattenRKEClusterServicesEtcd(in.Etcd, v)
-	obj["kube_api"] = flattenRKEClusterServicesKubeAPI(in.KubeAPI)
+	kubeAPI, err := flattenRKEClusterServicesKubeAPI(in.KubeAPI)
+	if err != nil {
+		return []interface{}{obj}, err
+	}
+	obj["kube_api"] = kubeAPI
 	obj["kube_controller"] = flattenRKEClusterServicesKubeController(in.KubeController)
 	obj["kubelet"] = flattenRKEClusterServicesKubelet(in.Kubelet)
 	obj["kubeproxy"] = flattenRKEClusterServicesKubeproxy(in.Kubeproxy)
 	obj["scheduler"] = flattenRKEClusterServicesScheduler(in.Scheduler)
 
-	return []interface{}{obj}
+	return []interface{}{obj}, nil
 }
 
 // Expanders
 
 func expandRKEClusterServices(p []interface{}) (rancher.RKEConfigServices, error) {
 	obj := rancher.RKEConfigServices{}
-	if len(p) == 0 || p[0] == nil {
+	if p == nil || len(p) == 0 || p[0] == nil {
 		return obj, nil
 	}
 	in := p[0].(map[string]interface{})
@@ -46,7 +50,11 @@ func expandRKEClusterServices(p []interface{}) (rancher.RKEConfigServices, error
 	}
 
 	if v, ok := in["kube_api"].([]interface{}); ok && len(v) > 0 {
-		obj.KubeAPI = expandRKEClusterServicesKubeAPI(v)
+		kubeAPI, err := expandRKEClusterServicesKubeAPI(v)
+		if err != nil {
+			return obj, err
+		}
+		obj.KubeAPI = kubeAPI
 	}
 
 	if v, ok := in["kube_controller"].([]interface{}); ok && len(v) > 0 {

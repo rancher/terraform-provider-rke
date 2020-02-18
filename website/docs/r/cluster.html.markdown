@@ -38,8 +38,10 @@ The following arguments are supported:
 * `authentication` - (Optional/Computed) RKE k8s cluster authentication configuration (list maxitems:1)
 * `authorization` - (Optional/Computed) RKE k8s cluster authorization mode configuration (list maxitems:1)
 * `bastion_host` - (Optional) RKE k8s cluster bastion Host configuration (list maxitems:1)
+* `cert_dir` - (Optional) Specify a certificate dir path (string)
 * `cloud_provider` - (Optional) RKE k8s cluster cloud provider configuration [rke-cloud-providers](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/) (list maxitems:1)
 * `cluster_name` - (Optional/Computed) RKE k8s cluster name used in the kube config (string)
+* `custom_certs` - (Optional) Use custom certificates from a cert dir (string)
 * `dns` - (Optional/Computed) RKE k8s cluster DNS Config (list maxitems:1)
 * `ignore_docker_version` - (Optional) Enable/Disable RKE k8s cluster strict docker version checking. Default `false` (bool)
 * `ingress` - (Optional/Computed) RKE k8s cluster ingress controller configuration (list maxitems:1)
@@ -61,7 +63,8 @@ The following arguments are supported:
 * `ssh_agent_auth` - (Optional) SSH Agent Auth enable. Default `false` (bool)
 * `ssh_cert_path` - (Optional/Computed) SSH Certificate Path (string)
 * `ssh_key_path` - (Optional/Computed) SSH Private Key Path (string)
-* `system_images` - (Optional/Computed) RKE k8s cluster system images list (list maxitems:1)
+* `system_images` - (Optional) RKE k8s cluster system images list (list maxitems:1)
+* `update_only` - (Optional) Skip idempotent deployment of control and etcd plane. Default `false` (bool)
 
 ## Attributes Reference
 
@@ -85,6 +88,7 @@ The following attributes are exported:
 * `etcd_hosts` - (Computed) RKE k8s cluster etcd nodes (list)
 * `inactive_hosts` - (Computed) RKE k8s cluster inactive nodes (list)
 * `worker_hosts` - (Computed) RKE k8s cluster worker nodes (list)
+* `running_system_images` - (Computed) RKE k8s cluster running system images list (list)
 
 ## Nested blocks
 
@@ -525,7 +529,8 @@ The following attributes are exported:
 * `max_age` - (Optional) Audit log max age. Default: `30` (int)
 * `max_backup` - (Optional) Audit log max backup. Default: `10` (int)
 * `max_size` - (Optional) Audit log max size. Default: `100` (int)
-* `path` - (Optional) (Optional) Audit log path. Default: `/var/log/kube-audit/audit-log.json` (string)
+* `path` - (Optional) Audit log path. Default: `/var/log/kube-audit/audit-log.json` (string)
+* `policy` - (Optional/Computed) Audit policy json encoded definition. `"apiVersion"` and `"kind":"Policy","rules"` fields are required in the json. Ex. `jsonencode({"apiVersion":"audit.k8s.io/v1","kind":"Policy","rules":[{"level":"RequestResponse","resources":[{"group":"","resources":["pods"]}]}]})` [More info](https://rancher.com/docs/rke/latest/en/config-options/audit-log/) (string)
 
 ##### `event_rate_limit`
 

@@ -1,3 +1,24 @@
+## 1.0.0-rc3 (Unreleased)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Added `cert_dir`, `custom_certs` and `update_only` arguments to rke cluster configuration
+* Refactored `rke_cluster` resource: 
+  * Added uuid as tfstate id
+  * Added `CustomizeDiff` to control changes
+  * Saving state on any execution
+* Added `kube_api.audit_log.Configuration.policy` argument to `services` argument
+
+
+BUG FIXES:
+
+* Fixed k8s version upgrade on `rke_cluster` resource
+
+
 ## 1.0.0-rc2 (February 6, 2020)
 
 FEATURES:

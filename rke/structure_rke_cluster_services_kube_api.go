@@ -1,15 +1,21 @@
 package rke
 
 import (
+	//"encoding/json"
+	"fmt"
+
 	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 )
 
 // Flatteners
 
-func flattenRKEClusterServicesKubeAPIAuditLogConfig(in *rancher.AuditLogConfig) []interface{} {
+func flattenRKEClusterServicesKubeAPIAuditLogConfig(in *rancher.AuditLogConfig) ([]interface{}, error) {
 	obj := make(map[string]interface{})
 	if in == nil {
-		return []interface{}{}
+		return []interface{}{}, nil
 	}
 
 	obj["format"] = in.Format
@@ -18,19 +24,37 @@ func flattenRKEClusterServicesKubeAPIAuditLogConfig(in *rancher.AuditLogConfig) 
 	obj["max_size"] = in.MaxSize
 	obj["path"] = in.Path
 
-	return []interface{}{obj}
+	if in.Policy != nil {
+		// needed to convert Policy to map to maintain json order
+		policyMap, err := interfaceToMap(in.Policy)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("interface to map err: %v", err)
+		}
+		policyStr, err := interfaceToJSON(policyMap)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("interface to json err: %v", err)
+		}
+		obj["policy"] = policyStr
+	}
+
+	return []interface{}{obj}, nil
 }
 
-func flattenRKEClusterServicesKubeAPIAuditLog(in *rancher.AuditLog) []interface{} {
+func flattenRKEClusterServicesKubeAPIAuditLog(in *rancher.AuditLog) ([]interface{}, error) {
 	obj := make(map[string]interface{})
 	if in == nil {
-		return []interface{}{}
+		return []interface{}{}, nil
 	}
 
 	obj["enabled"] = in.Enabled
-	obj["configuration"] = flattenRKEClusterServicesKubeAPIAuditLogConfig(in.Configuration)
 
-	return []interface{}{obj}
+	config, err := flattenRKEClusterServicesKubeAPIAuditLogConfig(in.Configuration)
+	if err != nil {
+		return []interface{}{}, fmt.Errorf("Flattening RKEClusterServicesKubeAPIAuditLogConfig err: %v", err)
+	}
+	obj["configuration"] = config
+
+	return []interface{}{obj}, nil
 }
 
 func flattenRKEClusterServicesKubeAPIEventRateLimit(in *rancher.EventRateLimit) []interface{} {
@@ -55,13 +79,17 @@ func flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in *rancher.Secrets
 	return []interface{}{obj}
 }
 
-func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) []interface{} {
+func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{}, error) {
 	obj := make(map[string]interface{})
 
 	obj["always_pull_images"] = in.AlwaysPullImages
 
 	if in.AuditLog != nil {
-		obj["audit_log"] = flattenRKEClusterServicesKubeAPIAuditLog(in.AuditLog)
+		auditLog, err := flattenRKEClusterServicesKubeAPIAuditLog(in.AuditLog)
+		if err != nil {
+			return []interface{}{}, err
+		}
+		obj["audit_log"] = auditLog
 	}
 
 	if in.EventRateLimit != nil {
@@ -98,15 +126,15 @@ func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) []interface{} {
 		obj["service_node_port_range"] = in.ServiceNodePortRange
 	}
 
-	return []interface{}{obj}
+	return []interface{}{obj}, nil
 }
 
 // Expanders
 
-func expandRKEClusterServicesKubeAPIAuditLogConfig(p []interface{}) *rancher.AuditLogConfig {
+func expandRKEClusterServicesKubeAPIAuditLogConfig(p []interface{}) (*rancher.AuditLogConfig, error) {
 	obj := &rancher.AuditLogConfig{}
-	if len(p) == 0 || p[0] == nil {
-		return obj
+	if p == nil || len(p) == 0 || p[0] == nil {
+		return nil, nil
 	}
 	in := p[0].(map[string]interface{})
 
@@ -130,13 +158,38 @@ func expandRKEClusterServicesKubeAPIAuditLogConfig(p []interface{}) *rancher.Aud
 		obj.Path = v
 	}
 
-	return obj
+	if v, ok := in["policy"].(string); ok && len(v) > 0 {
+		//err := jsonToInterface(v, obj.Policy)
+		//if err != nil {
+		//	return nil, fmt.Errorf("error marshalling audit policy: %v", err)
+		//}
+		/*policyBytes, err := json.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("error marshalling audit policy: %v", err)
+		}*/
+		policyBytes := []byte(v)
+		scheme := runtime.NewScheme()
+		err := auditv1.AddToScheme(scheme)
+		if err != nil {
+			return nil, fmt.Errorf("error adding to scheme: %v", err)
+		}
+		codecs := serializer.NewCodecFactory(scheme)
+		p := auditv1.Policy{}
+		err = runtime.DecodeInto(codecs.UniversalDecoder(), policyBytes, &p)
+		if err != nil || p.Kind != "Policy" {
+			return nil, fmt.Errorf("error decoding audit policy %s\n: %v", string(policyBytes), err)
+		}
+
+		obj.Policy = &p
+	}
+
+	return obj, nil
 }
 
-func expandRKEClusterServicesKubeAPIAuditLog(p []interface{}) *rancher.AuditLog {
+func expandRKEClusterServicesKubeAPIAuditLog(p []interface{}) (*rancher.AuditLog, error) {
 	obj := &rancher.AuditLog{}
-	if len(p) == 0 || p[0] == nil {
-		return obj
+	if p == nil || len(p) == 0 || p[0] == nil {
+		return nil, nil
 	}
 	in := p[0].(map[string]interface{})
 
@@ -145,16 +198,20 @@ func expandRKEClusterServicesKubeAPIAuditLog(p []interface{}) *rancher.AuditLog 
 	}
 
 	if v, ok := in["configuration"].([]interface{}); ok && len(v) > 0 {
-		obj.Configuration = expandRKEClusterServicesKubeAPIAuditLogConfig(v)
+		config, err := expandRKEClusterServicesKubeAPIAuditLogConfig(v)
+		if err != nil {
+			return nil, err
+		}
+		obj.Configuration = config
 	}
 
-	return obj
+	return obj, nil
 }
 
 func expandRKEClusterServicesKubeAPIEventRateLimit(p []interface{}) *rancher.EventRateLimit {
 	obj := &rancher.EventRateLimit{}
-	if len(p) == 0 || p[0] == nil {
-		return obj
+	if p == nil || len(p) == 0 || p[0] == nil {
+		return nil
 	}
 	in := p[0].(map[string]interface{})
 
@@ -167,8 +224,8 @@ func expandRKEClusterServicesKubeAPIEventRateLimit(p []interface{}) *rancher.Eve
 
 func expandRKEClusterServicesKubeAPISecretsEncryptionConfig(p []interface{}) *rancher.SecretsEncryptionConfig {
 	obj := &rancher.SecretsEncryptionConfig{}
-	if len(p) == 0 || p[0] == nil {
-		return obj
+	if p == nil || len(p) == 0 || p[0] == nil {
+		return nil
 	}
 	in := p[0].(map[string]interface{})
 
@@ -179,10 +236,10 @@ func expandRKEClusterServicesKubeAPISecretsEncryptionConfig(p []interface{}) *ra
 	return obj
 }
 
-func expandRKEClusterServicesKubeAPI(p []interface{}) rancher.KubeAPIService {
+func expandRKEClusterServicesKubeAPI(p []interface{}) (rancher.KubeAPIService, error) {
 	obj := rancher.KubeAPIService{}
-	if len(p) == 0 || p[0] == nil {
-		return obj
+	if p == nil || len(p) == 0 || p[0] == nil {
+		return obj, nil
 	}
 	in := p[0].(map[string]interface{})
 
@@ -191,7 +248,11 @@ func expandRKEClusterServicesKubeAPI(p []interface{}) rancher.KubeAPIService {
 	}
 
 	if v, ok := in["audit_log"].([]interface{}); ok && len(v) > 0 {
-		obj.AuditLog = expandRKEClusterServicesKubeAPIAuditLog(v)
+		auditLog, err := expandRKEClusterServicesKubeAPIAuditLog(v)
+		if err != nil {
+			return obj, err
+		}
+		obj.AuditLog = auditLog
 	}
 
 	if v, ok := in["event_rate_limit"].([]interface{}); ok && len(v) > 0 {
@@ -230,5 +291,5 @@ func expandRKEClusterServicesKubeAPI(p []interface{}) rancher.KubeAPIService {
 		obj.ServiceNodePortRange = v
 	}
 
-	return obj
+	return obj, nil
 }
