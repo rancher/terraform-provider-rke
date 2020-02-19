@@ -1,4 +1,5 @@
-## 1.0.0-rc3 (Unreleased)
+## 1.0.0-rc4 (Unreleased)
+## 1.0.0-rc3 (February 28, 2020)
 
 FEATURES:
 
@@ -12,6 +13,9 @@ ENHANCEMENTS:
   * Added `CustomizeDiff` to control changes
   * Saving state on any execution
 * Added `kube_api.audit_log.Configuration.policy` argument to `services` argument
+* Added `dind` support
+* Added acceptance tests
+* Added `debug` and `log_file` provider configuration
 
 
 BUG FIXES:
