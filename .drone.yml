@@ -4,15 +4,13 @@ name: default
 
 steps:
 - name: build
-  image: golang:1.12.3
+  image: rancher/dapper:1.11.2
   commands:
-  - apt-get update
-  - apt-get install -y xz-utils zip rsync jq curl ca-certificates
-  - mkdir -p /go/src/github.com/rancher
-  - ln -s /drone/src /go/src/github.com/rancher/terraform-provider-rke
-  - cd /go/src/github.com/rancher/terraform-provider-rke
-  - make build-rancher
-  - make test
+  - dapper ci
+  privileged: true
+  volumes:
+  - name: socket
+    path: /var/run/docker.sock
 
 - name: build-all-binaries
   image: golang:1.12.3
@@ -60,3 +58,7 @@ steps:
     ref:
       exclude: [ refs/tags/*rc* ]
 
+volumes:
+- name: socket
+  host:
+    path: /var/run/docker.sock

@@ -23,130 +23,58 @@ import (
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const (
-	envRKENodeAddr   = "RKE_NODE_ADDR"
-	envRKENodeUser   = "RKE_NODE_USER"
-	envRKENodeSSHKey = "RKE_NODE_SSH_KEY"
-)
-
 var (
-	nodeIP     string
-	nodeUser   string
-	nodeSSHKey string
+	testAccRKEClusterNodes = []string{"tf-testacc1", "tf-testacc2"}
 )
 
 func TestAccResourceRKECluster(t *testing.T) {
-	if ip, ok := os.LookupEnv(envRKENodeAddr); ok {
-		nodeIP = ip
-	}
-	if user, ok := os.LookupEnv(envRKENodeUser); ok {
-		nodeUser = user
-	}
-	if key, ok := os.LookupEnv(envRKENodeSSHKey); ok {
-		nodeSSHKey = key
-	}
-
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckRKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckRKEConfigBasic(nodeIP, nodeUser, nodeSSHKey),
+				Config: testAccCheckRKEConfigBasic(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.#", "1"),
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.0.address", nodeIP),
-					resource.TestMatchResourceAttr(
-						"rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.#", "1"),
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.0.address", testAccRKEClusterNodes[0]),
+					resource.TestMatchResourceAttr("rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
 					testAccCheckTempFilesExists(),
 				),
 			},
 			{
-				Config: testAccCheckRKEConfigUpdate(nodeIP, nodeUser, nodeSSHKey),
+				Config: testAccCheckRKEConfigUpdate(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.#", "1"),
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.0.address", nodeIP),
-					resource.TestMatchResourceAttr(
-						"rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
-					resource.TestMatchResourceAttr(
-						"rke_cluster.cluster", "rke_cluster_yaml", regexp.MustCompile(".+")), // should be not empty
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.0.labels.%", "2"),
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.0.labels.foo", "foo"),
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.0.labels.bar", "bar"),
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.#", "1"),
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.0.address", testAccRKEClusterNodes[0]),
+					resource.TestMatchResourceAttr("rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
+					resource.TestMatchResourceAttr("rke_cluster.cluster", "rke_cluster_yaml", regexp.MustCompile(".+")), // should be not empty
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.0.labels.%", "2"),
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.0.labels.foo", "foo"),
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.0.labels.bar", "bar"),
 					testAccCheckTempFilesExists(),
 				),
 			},
-		},
-	})
-}
-
-func TestAccResourceRKECluster_NodeCountUpAndDown(t *testing.T) {
-	var nodeIPs, nodeUsers, nodeSSHKeys []string
-
-	for i := 0; i < 2; i++ {
-		nodeIPEnv := fmt.Sprintf("%s_%d", envRKENodeAddr, i)
-		nodeUserEnv := fmt.Sprintf("%s_%d", envRKENodeUser, i)
-		nodeSSHKeyEnv := fmt.Sprintf("%s_%d", envRKENodeSSHKey, i)
-		if ip, ok := os.LookupEnv(nodeIPEnv); ok {
-			nodeIPs = append(nodeIPs, ip)
-		}
-		if user, ok := os.LookupEnv(nodeUserEnv); ok {
-			nodeUsers = append(nodeUsers, user)
-		}
-		if key, ok := os.LookupEnv(nodeSSHKeyEnv); ok {
-			nodeSSHKeys = append(nodeSSHKeys, key)
-		}
-	}
-	requireValues := [][]string{nodeIPs, nodeUsers, nodeSSHKeys}
-	for _, values := range requireValues {
-		if len(values) != 2 {
-			t.Skip("Acceptance tests skipped unless required env set")
-		}
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheckForMultiNodes(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckRKEClusterDestroy,
-		Steps: []resource.TestStep{
 			{
-				Config: testAccCheckRKEConfigNodeCountUpAndDownSingleNode(
-					nodeIPs[0], nodeUsers[0], nodeSSHKeys[0],
-				),
+				Config: testAccCheckRKEConfigBasic(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.#", "1"),
-					testAccCheckRKENodeExists("rke_cluster.cluster", nodeIPs[0]),
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.#", "1"),
+					testAccCheckRKENodeExists("rke_cluster.cluster", testAccRKEClusterNodes[0]),
 					testAccCheckRKEClusterYAML("rke_cluster.cluster", 1),
 				),
 			},
 			{
-				Config: testAccCheckRKEConfigNodeCountUpAndDownMultiNodes(
-					nodeIPs[0], nodeUsers[0], nodeSSHKeys[0],
-					nodeIPs[1], nodeUsers[1], nodeSSHKeys[1],
-				),
+				Config: testAccCheckRKEConfigBasic2Nodes(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.#", "2"),
-					testAccCheckRKENodeExists("rke_cluster.cluster", nodeIPs[0], nodeIPs[1]),
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.#", "2"),
+					testAccCheckRKENodeExists("rke_cluster.cluster", testAccRKEClusterNodes[0], testAccRKEClusterNodes[1]),
 					testAccCheckRKEClusterYAML("rke_cluster.cluster", 2),
 				),
 			},
 			{
-				Config: testAccCheckRKEConfigNodeCountUpAndDownSingleNode(
-					nodeIPs[0], nodeUsers[0], nodeSSHKeys[0],
-				),
+				Config: testAccCheckRKEConfigBasic(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"rke_cluster.cluster", "nodes.#", "1"),
-					testAccCheckRKENodeExists("rke_cluster.cluster", nodeIPs[0]),
+					resource.TestCheckResourceAttr("rke_cluster.cluster", "nodes.#", "1"),
+					testAccCheckRKENodeExists("rke_cluster.cluster", testAccRKEClusterNodes[0]),
 					testAccCheckRKEClusterYAML("rke_cluster.cluster", 1),
 				),
 			},
@@ -187,7 +115,7 @@ func testAccCheckRKENodeExists(n string, nodeIPs ...string) resource.TestCheckFu
 			return errors.New("no ID of rke_cluster is set")
 		}
 
-		masterURL := fmt.Sprintf("https://%s:6443", rs.Primary.ID)
+		masterURL := rs.Primary.Attributes["api_server_url"]
 		strKubeConfig := rs.Primary.Attributes["kube_config_yaml"]
 		if strKubeConfig == "" {
 			return errors.New("kube_config_yaml is empty")
@@ -264,40 +192,6 @@ func testAccCheckRKEClusterYAML(n string, expectNodeLen int) resource.TestCheckF
 	}
 }
 
-func TestAccResourceRKEClusterWithNodeParameter(t *testing.T) {
-	if ip, ok := os.LookupEnv(envRKENodeAddr); ok {
-		nodeIP = ip
-	}
-	if user, ok := os.LookupEnv(envRKENodeUser); ok {
-		nodeUser = user
-	}
-	if key, ok := os.LookupEnv(envRKENodeSSHKey); ok {
-		nodeSSHKey = key
-	}
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckRKEClusterDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccCheckRKEConfigWithNodesConfBasic(nodeIP, nodeUser, nodeSSHKey),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(
-						"rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
-				),
-			},
-			{
-				Config: testAccCheckRKEConfigWithNodesConfUpdate(nodeIP, nodeUser, nodeSSHKey),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(
-						"rke_cluster.cluster", "kube_config_yaml", regexp.MustCompile(".+")), // should be not empty
-				),
-			},
-		},
-	})
-}
-
 func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
@@ -305,7 +199,7 @@ func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 			continue
 		}
 
-		masterURL := fmt.Sprintf("https://%s:6443", rs.Primary.ID)
+		masterURL := rs.Primary.Attributes["api_server_url"]
 		req, err := http.NewRequest("GET", masterURL, nil)
 		if err != nil {
 			continue
@@ -328,121 +222,61 @@ func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 	return testAccCheckTempFilesExists()(s)
 }
 
-func testAccCheckRKEConfigBasic(ip, user, sshKey string) string {
+func testAccCheckRKEConfigBasic() string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
   ignore_docker_version = true
+  addon_job_timeout = 60
+  dind = true
+  dind_dns_server = "8.8.8.8"
   nodes {
     address = "%s"
-    user    = "%s"
+    user    = "docker"
     role    = ["controlplane", "worker", "etcd"]
-    ssh_key = <<EOF
-%s
-EOF
   }
 }
-	`, ip, user, sshKey)
+`, testAccRKEClusterNodes[0])
 
 }
 
-func testAccCheckRKEConfigUpdate(ip, user, sshKey string) string {
+func testAccCheckRKEConfigUpdate() string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
   ignore_docker_version = true
+  addon_job_timeout = 60
+  dind = true
+  dind_dns_server = "8.8.8.8"
   nodes {
     address = "%s"
-    user    = "%s"
+    user    = "docker"
     role    = ["controlplane", "worker", "etcd"]
-    ssh_key = <<EOF
-%s
-EOF
     labels = {
       foo = "foo"
       bar = "bar"
     }
   }
 }
-	`, ip, user, sshKey)
+`, testAccRKEClusterNodes[0])
 
 }
 
-func testAccCheckRKEConfigNodeCountUpAndDownSingleNode(ip, user, sshKey string) string {
+func testAccCheckRKEConfigBasic2Nodes() string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
   ignore_docker_version = true
+  addon_job_timeout = 60
+  dind = true
+  dind_dns_server = "8.8.8.8"
   nodes {
     address = "%s"
-    user    = "%s"
+    user    = "docker"
     role    = ["controlplane", "worker", "etcd"]
-    ssh_key = <<EOF
-%s
-EOF
-  }
-}
-	`, ip, user, sshKey)
-}
-func testAccCheckRKEConfigNodeCountUpAndDownMultiNodes(ip1, user1, sshKey1, ip2, user2, sshKey2 string) string {
-	return fmt.Sprintf(`	
-resource rke_cluster "cluster" {
-  ignore_docker_version = true
-  nodes {
-    address = "%s"
-    user    = "%s"
-    role    = ["controlplane", "worker", "etcd"]
-    ssh_key = <<EOF
-%s
-EOF
   }
   nodes {
     address = "%s"
-    user    = "%s"
-    role    = ["controlplane", "worker", "etcd"]
-    ssh_key = <<EOF
-%s
-EOF
+    user    = "docker"
+    role    = ["worker"]
   }
 }
-	`, ip1, user1, sshKey1, ip2, user2, sshKey2)
-}
-
-func testAccCheckRKEConfigWithNodesConfBasic(ip, user, sshKey string) string {
-	return fmt.Sprintf(`	
-data rke_node_parameter "node" {
-    address = "%s"
-    user    = "%s"
-    role    = ["controlplane", "worker", "etcd"]
-    ssh_key = <<EOF
-%s
-EOF
-}
-
-resource rke_cluster "cluster" {
-  ignore_docker_version = true
-  nodes_conf = ["${data.rke_node_parameter.node.json}"]
-}
-	`, ip, user, sshKey)
-
-}
-
-func testAccCheckRKEConfigWithNodesConfUpdate(ip, user, sshKey string) string {
-	return fmt.Sprintf(`	
-data rke_node_parameter "node" {
-  address = "%s"
-  user    = "%s"
-  role    = ["controlplane", "worker", "etcd"]
-  ssh_key = <<EOF
-%s
-EOF
-
-  labels = {
-    foo = "foo"
-    bar = "bar"
-  }
-}
-
-resource rke_cluster "cluster" {
-  ignore_docker_version = true
-  nodes_conf = ["${data.rke_node_parameter.node.json}"]
-}
-	`, ip, user, sshKey)
+`, testAccRKEClusterNodes[0], testAccRKEClusterNodes[1])
 }

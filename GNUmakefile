@@ -1,5 +1,5 @@
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
-GO111MODULE=on
+GO111MODULE=off
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=rke
 TEST?="./${PKG_NAME}"
@@ -9,6 +9,15 @@ default: build
 
 build: fmtcheck
 	go install
+
+dapper-build: .dapper
+	./.dapper build
+
+dapper-ci: .dapper
+	./.dapper ci
+
+dapper-testacc: .dapper
+	./.dapper gotestacc.sh
 
 build-rancher: validate-rancher
 	@sh -c "'$(CURDIR)/scripts/gobuild.sh'"
@@ -25,6 +34,13 @@ test: fmtcheck
 
 testacc: 
 	@sh -c "'$(CURDIR)/scripts/gotestacc.sh'"
+
+.dapper:
+	@echo Downloading dapper
+	@curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m` > .dapper.tmp
+	@@chmod +x .dapper.tmp
+	@./.dapper.tmp -v
+	@mv .dapper.tmp .dapper
 
 vet:
 	@echo "==> Checking that code complies with go vet requirements..."
@@ -86,6 +102,6 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: bin build test testacc vet fmt fmtcheck errcheck vendor-status test-compile vendor website website-test
+.PHONY: bin build test testacc vet fmt fmtcheck errcheck vendor-status test-compile vendor website website-test build-dapper
 
 
