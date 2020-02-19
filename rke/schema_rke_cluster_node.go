@@ -77,7 +77,7 @@ func rkeClusterNodeFields() map[string]*schema.Schema {
 		"ssh_agent_auth": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     false,
+			Computed:    true,
 			Description: "SSH Agent Auth enable",
 		},
 		"ssh_cert": {

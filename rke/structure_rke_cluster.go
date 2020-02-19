@@ -63,6 +63,8 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		}
 	}
 
+	d.Set("dind", in.DinD)
+
 	d.Set("ignore_docker_version", in.IgnoreDockerVersion)
 
 	err = d.Set("ingress", flattenRKEClusterIngress(in.Ingress))
@@ -84,7 +86,7 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		return err
 	}
 
-	if in.Nodes != nil {
+	if in.Nodes != nil && !in.DinD {
 		err := d.Set("nodes", flattenRKEClusterNodes(in.Nodes))
 		if err != nil {
 			return err
@@ -298,6 +300,13 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 		}
 	}
 
+	if v, ok := in.Get("dind").(bool); ok && v {
+		if obj.Services.Kubeproxy.ExtraArgs == nil {
+			obj.Services.Kubeproxy.ExtraArgs = make(map[string]string)
+		}
+		obj.Services.Kubeproxy.ExtraArgs["conntrack-max-per-core"] = "0"
+	}
+
 	objYml, err := interfaceToYaml(obj)
 	if err != nil {
 		return "", fmt.Errorf("Failed to marshal yaml RKE cluster: %v", err)
@@ -354,14 +363,22 @@ func expandRKEClusterFlag(in *schema.ResourceData, clusterFilePath string) clust
 
 	updateOnly := in.Get("update_only").(bool)
 	disablePortCheck := in.Get("disable_port_check").(bool)
+	dind := in.Get("dind").(bool)
+
+	if dind {
+		updateOnly = false
+	}
 
 	// setting up the flags
 	obj := cluster.GetExternalFlags(false, updateOnly, disablePortCheck, "", clusterFilePath)
-	// Custom certificates and certificate dir flags
-	if v, ok := in.Get("cert_dir").(string); ok && len(v) > 0 {
-		obj.CertificateDir = v
+	obj.DinD = dind
+	if !dind {
+		// Custom certificates and certificate dir flags
+		if v, ok := in.Get("cert_dir").(string); ok && len(v) > 0 {
+			obj.CertificateDir = v
+		}
+		obj.CustomCerts = in.Get("custom_certs").(bool)
 	}
-	obj.CustomCerts = in.Get("custom_certs").(bool)
 
 	return obj
 }

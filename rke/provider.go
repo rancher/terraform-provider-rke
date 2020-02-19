@@ -13,10 +13,8 @@ import (
 
 const (
 	rkeErrorTemplate = `
-%s
-
 ============= RKE outputs ==============
-
+%s
 %s
 ========================================
 `
@@ -51,10 +49,8 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
 func initLogger(d *schema.ResourceData) {
 	var writer io.Writer = rkeLogBuf
-	if v, ok := d.GetOk("log"); ok {
-		if v.(bool) {
-			writer = io.MultiWriter(os.Stderr, rkeLogBuf)
-		}
+	if v, ok := d.Get("log").(bool); ok && v {
+		writer = io.MultiWriter(os.Stderr, rkeLogBuf)
 	}
 
 	logrus.SetOutput(writer)
@@ -76,5 +72,5 @@ func wrapErrWithRKEOutputs(err error) error {
 	if rkeLogLines == "" {
 		return err
 	}
-	return fmt.Errorf(rkeErrorTemplate, err, rkeLogLines)
+	return fmt.Errorf(rkeErrorTemplate, rkeLogLines, err)
 }
