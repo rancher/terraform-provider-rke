@@ -1,55 +1,61 @@
-locals {
-  cluster_id_tag = {
-    "kubernetes.io/cluster/${var.cluster_id}" = "owned"
-  }
-}
-
 data "aws_availability_zones" "az" {
 }
 
-resource "aws_default_subnet" "default" {
-  availability_zone = data.aws_availability_zones.az.names[count.index]
-  tags              = local.cluster_id_tag
-  count             = length(data.aws_availability_zones.az.names)
+
+data "aws_security_group" "selected" {
+  name = var.security_group_name
 }
 
-resource "aws_security_group" "allow-all" {
-  name        = "rke-default-security-group"
-  description = "rke"
+# resource "aws_subnet" "subnet" {
+#   vpc_id     = data.aws_security_group.selected.vpc_id
+#   cidr_block = "10.0.1.0/24"
+# }
 
-  ingress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# resource "aws_default_subnet" "default" {
+#   availability_zone = data.aws_availability_zones.az.names[count.index]
+#   tags              = local.cluster_id_tag
+#   count             = length(data.aws_availability_zones.az.names)
+# }
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+# resource "aws_security_group" "allow-all" {
+#   name        = "rke-default-security-group"
+#   description = "rke"
 
-  tags = local.cluster_id_tag
-}
+#   ingress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+#   tags = local.cluster_id_tag
+# }
 
 resource "aws_instance" "rke-node" {
-  count = 4
+  count = var.instance_count
 
   ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
-  key_name               = aws_key_pair.rke-node-key.id
-  iam_instance_profile   = aws_iam_instance_profile.rke-aws.name
-  vpc_security_group_ids = [aws_security_group.allow-all.id]
-  tags                   = local.cluster_id_tag
-
+  key_name               = "mbh"
+  iam_instance_profile   = var.instance_profile_name
+  vpc_security_group_ids = [data.aws_security_group.selected.id]
+  tags                   = {  
+    "kubernetes.io/cluster/${var.cluster_id}" = "owned"
+    Name = "rke_0${count.index+1}"
+  }
   provisioner "remote-exec" {
     connection {
       host        = coalesce(self.public_ip, self.private_ip)
       type        = "ssh"
       user        = "ubuntu"
-      private_key = tls_private_key.node-key.private_key_pem
+      private_key = file("${path.module}/../mbh.pem")
     }
 
     inline = [

@@ -11,5 +11,20 @@ variable "cluster_id" {
 }
 
 variable "docker_install_url" {
-  default = "https://releases.rancher.com/install-docker/18.09.sh"
+  default = "https://releases.rancher.com/install-docker/19.03.sh"
 }
+
+variable "instance_count" {
+  default = 5
+}
+
+variable "security_group_name" {
+  description = "Name of existing security group to use for rke ec2 instances"
+  default     = "allow-all"
+}
+
+variable "instance_profile_name" {
+  description = "Name of the IAM instance profile that EC2 instances will use"
+  default     = "rke-aws"
+}
+
