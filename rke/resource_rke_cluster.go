@@ -15,7 +15,7 @@ import (
 	"github.com/rancher/rke/hosts"
 	"github.com/rancher/rke/pki"
 	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
-	//log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 const rkeClusterDINDWaitTime = 3
@@ -36,6 +36,7 @@ func resourceRKECluster() *schema.Resource {
 }
 
 func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
+	log.Info("Creating RKE cluster...")
 	if delay, ok := d.Get("delay_on_creation").(int); ok && delay > 0 {
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
@@ -43,21 +44,24 @@ func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceRKEClusterUpdate(d *schema.ResourceData, meta interface{}) error {
+	log.Info("Updating RKE cluster...")
 	if err := clusterUp(d); err != nil {
-		return wrapErrWithRKEOutputs(err)
+		return meta.(*Config).saveRKEOutput(err)
 	}
-	return wrapErrWithRKEOutputs(resourceRKEClusterRead(d, meta))
+	return meta.(*Config).saveRKEOutput(resourceRKEClusterRead(d, meta))
 }
 
 func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
+	log.Infof("Reading RKE cluster %s ...", d.Id())
 	currentCluster, err := readClusterState(d)
 	if err != nil {
-		return wrapErrWithRKEOutputs(err)
+		return meta.(*Config).saveRKEOutput(err)
 	}
-	return wrapErrWithRKEOutputs(flattenRKECluster(d, currentCluster))
+	return meta.(*Config).saveRKEOutput(flattenRKECluster(d, currentCluster))
 }
 
 func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
+	log.Info("Deleting RKE cluster...")
 	err := clusterDelete(d)
 	if err != nil {
 		return err
@@ -73,7 +77,7 @@ func clusterUp(d *schema.ResourceData) error {
 		return err
 	}
 
-	// setting up the flags and dialers
+	// setting up the flags, dialers anbd context
 	flags := expandRKEClusterFlag(d, clusterFilePath)
 	dialers := hosts.DialersOptions{}
 
