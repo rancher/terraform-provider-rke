@@ -18,6 +18,17 @@ Requirements
 - [Go](https://golang.org/doc/install) 1.12 to build the provider plugin
 - [Docker](https://docs.docker.com/install/) 17.03.x to run acceptance tests
 
+Installing The Provider
+-----------------------
+
+Download the binary for your platform from the [releases](https://github.com/rancher/terraform-provider-rke/releases) page
+
+```
+wget https://github.com/rancher/terraform-provider-rke/releases/download/x.x.x/terraform-provider-rke_<platform>
+```
+
+Rename the binary to to remove the platform ending (so it looks like `terraform-provider-rke`)and move it to your terraform plugin directory (`~/terraform.d/plugins/linux_amd64`) or a custom directory. If using a custom directory use the `-plug-in=/my/custom/path` when running `terraform init` to specify the path.
+
 Building The Provider
 ---------------------
 
