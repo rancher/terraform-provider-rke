@@ -24,6 +24,24 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Default:     false,
 			Description: "Use custom certificates from a cert dir",
 		},
+		"dind": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "RKE k8s cluster dind (experimental)",
+		},
+		"dind_storage_driver": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "",
+			Description: "RKE k8s cluster dind storage driver (experimental)",
+		},
+		"dind_dns_server": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "",
+			Description: "RKE k8s cluster dind storage driver (experimental)",
+		},
 		"delay_on_creation": {
 			Type:         schema.TypeInt,
 			Optional:     true,

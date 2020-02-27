@@ -11,12 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/cmd"
+	"github.com/rancher/rke/dind"
 	"github.com/rancher/rke/hosts"
-	//"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
 	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
-	//log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
+
+const rkeClusterDINDWaitTime = 3
 
 func resourceRKECluster() *schema.Resource {
 	return &schema.Resource{
@@ -34,33 +36,36 @@ func resourceRKECluster() *schema.Resource {
 }
 
 func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
+	log.Info("Creating RKE cluster...")
 	if delay, ok := d.Get("delay_on_creation").(int); ok && delay > 0 {
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
-
-	if err := clusterUp(d); err != nil {
-		return wrapErrWithRKEOutputs(err)
-	}
-	return wrapErrWithRKEOutputs(resourceRKEClusterRead(d, meta))
+	return resourceRKEClusterUpdate(d, meta)
 }
 
 func resourceRKEClusterUpdate(d *schema.ResourceData, meta interface{}) error {
+	log.Info("Updating RKE cluster...")
 	if err := clusterUp(d); err != nil {
-		return wrapErrWithRKEOutputs(err)
+		return meta.(*Config).saveRKEOutput(err)
 	}
-	return wrapErrWithRKEOutputs(resourceRKEClusterRead(d, meta))
+	return meta.(*Config).saveRKEOutput(resourceRKEClusterRead(d, meta))
 }
 
 func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
+	log.Infof("Reading RKE cluster %s ...", d.Id())
 	currentCluster, err := readClusterState(d)
 	if err != nil {
-		return wrapErrWithRKEOutputs(err)
+		return meta.(*Config).saveRKEOutput(err)
 	}
-	return wrapErrWithRKEOutputs(flattenRKECluster(d, currentCluster))
+	return meta.(*Config).saveRKEOutput(flattenRKECluster(d, currentCluster))
 }
 
 func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
-	clusterRemove(d)
+	log.Info("Deleting RKE cluster...")
+	err := clusterDelete(d)
+	if err != nil {
+		return err
+	}
 	d.SetId("")
 	return nil
 }
@@ -72,34 +77,74 @@ func clusterUp(d *schema.ResourceData) error {
 		return err
 	}
 
-	// setting up the flags
+	// setting up the flags, dialers anbd context
 	flags := expandRKEClusterFlag(d, clusterFilePath)
+	dialers := hosts.DialersOptions{}
 
-	if err := cmd.ClusterInit(context.Background(), rkeConfig, hosts.DialersOptions{}, flags); err != nil {
-		return err
+	// setting dind if needed
+	if d.Get("dind").(bool) {
+		dindStorageDriver := d.Get("dind_storage_driver").(string)
+		dindDNS := d.Get("dind_dns_server").(string)
+		if err = prepareDINDEnv(context.Background(), rkeConfig, dindStorageDriver, dindDNS); err != nil {
+			return fmt.Errorf("Failed preparing DIND environment err:%v", err)
+		}
+		dialers = hosts.GetDialerOptions(hosts.DindConnFactory, hosts.DindHealthcheckConnFactory, nil)
 	}
 
-	_, _, _, _, _, clusterUpErr := cmd.ClusterUp(context.Background(), hosts.DialersOptions{}, flags, map[string]interface{}{})
+	if err := cmd.ClusterInit(context.Background(), rkeConfig, dialers, flags); err != nil {
+		return fmt.Errorf("Failed initializing cluster err:%v", err)
+	}
+	_, _, _, _, _, clusterUpErr := cmd.ClusterUp(context.Background(), dialers, flags, map[string]interface{}{})
+
 	// set cluster state to resourceData
 	err = setRKEClusterState(d, tempDir)
 	if clusterUpErr != nil {
-		return clusterUpErr
+		return fmt.Errorf("Failed running cluster err:%v", clusterUpErr)
 	}
 
 	return err
 }
 
-func clusterRemove(d *schema.ResourceData) error {
+func prepareDINDEnv(ctx context.Context, rkeConfig *v3.RancherKubernetesEngineConfig, dindStorageDriver, dindDNS string) error {
+	os.Setenv("DOCKER_API_VERSION", hosts.DockerAPIVersion)
+	for i := range rkeConfig.Nodes {
+		address, err := dind.StartUpDindContainer(ctx, rkeConfig.Nodes[i].Address, dind.DINDNetwork, dindStorageDriver, dindDNS)
+		if err != nil {
+			return err
+		}
+		if rkeConfig.Nodes[i].HostnameOverride == "" {
+			rkeConfig.Nodes[i].HostnameOverride = rkeConfig.Nodes[i].Address
+		}
+		rkeConfig.Nodes[i].Address = address
+	}
+	time.Sleep(rkeClusterDINDWaitTime * time.Second)
+	return nil
+}
+
+func clusterDelete(d *schema.ResourceData) error {
 	rkeConfig, _, clusterFilePath, tempDir, err := getRKEClusterConfig(d)
 	defer removeTempDir(tempDir)
 	if err != nil {
 		return err
 	}
 
+	if d.Get("dind").(bool) {
+		os.Setenv("DOCKER_API_VERSION", hosts.DockerAPIVersion)
+		for _, node := range rkeConfig.Nodes {
+			if err = dind.RmoveDindContainer(context.Background(), node.Address); err != nil {
+				return nil
+			}
+		}
+		return nil
+	}
+
 	// setting up the flags
 	flags := cluster.GetExternalFlags(false, false, false, "", clusterFilePath)
 
-	return cmd.ClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)
+	// Omiting ClusterRemove  errors
+	cmd.ClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)
+
+	return nil
 }
 
 func getRKEClusterConfig(d *schema.ResourceData) (*v3.RancherKubernetesEngineConfig, string, string, string, error) {
@@ -164,6 +209,8 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 			return nil, nil
 		}
 	}
+
+	readedCluster.DinD = d.Get("dind").(bool)
 
 	return readedCluster, err
 }

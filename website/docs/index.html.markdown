@@ -15,7 +15,8 @@ The RKE provider is used to interact with Rancher Kubernetes Engine kubernetes c
 ```hcl
 # Configure the RKE provider
 provider "rke" {
-  log = true
+  debug = true
+  log_file = "<RKE_LOG_FILE>"
 }
 ```
 
@@ -23,4 +24,5 @@ provider "rke" {
 
 The following arguments are supported:
 
-* `log` - (Optional) Enable RKE logs. It can also be sourced from the `RKE_LOG` environment variable. Default `false` (bool)
+* `debug` - (Optional) Enable RKE debug logs. It can also be sourced from the `RKE_DEBUG` environment variable. Default `false` (bool)
+* `log_file` - (Optional) Save RKE logs to a file. It can also be sourced from the `RKE_LOG_FILE` environment variable (string)

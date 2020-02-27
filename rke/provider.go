@@ -1,37 +1,23 @@
 package rke
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"os"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/sirupsen/logrus"
 )
-
-const (
-	rkeErrorTemplate = `
-%s
-
-============= RKE outputs ==============
-
-%s
-========================================
-`
-)
-
-var rkeLogBuf = &bytes.Buffer{}
 
 // Provider returns a terraform.ResourceProvider.
 func Provider() terraform.ResourceProvider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"log": {
+			"debug": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("RKE_LOG", false),
+				DefaultFunc: schema.EnvDefaultFunc("RKE_DEBUG", false),
+			},
+			"log_file": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("RKE_LOG_FILE", ""),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -43,38 +29,11 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-	initLogger(d)
+	config := &Config{
+		Debug:   d.Get("debug").(bool),
+		LogFile: d.Get("log_file").(string),
+	}
 
-	config := Config{}
+	config.initLogger()
 	return config, nil
-}
-
-func initLogger(d *schema.ResourceData) {
-	var writer io.Writer = rkeLogBuf
-	if v, ok := d.GetOk("log"); ok {
-		if v.(bool) {
-			writer = io.MultiWriter(os.Stderr, rkeLogBuf)
-		}
-	}
-
-	logrus.SetOutput(writer)
-	logrus.SetFormatter(&logFormatter{})
-}
-
-type logFormatter struct{}
-
-func (l *logFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	return []byte(fmt.Sprintf("[%s] %s\n", entry.Level, entry.Message)), nil
-}
-
-func wrapErrWithRKEOutputs(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	rkeLogLines := rkeLogBuf.String()
-	if rkeLogLines == "" {
-		return err
-	}
-	return fmt.Errorf(rkeErrorTemplate, err, rkeLogLines)
 }
