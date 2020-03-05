@@ -2,7 +2,6 @@ package rke
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 //Schemas
@@ -20,11 +19,10 @@ func rkeClusterBastionHostFields() map[string]*schema.Schema {
 			Description: "SSH User to Bastion Host",
 		},
 		"port": {
-			Type:         schema.TypeString,
-			Optional:     true,
-			Default:      "22",
-			Description:  "SSH Port of Bastion Host",
-			ValidateFunc: validation.IntBetween(1, 65535),
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "22",
+			Description: "SSH Port of Bastion Host",
 		},
 		"ssh_agent_auth": {
 			Type:        schema.TypeBool,
