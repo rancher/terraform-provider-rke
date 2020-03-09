@@ -15,6 +15,11 @@ Provides RKE cluster resource. This can be used to create RKE clusters and retri
 Creating RKE cluster
 
 ```hcl
+# Configure RKE provider
+provider "rke" {
+  debug = true
+  log_file = "rke_debug.log"
+}
 # Create a new RKE cluster
 resource "rke_cluster" "foo" {
   nodes {
