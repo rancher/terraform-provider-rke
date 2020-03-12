@@ -1,97 +1,59 @@
-Terraform Provider for RKE
-==================================
+# How To Deploy Kubernetes Clusters on AWS using Terraform and Terraform RKE Provider -- MY FORK
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/rancher/terraform-provider-rke)](https://goreportcard.com/report/github.com/rancher/terraform-provider-rke)
+This repository is an examples for building a Kubernetes cluster using Terraform and Terraform RKE provider on AWS.
 
-Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kubernetes Engine](https://github.com/rancher/rke).  
+> ref: [https://rancher.com/blog/2018/2018-05-14-rke-on-aws/](https://rancher.com/blog/2018/2018-05-14-rke-on-aws/)
 
-- Website: https://www.terraform.io
-- [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
-- Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
+## How to use
 
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
+### Requirements
 
-Requirements
-------------
+- [terraform](https://terraform.io) v0.11+
+- [terraform-provider-rke](https://github.com/rancher/terraform-provider-rke)
+- Valid AWS access_key and secret_key
+- [optional] `kubectl` command
 
-- [Terraform](https://www.terraform.io/downloads.html) >= 0.11.x
-- [Go](https://golang.org/doc/install) 1.12 to build the provider plugin
-- [Docker](https://docs.docker.com/install/) 17.03.x to run acceptance tests
+### Deploy Kubernetes Cluster on AWS
 
-Building The Provider
----------------------
+```console
+#clone this repo
+$ git clone https://github.com/rancher/terraform-provider-rke
+$ cd terraform-provider-rke/examples/aws_ec2
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-rke`
+#set API keys to environment variables
+$ export AWS_ACCESS_KEY_ID="<your-access-key>"
+$ export AWS_SECRET_ACCESS_KEY="<your-secret-key>" 
 
-```sh
-$ mkdir -p $GOPATH/src/github.com/rancher
-$ cd $GOPATH/src/github.com/rancher
+#deploy
+$ terraform init && terraform apply
 
-$ go get github.com/rancher/terraform-provider-rke
-$ go install github.com/rancher/terraform-provider-rke
+###########################################################################
+#When "terraform apply" is completed, 
+#kubeconfig file should be created in the current directory 
+###########################################################################
+
+#set KUBECONFIG environment variable for kubectl 
+$ export KUBECONFIG=${PWD}/kube_config_cluster.yml 
+
+###########################################################################
+#Then, kubectl command can be used
+###########################################################################
+
+#component statuses
+$ kubectl get cs
+
+NAME                 STATUS    MESSAGE              ERROR
+controller-manager   Healthy   ok                   
+scheduler            Healthy   ok                   
+etcd-0               Healthy   {"health": "true"}  
+
+#nodes
+$ kubectl get nodes
+
+NAME                                             STATUS    ROLES               AGE       VERSION
+ip-xx-xx-xx-xx.ap-northeast-1.compute.internal   Ready     controlplane,etcd   1m        v1.10.1
+ip-xx-xx-xx-xx.ap-northeast-1.compute.internal   Ready     worker              1m        v1.10.1
+ip-xx-xx-xx-xx.ap-northeast-1.compute.internal   Ready     worker              1m        v1.10.1
+ip-xx-xx-xx-xx.ap-northeast-1.compute.internal   Ready     worker              1m        v1.10.1
 ```
 
-Enter the provider directory and build the provider
-
-```sh
-$ cd $GOPATH/src/github.com/rancher/terraform-provider-rke
-$ make build
-```
-
-**Current master is focusing on RKE v1.0.x** There are some breaking changes from previous provider version.
-
-**If you use RKE v0.2.x or v0.1.x, please set proper branch.**
-
-Using the provider
-------------------
-
-If you're building the provider, follow the instructions to [install it as a plugin.](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin) After placing it into your plugins directory,  run `terraform init` to initialize it. Documentation about the provider specific configuration options can be found on the [provider's website](https://www.terraform.io/docs/providers/rke/index.html).
-
-Developing the Provider
------------------------
-
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.12+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
-
-To compile the provider, run `make build`. This will build the provider and put the provider binary in `$GOPATH/bin` .
-
-```sh
-$ make build
-...
-$ $GOPATH/bin/terraform-provider-rke
-...
-```
-
-To just compile provider binary on repo path and test on terraform:
-
-```sh
-$ make bin
-$ terraform init
-$ terraform plan
-$ terraform apply
-```
-
-Testing the Provider
---------------------
-
-In order to test the provider, you can simply run `make test`.
-
-```sh
-$ make test
-```
-
-In order to run the full suite of Acceptance tests, a running rancher system, a rancher API key and a working k8s cluster imported are needed.
-
-To run acceptance tests, you can simply run `make testacc`. `scripts/gotestacc.sh` will be run, deploying all needed requirements, running acceptance tests and cleanup.
-
-```sh
-$ make testacc
-```
-
-Currently acceptance tests only works on Linux platforms, on Mac OSX are not yet supported.
-
-Provider examples
------------------
-
-You can view some tf file examples, [here](examples).
-
-On Openstack you can use [terraform-openstack-rke](https://github.com/remche/terraform-openstack-rke) module.
