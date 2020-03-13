@@ -1,4 +1,18 @@
-## 1.0.0-rc4 (Unreleased)
+## 1.0.0-rc4 (March 13, 2020)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Updated `log_file` to sync logs
+
+
+BUG FIXES:
+
+* Fixed computed fields to avoid inconsistent plan
+
 ## 1.0.0-rc3 (February 28, 2020)
 
 FEATURES:

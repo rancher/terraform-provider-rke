@@ -27,6 +27,45 @@ func resourceRKECluster() *schema.Resource {
 		Update: resourceRKEClusterUpdate,
 		Delete: resourceRKEClusterDelete,
 		Schema: rkeClusterFields(),
+		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
+			changed, changedKeys := getChangedKeys(d)
+			if changed > 0 {
+				computedFields := []string{
+					"rke_state",
+					"kube_config_yaml",
+					"rke_cluster_yaml",
+				}
+
+				if changedKeys["rotate_certificates"] {
+					for _, key := range []string{"ca_crt", "client_cert", "client_key", "certificates", "kube_admin_user"} {
+						computedFields = append(computedFields, key)
+					}
+				}
+
+				if changedKeys["dns"] || changedKeys["services"] {
+					for _, key := range []string{"cluster_domain", "cluster_cidr", "cluster_dns_server"} {
+						computedFields = append(computedFields, key)
+					}
+				}
+
+				if changedKeys["nodes"] {
+					for _, key := range []string{"api_server_url", "etcd_hosts", "control_plane_hosts", "inactive_hosts", "worker_hosts"} {
+						computedFields = append(computedFields, key)
+					}
+				}
+
+				if changedKeys["kubernetes_version"] || changedKeys["system_images"] {
+					computedFields = append(computedFields, "running_system_images")
+				}
+
+				for _, key := range computedFields {
+					if err := d.SetNewComputed(key); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		},
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(30 * time.Minute),
 			Update: schema.DefaultTimeout(30 * time.Minute),
@@ -48,7 +87,7 @@ func resourceRKEClusterUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err := clusterUp(d); err != nil {
 		return meta.(*Config).saveRKEOutput(err)
 	}
-	return meta.(*Config).saveRKEOutput(resourceRKEClusterRead(d, meta))
+	return resourceRKEClusterRead(d, meta)
 }
 
 func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
@@ -64,7 +103,7 @@ func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Info("Deleting RKE cluster...")
 	err := clusterDelete(d)
 	if err != nil {
-		return err
+		return meta.(*Config).saveRKEOutput(err)
 	}
 	d.SetId("")
 	return nil
@@ -330,6 +369,44 @@ func removeTempDir(tempDir string) {
 	if len(tempDir) > 0 {
 		os.RemoveAll(tempDir)
 	}
+}
+
+func getChangedKeys(d *schema.ResourceDiff) (int, map[string]bool) {
+	targetKeys := []string{
+		"addon_job_timeout",
+		"addons",
+		"addons_include",
+		"authentication",
+		"authorization",
+		"bastion_host",
+		"cloud_provider",
+		"cluster_name",
+		"dns",
+		"ignore_docker_version",
+		"ingress",
+		"kubernetes_version",
+		"monitoring",
+		"network",
+		"nodes",
+		"prefix_path",
+		"private_registries",
+		"restore",
+		"rotate_certificates",
+		"services",
+		"ssh_agent_auth",
+		"ssh_cert_path",
+		"ssh_key_path",
+		"system_images",
+	}
+	changedKeys := map[string]bool{}
+	changed := 0
+	for _, key := range targetKeys {
+		changedKeys[key] = d.HasChange(key)
+		if changedKeys[key] {
+			changed++
+		}
+	}
+	return changed, changedKeys
 }
 
 type stateNotFoundError struct {
