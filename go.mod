@@ -7,9 +7,9 @@ require (
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
 	github.com/hashicorp/go-version v1.2.0
-	github.com/hashicorp/terraform-plugin-sdk v1.0.0
-	github.com/rancher/kontainer-driver-metadata v0.0.0-20200125025425-eef1fdc7ca9c
-	github.com/rancher/rke v1.0.4
+	github.com/hashicorp/terraform-plugin-sdk v1.8.0
+	github.com/rancher/kontainer-driver-metadata v0.0.0-20200329153031-ee56d7c311b4
+	github.com/rancher/rke v1.0.6
 	github.com/rancher/types v0.0.0-20191220141556-ad31d6815bbd
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/sirupsen/logrus v1.4.2

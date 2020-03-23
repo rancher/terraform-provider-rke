@@ -22,7 +22,7 @@ github.com/apparentlymart/go-cidr/cidr
 github.com/apparentlymart/go-textseg/textseg
 # github.com/armon/go-radix v1.0.0
 github.com/armon/go-radix
-# github.com/aws/aws-sdk-go v1.19.39
+# github.com/aws/aws-sdk-go v1.25.3
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/credentials
 github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
@@ -54,7 +54,9 @@ github.com/aws/aws-sdk-go/private/protocol/restxml
 github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
 github.com/aws/aws-sdk-go/internal/sdkrand
 github.com/aws/aws-sdk-go/service/sts
+github.com/aws/aws-sdk-go/service/sts/stsiface
 github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
+github.com/aws/aws-sdk-go/internal/sdkmath
 github.com/aws/aws-sdk-go/private/protocol/query
 github.com/aws/aws-sdk-go/private/protocol/json/jsonutil
 github.com/aws/aws-sdk-go/private/protocol/query/queryutil
@@ -124,7 +126,7 @@ github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/protoc-gen-go/descriptor
-# github.com/google/go-cmp v0.3.0
+# github.com/google/go-cmp v0.3.1
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -173,26 +175,25 @@ github.com/hashicorp/hcl/hcl/scanner
 github.com/hashicorp/hcl/hcl/strconv
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
-# github.com/hashicorp/hcl2 v0.0.0-20190821123243-0c888d1241f6
-github.com/hashicorp/hcl2/hcl
-github.com/hashicorp/hcl2/hcl/hclsyntax
-github.com/hashicorp/hcl2/hcldec
-github.com/hashicorp/hcl2/ext/typeexpr
-github.com/hashicorp/hcl2/gohcl
-github.com/hashicorp/hcl2/hclparse
-github.com/hashicorp/hcl2/ext/dynblock
-github.com/hashicorp/hcl2/hclwrite
-github.com/hashicorp/hcl2/hcl/json
-github.com/hashicorp/hcl2/hcled
-# github.com/hashicorp/hil v0.0.0-20190212112733-ab17b08d6590
-github.com/hashicorp/hil/ast
+# github.com/hashicorp/hcl/v2 v2.0.0
+github.com/hashicorp/hcl/v2
+github.com/hashicorp/hcl/v2/hcldec
+github.com/hashicorp/hcl/v2/hclsyntax
+github.com/hashicorp/hcl/v2/ext/typeexpr
+github.com/hashicorp/hcl/v2/gohcl
+github.com/hashicorp/hcl/v2/hclparse
+github.com/hashicorp/hcl/v2/ext/dynblock
+github.com/hashicorp/hcl/v2/hclwrite
+github.com/hashicorp/hcl/v2/json
+github.com/hashicorp/hcl/v2/hcled
 # github.com/hashicorp/logutils v1.0.0
 github.com/hashicorp/logutils
-# github.com/hashicorp/terraform-config-inspect v0.0.0-20190821133035-82a99dc22ef4
+# github.com/hashicorp/terraform-config-inspect v0.0.0-20191115094559-17f92b0546e8
 github.com/hashicorp/terraform-config-inspect/tfconfig
-# github.com/hashicorp/terraform-plugin-sdk v1.0.0
+# github.com/hashicorp/terraform-json v0.4.0
+github.com/hashicorp/terraform-json
+# github.com/hashicorp/terraform-plugin-sdk v1.8.0
 github.com/hashicorp/terraform-plugin-sdk/plugin
-github.com/hashicorp/terraform-plugin-sdk/helper/customdiff
 github.com/hashicorp/terraform-plugin-sdk/helper/schema
 github.com/hashicorp/terraform-plugin-sdk/helper/validation
 github.com/hashicorp/terraform-plugin-sdk/terraform
@@ -223,19 +224,25 @@ github.com/hashicorp/terraform-plugin-sdk/internal/httpclient
 github.com/hashicorp/terraform-plugin-sdk/internal/registry
 github.com/hashicorp/terraform-plugin-sdk/internal/registry/regsrc
 github.com/hashicorp/terraform-plugin-sdk/internal/registry/response
-github.com/hashicorp/terraform-plugin-sdk/internal/svchost/disco
 github.com/hashicorp/terraform-plugin-sdk/internal/lang/blocktoattr
 github.com/hashicorp/terraform-plugin-sdk/internal/lang/funcs
+github.com/hashicorp/terraform-plugin-sdk/acctest
 github.com/hashicorp/terraform-plugin-sdk/helper/logging
 github.com/hashicorp/terraform-plugin-sdk/internal/command/format
 github.com/hashicorp/terraform-plugin-sdk/internal/configs/configload
 github.com/hashicorp/terraform-plugin-sdk/internal/helper/config
 github.com/hashicorp/terraform-plugin-sdk/internal/initwd
-github.com/hashicorp/terraform-plugin-sdk/internal/svchost
-github.com/hashicorp/terraform-plugin-sdk/internal/svchost/auth
+github.com/hashicorp/terraform-plugin-sdk/httpclient
 github.com/hashicorp/terraform-plugin-sdk/internal/modsdir
 github.com/hashicorp/terraform-plugin-sdk/internal/flatmap
 github.com/hashicorp/terraform-plugin-sdk/internal/earlyconfig
+github.com/hashicorp/terraform-plugin-sdk/meta
+# github.com/hashicorp/terraform-plugin-test v1.2.0
+github.com/hashicorp/terraform-plugin-test
+# github.com/hashicorp/terraform-svchost v0.0.0-20191011084731-65d371908596
+github.com/hashicorp/terraform-svchost/disco
+github.com/hashicorp/terraform-svchost
+github.com/hashicorp/terraform-svchost/auth
 # github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d
 github.com/hashicorp/yamux
 # github.com/huandu/xstrings v1.2.0
@@ -248,7 +255,7 @@ github.com/jmespath/go-jmespath
 github.com/json-iterator/go
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
-# github.com/mattn/go-colorable v0.1.0
+# github.com/mattn/go-colorable v0.1.1
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.6
 github.com/mattn/go-isatty
@@ -304,7 +311,7 @@ github.com/prometheus/procfs
 github.com/prometheus/procfs/nfs
 github.com/prometheus/procfs/xfs
 github.com/prometheus/procfs/internal/util
-# github.com/rancher/kontainer-driver-metadata v0.0.0-20200125025425-eef1fdc7ca9c
+# github.com/rancher/kontainer-driver-metadata v0.0.0-20200329153031-ee56d7c311b4
 github.com/rancher/kontainer-driver-metadata/rke
 github.com/rancher/kontainer-driver-metadata/rke/templates
 # github.com/rancher/norman v0.0.0-20191126011629-6269ccdbeace
@@ -322,9 +329,10 @@ github.com/rancher/norman/types/definition
 github.com/rancher/norman/types/slice
 github.com/rancher/norman/types/values
 github.com/rancher/norman/metrics
-# github.com/rancher/rke v1.0.4
+# github.com/rancher/rke v1.0.6
 github.com/rancher/rke/cluster
 github.com/rancher/rke/cmd
+github.com/rancher/rke/dind
 github.com/rancher/rke/hosts
 github.com/rancher/rke/pki
 github.com/rancher/rke/addons
@@ -338,7 +346,6 @@ github.com/rancher/rke/pki/cert
 github.com/rancher/rke/services
 github.com/rancher/rke/templates
 github.com/rancher/rke/util
-github.com/rancher/rke/dind
 github.com/rancher/rke/cloudprovider/aws
 github.com/rancher/rke/cloudprovider/azure
 github.com/rancher/rke/cloudprovider/custom
@@ -368,10 +375,10 @@ github.com/ulikunitz/xz/lzma
 github.com/ulikunitz/xz/internal/hash
 # github.com/urfave/cli v1.18.0
 github.com/urfave/cli
-# github.com/vmihailenco/msgpack v3.3.3+incompatible
+# github.com/vmihailenco/msgpack v4.0.1+incompatible
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# github.com/zclconf/go-cty v1.1.0
+# github.com/zclconf/go-cty v1.2.1
 github.com/zclconf/go-cty/cty
 github.com/zclconf/go-cty/cty/msgpack
 github.com/zclconf/go-cty/cty/convert
@@ -420,7 +427,7 @@ golang.org/x/crypto/cast5
 golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/pbkdf2
-# golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
+# golang.org/x/net v0.0.0-20191009170851-d66e71096ffb
 golang.org/x/net/context
 golang.org/x/net/trace
 golang.org/x/net/http2
@@ -439,7 +446,7 @@ golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
 # golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/errgroup
-# golang.org/x/sys v0.0.0-20190624142023-c5567b49c5d0
+# golang.org/x/sys v0.0.0-20190804053845-51ab0e2deafa
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/cpu
