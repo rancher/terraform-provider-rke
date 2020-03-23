@@ -10,6 +10,11 @@ description: |-
 
 Provides RKE cluster resource. This can be used to create RKE clusters and retrieve their information.
 
+RKE clusters can be defined in the provider:
+- Using cluster_yaml: The full RKE cluster is defined in an RKE cluster.yml file.
+- Using the TF provider arguments to define the entire cluster.
+- Using a combination of both the cluster_yaml and TF provider arguments. The TF arguments will override the cluster_yaml options if collisions occur.
+
 ## Example Usage
 
 Creating RKE cluster
@@ -17,17 +22,27 @@ Creating RKE cluster
 ```hcl
 # Configure RKE provider
 provider "rke" {
-  debug = true
   log_file = "rke_debug.log"
 }
-# Create a new RKE cluster
+# Create a new RKE cluster using config yaml
 resource "rke_cluster" "foo" {
+  cluster_yaml = file("cluster.yaml")
+}
+# Create a new RKE cluster using arguments
+resource "rke_cluster" "foo2" {
   nodes {
     address = "1.2.3.4"
     user    = "ubuntu"
     role    = ["controlplane", "worker", "etcd"]
     ssh_key = file("~/.ssh/id_rsa")
   }
+}
+# Create a new RKE cluster using both. In case of conflict, arguments override cluster_yaml arguments
+resource "rke_cluster" "foo2" {
+  cluster_yaml = file("cluster.yaml")
+  ssh_agent_auth = true
+  ignore_docker_version = true
+  kubernetes_version = "<K8s_VERSION>"
 }
 ```
 
@@ -46,12 +61,13 @@ The following arguments are supported:
 * `cert_dir` - (Optional) Specify a certificate dir path (string)
 * `cloud_provider` - (Optional) RKE k8s cluster cloud provider configuration [rke-cloud-providers](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/) (list maxitems:1)
 * `cluster_name` - (Optional/Computed) RKE k8s cluster name used in the kube config (string)
+* `cluster_yaml` - (Optional) RKE k8s cluster config yaml encoded. Provider arguments take precedence over this one (string)
 * `custom_certs` - (Optional) Use custom certificates from a cert dir (string)
 * `dind` - (Optional/Experimental) Deploy RKE cluster on a dind environment. Default: `false` (bool)
 * `dind_storage_driver` - (Optional/Experimental) DinD RKE cluster storage driver (string)
 * `dind_dns_server` - (Optional/Experimental) DinD RKE cluster dns (string)
 * `dns` - (Optional/Computed) RKE k8s cluster DNS Config (list maxitems:1)
-* `ignore_docker_version` - (Optional) Enable/Disable RKE k8s cluster strict docker version checking. Default `false` (bool)
+* `ignore_docker_version` - (Optional/Computed) Enable/Disable RKE k8s cluster strict docker version checking. Default `false` (bool)
 * `ingress` - (Optional/Computed) RKE k8s cluster ingress controller configuration (list maxitems:1)
 * `kubernetes_version` - (Optional/Computed) K8s version to deploy (if kubernetes image is specified, image version takes precedence) (string)
 * `monitoring` - (Optional/Computed) RKE k8s cluster monitoring Config (list maxitems:1)
@@ -68,7 +84,7 @@ The following arguments are supported:
 * `services_kubelet` - (DEPRECATED) Use services.kubelet instead (list maxitems:1)
 * `services_kubeproxy` - (DEPRECATED) Use services.kubeproxy instead (list maxitems:1)
 * `services_scheduler` - (DEPRECATED) Use services.scheduler instead (list maxitems:1)
-* `ssh_agent_auth` - (Optional) SSH Agent Auth enable. Default `false` (bool)
+* `ssh_agent_auth` - (Optional/Computed) SSH Agent Auth enable. Default `false` (bool)
 * `ssh_cert_path` - (Optional/Computed) SSH Certificate Path (string)
 * `ssh_key_path` - (Optional/Computed) SSH Private Key Path (string)
 * `system_images` - (Optional) RKE k8s cluster system images list (list maxitems:1)
@@ -287,9 +303,9 @@ The following attributes are exported:
 
 * `virtual_center` - (Required) (List)
 * `workspace` - (Required) (list maxitems:1)
-* `disk` - (Optional) (list maxitems:1)
-* `global` - (Optional) (list maxitems:1)
-* `network` - (Optional) (list maxitems:1)
+* `disk` - (Optional/Computed) (list maxitems:1)
+* `global` - (Optional/Computed) (list maxitems:1)
+* `network` - (Optional/Computed) (list maxitems:1)
 
 ##### `virtual_center`
 
@@ -640,3 +656,10 @@ The following attributes are exported:
 - `update` - (Default `30 minutes`) Used for cluster modifications.
 - `delete` - (Default `30 minutes`) Used for deleting clusters.
 
+## Import
+
+rke_cluster can be imported using the RKE cluster config and state files as ID in the format `<cluster_config_file>:<rke_state_file>`
+
+```
+$ terraform import rke_cluster.foo <cluster_config_file>:<rke_state_file>
+```
