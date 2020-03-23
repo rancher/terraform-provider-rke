@@ -1,3 +1,24 @@
+## 1.0.0-rc5 (Unreleased)
+
+FEATURES:
+
+* **Deprecated Argument:** `nodes_conf` - Use `cluster_yaml` instead
+* **Deprecated Argument:** `internal_kube_config_yaml` - Use `kube_config_yaml` instead
+* **New Argument:** `cluster_yaml` - RKE cluster config yaml
+* **New Import:** `rke_cluster` - RKE cluster import is supported
+
+ENHANCEMENTS:
+
+* Updated `hashicorp/terraform-plugin-sdk` go modules and vendor files to v1.8.0
+* Updated go modules and vendor files to support [RKE v1.0.6](https://github.com/rancher/rke/releases/tag/v1.0.6)
+
+BUG FIXES:
+
+* Fixed computed fields to avoid inconsistent plan
+* Disabled `debug` config option until next rke release (Breaking logs)
+* Fixed segmentation fault with deprecated fields
+* Fixed `vsphere_cloud_provider` argument to avoid false diff
+
 ## 1.0.0-rc4 (March 13, 2020)
 
 FEATURES:
