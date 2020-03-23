@@ -26,6 +26,9 @@ func resourceRKECluster() *schema.Resource {
 		Read:   resourceRKEClusterRead,
 		Update: resourceRKEClusterUpdate,
 		Delete: resourceRKEClusterDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceRKEClusterImport,
+		},
 		Schema: rkeClusterFields(),
 		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
 			changed, changedKeys := getChangedKeys(d)
@@ -36,25 +39,25 @@ func resourceRKECluster() *schema.Resource {
 					"rke_cluster_yaml",
 				}
 
-				if changedKeys["rotate_certificates"] {
+				if changedKeys["rotate_certificates"] || changedKeys["cluster_yaml"] {
 					for _, key := range []string{"ca_crt", "client_cert", "client_key", "certificates", "kube_admin_user"} {
 						computedFields = append(computedFields, key)
 					}
 				}
 
-				if changedKeys["dns"] || changedKeys["services"] {
+				if changedKeys["dns"] || changedKeys["services"] || changedKeys["cluster_yaml"] {
 					for _, key := range []string{"cluster_domain", "cluster_cidr", "cluster_dns_server"} {
 						computedFields = append(computedFields, key)
 					}
 				}
 
-				if changedKeys["nodes"] {
+				if changedKeys["nodes"] || changedKeys["cluster_yaml"] {
 					for _, key := range []string{"api_server_url", "etcd_hosts", "control_plane_hosts", "inactive_hosts", "worker_hosts"} {
 						computedFields = append(computedFields, key)
 					}
 				}
 
-				if changedKeys["kubernetes_version"] || changedKeys["system_images"] {
+				if changedKeys["kubernetes_version"] || changedKeys["system_images"] || changedKeys["cluster_yaml"] {
 					computedFields = append(computedFields, "running_system_images")
 				}
 
@@ -116,7 +119,7 @@ func clusterUp(d *schema.ResourceData) error {
 		return err
 	}
 
-	// setting up the flags, dialers anbd context
+	// setting up the flags, dialers and context
 	flags := expandRKEClusterFlag(d, clusterFilePath)
 	dialers := hosts.DialersOptions{}
 
@@ -133,6 +136,13 @@ func clusterUp(d *schema.ResourceData) error {
 	if err := cmd.ClusterInit(context.Background(), rkeConfig, dialers, flags); err != nil {
 		return fmt.Errorf("Failed initializing cluster err:%v", err)
 	}
+	// set init cluster state to resourceData
+	flattenRKEClusterFlag(d, &flags)
+	err = setRKEClusterState(d, tempDir)
+	if err != nil {
+		return fmt.Errorf("Failed setting initial cluster state err:%v", err)
+	}
+
 	_, _, _, _, _, clusterUpErr := cmd.ClusterUp(context.Background(), dialers, flags, map[string]interface{}{})
 
 	// set cluster state to resourceData
@@ -140,8 +150,11 @@ func clusterUp(d *schema.ResourceData) error {
 	if clusterUpErr != nil {
 		return fmt.Errorf("Failed running cluster err:%v", clusterUpErr)
 	}
+	if err != nil {
+		return fmt.Errorf("Failed setting cluster state err:%v", err)
+	}
 
-	return err
+	return nil
 }
 
 func prepareDINDEnv(ctx context.Context, rkeConfig *v3.RancherKubernetesEngineConfig, dindStorageDriver, dindDNS string) error {
@@ -337,7 +350,7 @@ func writeRKEState(dir string, d *schema.ResourceData) error {
 }
 
 func writeKubeConfig(dir string, d *schema.ResourceData) error {
-	if strConf, ok := d.Get("internal_kube_config_yaml").(string); ok && len(strConf) > 0 {
+	if strConf, ok := d.Get("kube_config_yaml").(string); ok && len(strConf) > 0 {
 		localKubeConfigPath := pki.GetLocalKubeConfig(dir, "")
 		return ioutil.WriteFile(localKubeConfigPath, []byte(strConf), 0640)
 	}
@@ -381,8 +394,8 @@ func getChangedKeys(d *schema.ResourceDiff) (int, map[string]bool) {
 		"bastion_host",
 		"cloud_provider",
 		"cluster_name",
+		"cluster_yaml",
 		"dns",
-		"ignore_docker_version",
 		"ingress",
 		"kubernetes_version",
 		"monitoring",

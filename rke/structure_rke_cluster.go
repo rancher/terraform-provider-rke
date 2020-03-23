@@ -10,25 +10,39 @@ import (
 
 // Flatteners
 
-func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
+func flattenRKEClusterFlag(d *schema.ResourceData, in *cluster.ExternalFlags) {
+	if in == nil {
+		return
+	}
 
+	d.Set("update_only", in.UpdateOnly)
+	d.Set("disable_port_check", in.DisablePortCheck)
+	d.Set("dind", in.DinD)
+	d.Set("custom_certs", in.CustomCerts)
+	if len(in.CertificateDir) > 0 {
+		d.Set("cert_dir", in.CertificateDir)
+	}
+}
+
+func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 	if in == nil {
 		return nil
 	}
 
+	var err error
 	if in.AddonJobTimeout > 0 {
 		d.Set("addon_job_timeout", int(in.AddonJobTimeout))
 	}
 
-	if len(in.Addons) > 0 {
+	if v, ok := d.Get("addons").(string); len(in.Addons) > 0 && ok && len(v) > 0 {
 		d.Set("addons", in.Addons)
 	}
 
-	if len(in.AddonsInclude) > 0 {
+	if v, ok := d.Get("addons_include").(string); len(in.AddonsInclude) > 0 && ok && len(v) > 0 {
 		d.Set("addons_include", in.AddonsInclude)
 	}
 
-	err := d.Set("authentication", flattenRKEClusterAuthentication(in.Authentication))
+	err = d.Set("authentication", flattenRKEClusterAuthentication(in.Authentication))
 	if err != nil {
 		return err
 	}
@@ -43,13 +57,11 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		return err
 	}
 
-	v, ok := d.Get("cloud_provider").([]interface{})
-	if !ok {
-		v = []interface{}{}
-	}
-	err = d.Set("cloud_provider", flattenRKEClusterCloudProvider(in.CloudProvider, v))
-	if err != nil {
-		return err
+	if v, ok := d.Get("cloud_provider").([]interface{}); ok && len(v) > 0 {
+		err = d.Set("cloud_provider", flattenRKEClusterCloudProvider(in.CloudProvider, v))
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(in.ClusterName) > 0 {
@@ -86,7 +98,7 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		return err
 	}
 
-	if in.Nodes != nil && !in.DinD {
+	if v, ok := d.Get("nodes").([]interface{}); in.Nodes != nil && !in.DinD && ok && len(v) > 0 {
 		err := d.Set("nodes", flattenRKEClusterNodes(in.Nodes))
 		if err != nil {
 			return err
@@ -97,7 +109,7 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		d.Set("prefix_path", in.PrefixPath)
 	}
 
-	if in.PrivateRegistries != nil {
+	if v, ok := d.Get("private_registries").([]interface{}); in.PrivateRegistries != nil && ok && len(v) > 0 {
 		err := d.Set("private_registries", flattenRKEClusterPrivateRegistries(in.PrivateRegistries))
 		if err != nil {
 			return err
@@ -109,24 +121,22 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		return err
 	}
 
-	if in.RotateCertificates != nil {
+	if v, ok := d.Get("rotate_certificates").([]interface{}); in.RotateCertificates != nil && ok && len(v) > 0 {
 		err := d.Set("rotate_certificates", flattenRKEClusterRotateCertificates(in.RotateCertificates))
 		if err != nil {
 			return err
 		}
 	}
 
-	v, ok = d.Get("services").([]interface{})
-	if !ok {
-		v = []interface{}{}
-	}
-	services, err := flattenRKEClusterServices(in.Services, v)
-	if err != nil {
-		return err
-	}
-	err = d.Set("services", services)
-	if err != nil {
-		return err
+	if v, ok := d.Get("services").([]interface{}); ok {
+		services, err := flattenRKEClusterServices(in.Services, v)
+		if err != nil {
+			return err
+		}
+		err = d.Set("services", services)
+		if err != nil {
+			return err
+		}
 	}
 
 	d.Set("ssh_agent_auth", in.SSHAgentAuth)
@@ -192,6 +202,13 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 	}
 
 	obj := &rancher.RancherKubernetesEngineConfig{}
+
+	if v, ok := in.Get("cluster_yaml").(string); ok && len(v) > 0 {
+		err := yamlToInterface(v, obj)
+		if err != nil {
+			return "", err
+		}
+	}
 
 	if v, ok := in.Get("addon_job_timeout").(int); ok && v > 0 {
 		obj.AddonJobTimeout = v
