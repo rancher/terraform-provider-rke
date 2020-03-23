@@ -131,7 +131,7 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"ignore_docker_version": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     false,
+			Computed:    true,
 			Description: "Enable/Disable RKE k8s cluster strict docker version checking",
 		},
 		"ingress": {
@@ -306,7 +306,7 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"ssh_agent_auth": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     false,
+			Computed:    true,
 			Description: "SSH Agent Auth enable",
 		},
 		"ssh_cert_path": {

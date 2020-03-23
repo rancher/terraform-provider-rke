@@ -229,7 +229,7 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 		obj.DNS = expandRKEClusterDNS(v)
 	}
 
-	if v, ok := in.Get("ignore_docker_version").(bool); ok {
+	if v, ok := in.Get("ignore_docker_version").(bool); ok && v {
 		obj.IgnoreDockerVersion = v
 	}
 
@@ -269,7 +269,7 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 		obj.RotateCertificates = expandRKEClusterRotateCertificates(v)
 	}
 
-	if v, ok := in.Get("ssh_agent_auth").(bool); ok {
+	if v, ok := in.Get("ssh_agent_auth").(bool); ok && v {
 		obj.SSHAgentAuth = v
 	}
 
