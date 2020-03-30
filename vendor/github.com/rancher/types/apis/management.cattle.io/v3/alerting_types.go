@@ -1,6 +1,8 @@
 package v3
 
 import (
+	"strings"
+
 	"github.com/rancher/norman/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -19,6 +21,10 @@ type ClusterAlert struct {
 	Status AlertStatus `json:"status"`
 }
 
+func (c *ClusterAlert) ObjClusterName() string {
+	return c.Spec.ObjClusterName()
+}
+
 type ProjectAlert struct {
 	types.Namespaced
 
@@ -31,6 +37,10 @@ type ProjectAlert struct {
 	// Most recent observed status of the alert. More info:
 	// https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#spec-and-status
 	Status AlertStatus `json:"status"`
+}
+
+func (p *ProjectAlert) ObjClusterName() string {
+	return p.Spec.ObjClusterName()
 }
 
 type AlertCommonSpec struct {
@@ -51,12 +61,23 @@ type ClusterAlertSpec struct {
 	TargetEvent         *TargetEvent         `json:"targetEvent,omitempty"`
 }
 
+func (c *ClusterAlertSpec) ObjClusterName() string {
+	return c.ClusterName
+}
+
 type ProjectAlertSpec struct {
 	AlertCommonSpec
 
 	ProjectName    string          `json:"projectName" norman:"type=reference[project]"`
 	TargetWorkload *TargetWorkload `json:"targetWorkload,omitempty"`
 	TargetPod      *TargetPod      `json:"targetPod,omitempty"`
+}
+
+func (p *ProjectAlertSpec) ObjClusterName() string {
+	if parts := strings.SplitN(p.ProjectName, ":", 2); len(parts) == 2 {
+		return parts[0]
+	}
+	return ""
 }
 
 type Recipient struct {
@@ -113,6 +134,10 @@ type ClusterAlertGroup struct {
 	Status AlertStatus `json:"status"`
 }
 
+func (c *ClusterAlertGroup) ObjClusterName() string {
+	return c.Spec.ObjClusterName()
+}
+
 type ProjectAlertGroup struct {
 	types.Namespaced
 
@@ -127,16 +152,31 @@ type ProjectAlertGroup struct {
 	Status AlertStatus `json:"status"`
 }
 
+func (p *ProjectAlertGroup) ObjClusterName() string {
+	return p.Spec.ObjClusterName()
+}
+
 type ClusterGroupSpec struct {
 	ClusterName string      `json:"clusterName" norman:"type=reference[cluster]"`
 	Recipients  []Recipient `json:"recipients,omitempty"`
 	CommonGroupField
 }
 
+func (c *ClusterGroupSpec) ObjClusterName() string {
+	return c.ClusterName
+}
+
 type ProjectGroupSpec struct {
 	ProjectName string      `json:"projectName" norman:"type=reference[project]"`
 	Recipients  []Recipient `json:"recipients,omitempty"`
 	CommonGroupField
+}
+
+func (p *ProjectGroupSpec) ObjClusterName() string {
+	if parts := strings.SplitN(p.ProjectName, ":", 2); len(parts) == 2 {
+		return parts[0]
+	}
+	return ""
 }
 
 type ClusterAlertRule struct {
@@ -153,6 +193,10 @@ type ClusterAlertRule struct {
 	Status AlertStatus `json:"status"`
 }
 
+func (c *ClusterAlertRule) ObjClusterName() string {
+	return c.Spec.ObjClusterName()
+}
+
 type ClusterAlertRuleSpec struct {
 	CommonRuleField
 	ClusterName       string             `json:"clusterName" norman:"type=reference[cluster]"`
@@ -161,6 +205,11 @@ type ClusterAlertRuleSpec struct {
 	EventRule         *EventRule         `json:"eventRule,omitempty"`
 	SystemServiceRule *SystemServiceRule `json:"systemServiceRule,omitempty"`
 	MetricRule        *MetricRule        `json:"metricRule,omitempty"`
+	ClusterScanRule   *ClusterScanRule   `json:"clusterScanRule,omitempty"`
+}
+
+func (c *ClusterAlertRuleSpec) ObjClusterName() string {
+	return c.ClusterName
 }
 
 type ProjectAlertRule struct {
@@ -177,6 +226,10 @@ type ProjectAlertRule struct {
 	Status AlertStatus `json:"status"`
 }
 
+func (p *ProjectAlertRule) ObjClusterName() string {
+	return p.Spec.ObjClusterName()
+}
+
 type ProjectAlertRuleSpec struct {
 	CommonRuleField
 	ProjectName  string        `json:"projectName" norman:"type=reference[project]"`
@@ -184,6 +237,13 @@ type ProjectAlertRuleSpec struct {
 	PodRule      *PodRule      `json:"podRule,omitempty"`
 	WorkloadRule *WorkloadRule `json:"workloadRule,omitempty"`
 	MetricRule   *MetricRule   `json:"metricRule,omitempty"`
+}
+
+func (p *ProjectAlertRuleSpec) ObjClusterName() string {
+	if parts := strings.SplitN(p.ProjectName, ":", 2); len(parts) == 2 {
+		return parts[0]
+	}
+	return ""
 }
 
 type CommonGroupField struct {
@@ -197,6 +257,11 @@ type CommonRuleField struct {
 	Severity    string `json:"severity,omitempty" norman:"required,options=info|critical|warning,default=critical"`
 	Inherited   *bool  `json:"inherited,omitempty" norman:"default=true"`
 	TimingField
+}
+
+type ClusterScanRule struct {
+	ScanRunType  ClusterScanRunType `json:"scanRunType,omitempty" norman:"required,options=manual|scheduled,default=scheduled"`
+	FailuresOnly bool               `json:"failuresOnly,omitempty"`
 }
 
 type MetricRule struct {
@@ -257,6 +322,10 @@ type Notifier struct {
 	Status NotifierStatus `json:"status"`
 }
 
+func (n *Notifier) ObjClusterName() string {
+	return n.Spec.ObjClusterName()
+}
+
 type NotifierSpec struct {
 	ClusterName string `json:"clusterName" norman:"type=reference[cluster]"`
 
@@ -268,6 +337,10 @@ type NotifierSpec struct {
 	PagerdutyConfig *PagerdutyConfig `json:"pagerdutyConfig,omitempty"`
 	WebhookConfig   *WebhookConfig   `json:"webhookConfig,omitempty"`
 	WechatConfig    *WechatConfig    `json:"wechatConfig,omitempty"`
+}
+
+func (n *NotifierSpec) ObjClusterName() string {
+	return n.ClusterName
 }
 
 type Notification struct {
@@ -283,7 +356,7 @@ type SMTPConfig struct {
 	Host             string `json:"host,omitempty" norman:"required,type=hostname"`
 	Port             int    `json:"port,omitempty" norman:"required,min=1,max=65535,default=587"`
 	Username         string `json:"username,omitempty"`
-	Password         string `json:"password,omitempty"`
+	Password         string `json:"password,omitempty" norman:"type=password"`
 	Sender           string `json:"sender,omitempty" norman:"required"`
 	DefaultRecipient string `json:"defaultRecipient,omitempty" norman:"required"`
 	TLS              bool   `json:"tls,omitempty" norman:"required,default=true"`
@@ -311,6 +384,7 @@ type WechatConfig struct {
 	Agent            string `json:"agent,omitempty" norman:"required"`
 	Corp             string `json:"corp,omitempty" norman:"required"`
 	RecipientType    string `json:"recipientType,omitempty" norman:"required,options=tag|party|user,default=party"`
+	APIURL           string `json:"apiUrl,omitempty"`
 	*HTTPClientConfig
 }
 

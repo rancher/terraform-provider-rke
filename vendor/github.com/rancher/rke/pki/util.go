@@ -14,7 +14,6 @@ import (
 	"math/big"
 	"net"
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -260,31 +259,31 @@ func GetCrtNameForHost(host *hosts.Host, prefix string) string {
 	} else {
 		newAddress = strings.Replace(host.Address, ".", "-", -1)
 	}
-	return fmt.Sprintf("%s-%s", prefix, newAddress)
+	return prefix + "-" + newAddress
 }
 
 func GetCertPath(name string) string {
-	return fmt.Sprintf("%s%s.pem", CertPathPrefix, name)
+	return CertPathPrefix + name + ".pem"
 }
 
 func GetKeyPath(name string) string {
-	return fmt.Sprintf("%s%s-key.pem", CertPathPrefix, name)
+	return CertPathPrefix + name + "-key.pem"
 }
 
 func GetConfigPath(name string) string {
-	return fmt.Sprintf("%skubecfg-%s.yaml", CertPathPrefix, name)
+	return CertPathPrefix + "kubecfg-" + name + ".yaml"
 }
 
 func GetCertTempPath(name string) string {
-	return fmt.Sprintf("%s%s.pem", TempCertPath, name)
+	return TempCertPath + name + ".pem"
 }
 
 func GetKeyTempPath(name string) string {
-	return fmt.Sprintf("%s%s-key.pem", TempCertPath, name)
+	return TempCertPath + name + ".pem"
 }
 
 func GetConfigTempPath(name string) string {
-	return fmt.Sprintf("%skubecfg-%s.yaml", TempCertPath, name)
+	return TempCertPath + "kubecfg-" + name + ".yaml"
 }
 
 func ToCertObject(componentName, commonName, ouName string, certificate *x509.Certificate, key *rsa.PrivateKey, csrASN1 []byte) CertificatePKI {
@@ -403,19 +402,6 @@ func GetLocalKubeConfig(configPath, configDir string) string {
 	fileName := filepath.Base(configPath)
 	baseDir += "/"
 	return fmt.Sprintf("%s%s%s", baseDir, KubeAdminConfigPrefix, fileName)
-}
-
-func strCrtToEnv(crtName, crt string) string {
-	return fmt.Sprintf("%s=%s", getEnvFromName(crtName), crt)
-}
-
-func strKeyToEnv(crtName, key string) string {
-	envName := getEnvFromName(crtName)
-	return fmt.Sprintf("%s=%s", getKeyEnvFromEnv(envName), key)
-}
-
-func getTempPath(s string) string {
-	return TempCertPath + path.Base(s)
 }
 
 func populateCertMap(tmpCerts map[string]CertificatePKI, localConfigPath string, extraHosts []*hosts.Host) map[string]CertificatePKI {

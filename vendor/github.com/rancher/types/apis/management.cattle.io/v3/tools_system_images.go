@@ -23,7 +23,7 @@ var (
 			KubeApply:     m("rancher/pipeline-tools:v0.1.14"),
 		},
 		AuthSystemImages: AuthSystemImages{
-			KubeAPIAuth: m("rancher/kube-api-auth:v0.1.3"),
+			KubeAPIAuth: m("rancher/kube-api-auth:v0.1.4"),
 		},
 	}
 )

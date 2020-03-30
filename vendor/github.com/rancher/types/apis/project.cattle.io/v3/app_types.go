@@ -1,6 +1,8 @@
 package v3
 
 import (
+	"strings"
+
 	"github.com/rancher/norman/condition"
 	"github.com/rancher/norman/types"
 	v1 "k8s.io/api/core/v1"
@@ -14,6 +16,10 @@ type App struct {
 
 	Spec   AppSpec   `json:"spec,omitempty"`
 	Status AppStatus `json:"status,omitempty"`
+}
+
+func (a *App) ObjClusterName() string {
+	return a.Spec.ObjClusterName()
 }
 
 type AppSpec struct {
@@ -31,6 +37,13 @@ type AppSpec struct {
 	ValuesYaml          string            `json:"valuesYaml,omitempty"`
 }
 
+func (a *AppSpec) ObjClusterName() string {
+	if parts := strings.SplitN(a.ProjectName, ":", 2); len(parts) == 2 {
+		return parts[0]
+	}
+	return ""
+}
+
 var (
 	AppConditionInstalled                  condition.Cond = "Installed"
 	AppConditionMigrated                   condition.Cond = "Migrated"
@@ -45,6 +58,7 @@ type AppStatus struct {
 	Notes                string            `json:"notes,omitempty"`
 	Conditions           []AppCondition    `json:"conditions,omitempty"`
 	LastAppliedTemplates string            `json:"lastAppliedTemplate,omitempty"`
+	HelmVersion          string            `json:"helmVersion,omitempty" norman:"noupdate,nocreate"`
 }
 
 type AppCondition struct {
@@ -75,6 +89,13 @@ type AppRevisionSpec struct {
 	ProjectName string `json:"projectName,omitempty" norman:"type=reference[/v3/schemas/project]"`
 }
 
+func (a *AppRevisionSpec) ObjClusterName() string {
+	if parts := strings.SplitN(a.ProjectName, ":", 2); len(parts) == 2 {
+		return parts[0]
+	}
+	return ""
+}
+
 type AppRevisionStatus struct {
 	ProjectName string            `json:"projectName,omitempty" norman:"type=reference[/v3/schemas/project]"`
 	ExternalID  string            `json:"externalId"`
@@ -82,6 +103,13 @@ type AppRevisionStatus struct {
 	Digest      string            `json:"digest"`
 	ValuesYaml  string            `json:"valuesYaml,omitempty"`
 	Files       map[string]string `json:"files,omitempty"`
+}
+
+func (a *AppRevisionStatus) ObjClusterName() string {
+	if parts := strings.SplitN(a.ProjectName, ":", 2); len(parts) == 2 {
+		return parts[0]
+	}
+	return ""
 }
 
 type AppUpgradeConfig struct {

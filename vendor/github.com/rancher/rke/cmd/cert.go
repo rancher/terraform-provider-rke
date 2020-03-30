@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"time"
-
-	"github.com/sirupsen/logrus"
 
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/hosts"
@@ -14,6 +13,7 @@ import (
 	"github.com/rancher/rke/pki/cert"
 	"github.com/rancher/rke/services"
 	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
+	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 )
 
@@ -127,10 +127,6 @@ func generateCSRFromCli(ctx *cli.Context) error {
 	return GenerateRKECSRs(context.Background(), rkeConfig, externalFlags)
 }
 
-func showRKECertificatesFromCli(ctx *cli.Context) error {
-	return nil
-}
-
 func rebuildClusterWithRotatedCertificates(ctx context.Context,
 	dialersOptions hosts.DialersOptions,
 	flags cluster.ExternalFlags, svcOptionData map[string]*v3.KubernetesServicesOptions) (string, string, string, string, map[string]pki.CertificatePKI, error) {
@@ -189,7 +185,7 @@ func rebuildClusterWithRotatedCertificates(ctx context.Context,
 	}
 	if isLegacyKubeAPI {
 		log.Infof(ctx, "[controlplane] Redeploying controlplane to update kubeapi parameters")
-		if err := kubeCluster.DeployControlPlane(ctx, svcOptionData); err != nil {
+		if _, err := kubeCluster.DeployControlPlane(ctx, svcOptionData, true); err != nil {
 			return APIURL, caCrt, clientCert, clientKey, nil, err
 		}
 	}
@@ -240,6 +236,21 @@ func rotateRKECertificates(ctx context.Context, kubeCluster *cluster.Cluster, fl
 		return nil, fmt.Errorf("Failed to rotate certificates: can't find old certificates")
 	}
 	currentCluster.RotateCertificates = kubeCluster.RotateCertificates
+	if !kubeCluster.RotateCertificates.CACertificates {
+		caCertPKI, ok := rkeFullState.CurrentState.CertificatesBundle[pki.CACertName]
+		if !ok {
+			return nil, fmt.Errorf("Failed to rotate certificates: can't find CA certificate")
+		}
+		caCert := caCertPKI.Certificate
+		if caCert == nil {
+			return nil, fmt.Errorf("Failed to rotate certificates: CA certificate is nil")
+		}
+		certPool := x509.NewCertPool()
+		certPool.AddCert(caCert)
+		if _, err := caCert.Verify(x509.VerifyOptions{Roots: certPool, KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}}); err != nil {
+			return nil, fmt.Errorf("Failed to rotate certificates: CA certificate is invalid, please use the --rotate-ca flag to rotate CA certificate, error: %v", err)
+		}
+	}
 	if err := cluster.RotateRKECertificates(ctx, currentCluster, flags, rkeFullState); err != nil {
 		return nil, err
 	}

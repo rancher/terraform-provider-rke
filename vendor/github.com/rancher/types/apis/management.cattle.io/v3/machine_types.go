@@ -65,6 +65,10 @@ type Node struct {
 	Status NodeStatus `json:"status"`
 }
 
+func (in *Node) ObjClusterName() string {
+	return in.Namespace
+}
+
 type MetadataUpdate struct {
 	Labels      MapDelta `json:"labels,omitempty"`
 	Annotations MapDelta `json:"annotations,omitempty"`
@@ -87,6 +91,8 @@ type NodeStatus struct {
 	NodeLabels         map[string]string `json:"nodeLabels,omitempty"`
 	NodeTaints         []v1.Taint        `json:"nodeTaints,omitempty"`
 	DockerInfo         *DockerInfo       `json:"dockerInfo,omitempty"`
+	NodePlan           *NodePlan         `json:"nodePlan,omitempty"`
+	AppliedNodeVersion int               `json:"appliedNodeVersion,omitempty"`
 }
 
 type DockerInfo struct {
@@ -119,6 +125,7 @@ var (
 	NodeConditionConfigSaved condition.Cond = "Saved"
 	NodeConditionReady       condition.Cond = "Ready"
 	NodeConditionDrained     condition.Cond = "Drained"
+	NodeConditionUpgraded    condition.Cond = "Upgraded"
 )
 
 type NodeCondition struct {
@@ -152,6 +159,10 @@ type NodePool struct {
 	Status NodePoolStatus `json:"status"`
 }
 
+func (n *NodePool) ObjClusterName() string {
+	return n.Spec.ObjClusterName()
+}
+
 type NodePoolSpec struct {
 	Etcd             bool   `json:"etcd"`
 	ControlPlane     bool   `json:"controlPlane"`
@@ -168,6 +179,10 @@ type NodePoolSpec struct {
 	ClusterName string `json:"clusterName,omitempty" norman:"type=reference[cluster],noupdate,required"`
 
 	DeleteNotReadyAfterSecs time.Duration `json:"deleteNotReadyAfterSecs" norman:"default=0,max=31540000,min=0"`
+}
+
+func (n *NodePoolSpec) ObjClusterName() string {
+	return n.ClusterName
 }
 
 type NodePoolStatus struct {
@@ -211,6 +226,13 @@ type NodeSpec struct {
 	DesiredNodeUnschedulable string          `json:"desiredNodeUnschedulable,omitempty"`
 	NodeDrainInput           *NodeDrainInput `json:"nodeDrainInput,omitempty"`
 	MetadataUpdate           MetadataUpdate  `json:"metadataUpdate,omitempty"`
+}
+
+type NodePlan struct {
+	Plan    *RKEConfigNodePlan `json:"plan,omitempty"`
+	Version int                `json:"version,omitempty"`
+	// current default in rancher-agent is 2m (120s)
+	AgentCheckInterval int `json:"agentCheckInterval,omitempty" norman:"min=1,max=1800,default=120"`
 }
 
 type NodeCommonParams struct {
@@ -302,17 +324,17 @@ type PublicEndpoint struct {
 type NodeDrainInput struct {
 	// Drain node even if there are pods not managed by a ReplicationController, Job, or DaemonSet
 	// Drain will not proceed without Force set to true if there are such pods
-	Force bool `json:"force,omitempty"`
+	Force bool `yaml:"force" json:"force,omitempty"`
 	// If there are DaemonSet-managed pods, drain will not proceed without IgnoreDaemonSets set to true
 	// (even when set to true, kubectl won't delete pods - so setting default to true)
-	IgnoreDaemonSets bool `json:"ignoreDaemonSets,omitempty" norman:"default=true"`
+	IgnoreDaemonSets bool `yaml:"ignore_daemonsets" json:"ignoreDaemonSets,omitempty" norman:"default=true"`
 	// Continue even if there are pods using emptyDir
-	DeleteLocalData bool `json:"deleteLocalData,omitempty"`
+	DeleteLocalData bool `yaml:"delete_local_data" json:"deleteLocalData,omitempty"`
 	//Period of time in seconds given to each pod to terminate gracefully.
 	// If negative, the default value specified in the pod will be used
-	GracePeriod int `json:"gracePeriod,omitempty" norman:"default=-1"`
+	GracePeriod int `yaml:"grace_period" json:"gracePeriod,omitempty" norman:"default=-1"`
 	// Time to wait (in seconds) before giving up for one try
-	Timeout int `json:"timeout" norman:"min=1,max=10800,default=60"`
+	Timeout int `yaml:"timeout" json:"timeout" norman:"min=1,max=10800,default=120"`
 }
 
 type CloudCredential struct {
