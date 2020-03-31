@@ -191,6 +191,11 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		return err
 	}
 
+	err = d.Set("upgrade_strategy", flattenRKEClusterNodeUpgradeStrategy(in.UpgradeStrategy))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -300,6 +305,10 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 
 	if v, ok := in.Get("system_images").([]interface{}); ok && len(v) > 0 {
 		obj.SystemImages = expandRKEClusterSystemImages(v)
+	}
+
+	if v, ok := in.Get("upgrade_strategy").([]interface{}); ok {
+		obj.UpgradeStrategy = expandRKEClusterNodeUpgradeStrategy(v)
 	}
 
 	policyJSON := ""

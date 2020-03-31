@@ -129,3 +129,65 @@ func rkeClusterNodeComputedFields() map[string]*schema.Schema {
 	}
 	return s
 }
+
+func rkeClusterNodeDrainInputFields() map[string]*schema.Schema {
+	s := map[string]*schema.Schema{
+		"delete_local_data": {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  false,
+		},
+		"force": {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  false,
+		},
+		"grace_period": {
+			Type:     schema.TypeInt,
+			Optional: true,
+			Default:  -1,
+		},
+		"ignore_daemon_sets": {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  true,
+		},
+		"timeout": {
+			Type:         schema.TypeInt,
+			Optional:     true,
+			Default:      60,
+			ValidateFunc: validation.IntBetween(1, 10800),
+		},
+	}
+	return s
+}
+
+func rkeClusterNodeUpgradeStrategyFields() map[string]*schema.Schema {
+	s := map[string]*schema.Schema{
+		"drain": {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  false,
+		},
+		"drain_input": {
+			Type:     schema.TypeList,
+			MaxItems: 1,
+			Optional: true,
+			Computed: true,
+			Elem: &schema.Resource{
+				Schema: rkeClusterNodeDrainInputFields(),
+			},
+		},
+		"max_unavailable_controlplane": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "1",
+		},
+		"max_unavailable_worker": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "10%",
+		},
+	}
+	return s
+}

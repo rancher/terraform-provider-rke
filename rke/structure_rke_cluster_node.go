@@ -7,6 +7,44 @@ import (
 
 // Flatteners
 
+func flattenRKEClusterNodeDrainInput(in *rancher.NodeDrainInput) []interface{} {
+	obj := make(map[string]interface{})
+	if in == nil {
+		return []interface{}{}
+	}
+
+	obj["delete_local_data"] = in.DeleteLocalData
+	obj["force"] = in.Force
+	obj["grace_period"] = in.GracePeriod
+	obj["ignore_daemon_sets"] = in.IgnoreDaemonSets
+	obj["timeout"] = in.Timeout
+
+	return []interface{}{obj}
+}
+
+func flattenRKEClusterNodeUpgradeStrategy(in *rancher.NodeUpgradeStrategy) []interface{} {
+	obj := make(map[string]interface{})
+	if in == nil {
+		return []interface{}{}
+	}
+
+	obj["drain"] = in.Drain
+
+	if in.DrainInput != nil {
+		obj["drain_input"] = flattenRKEClusterNodeDrainInput(in.DrainInput)
+	}
+
+	if len(in.MaxUnavailableControlplane) > 0 {
+		obj["max_unavailable_controlplane"] = in.MaxUnavailableControlplane
+	}
+
+	if len(in.MaxUnavailableWorker) > 0 {
+		obj["max_unavailable_worker"] = in.MaxUnavailableWorker
+	}
+
+	return []interface{}{obj}
+}
+
 func flattenRKEClusterNodes(p []rancher.RKEConfigNode) []interface{} {
 	out := []interface{}{}
 
@@ -98,6 +136,62 @@ func flattenRKEClusterNodesComputed(p []*hosts.Host) []interface{} {
 }
 
 // Expanders
+
+func expandRKEClusterNodeDrainInput(p []interface{}) *rancher.NodeDrainInput {
+	obj := &rancher.NodeDrainInput{}
+	if len(p) == 0 || p[0] == nil {
+		return obj
+	}
+	in := p[0].(map[string]interface{})
+
+	if v, ok := in["delete_local_data"].(bool); ok {
+		obj.DeleteLocalData = v
+	}
+
+	if v, ok := in["force"].(bool); ok {
+		obj.Force = v
+	}
+
+	if v, ok := in["grace_period"].(int); ok {
+		obj.GracePeriod = v
+	}
+
+	if v, ok := in["ignore_daemon_sets"].(bool); ok {
+		obj.IgnoreDaemonSets = v
+	}
+
+	if v, ok := in["timeout"].(int); ok {
+		obj.Timeout = v
+	}
+
+	return obj
+}
+
+func expandRKEClusterNodeUpgradeStrategy(p []interface{}) *rancher.NodeUpgradeStrategy {
+	obj := &rancher.NodeUpgradeStrategy{}
+	if len(p) == 0 || p[0] == nil {
+		return obj
+	}
+	in := p[0].(map[string]interface{})
+
+	if v, ok := in["drain"].(bool); ok {
+		obj.Drain = v
+	}
+
+	if v, ok := in["drain_input"].([]interface{}); ok {
+		obj.DrainInput = expandRKEClusterNodeDrainInput(v)
+	}
+
+	if v, ok := in["max_unavailable_controlplane"].(string); ok && len(v) > 0 {
+		obj.MaxUnavailableControlplane = v
+	}
+
+	if v, ok := in["max_unavailable_worker"].(string); ok && len(v) > 0 {
+		obj.MaxUnavailableWorker = v
+	}
+
+	return obj
+}
 
 func expandRKEClusterNodes(p []interface{}) []rancher.RKEConfigNode {
 	out := []rancher.RKEConfigNode{}

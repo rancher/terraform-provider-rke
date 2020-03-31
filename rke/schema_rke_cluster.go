@@ -1,9 +1,8 @@
 package rke
 
 import (
-<<<<<<< HEAD
-	"fmt"
 	"context"
+	"fmt"
 	"sort"
 
 	"github.com/hashicorp/go-version"
