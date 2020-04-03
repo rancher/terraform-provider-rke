@@ -7,14 +7,29 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	ghodssyaml "github.com/ghodss/yaml"
 	gover "github.com/hashicorp/go-version"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/yaml.v2"
 )
+
+func splitImportID(s string) ([]string, error) {
+	sep := ":"
+	if len(s) == 0 {
+		return nil, fmt.Errorf("Import ID is nil")
+	}
+
+	result := strings.Split(s, sep)
+	if len(result) != 2 {
+		return nil, fmt.Errorf("Import ID bad format")
+	}
+	return result, nil
+}
 
 func base64Encode(s string) string {
 	if len(s) == 0 {
@@ -134,6 +149,15 @@ func interfaceToJSON(in interface{}) (string, error) {
 		return "", err
 	}
 	return string(out), err
+}
+
+func yamlToMapInterface(in string) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	err := yaml.Unmarshal([]byte(in), &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, err
 }
 
 func yamlToInterface(in string, out interface{}) error {

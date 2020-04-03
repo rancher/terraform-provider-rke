@@ -56,7 +56,9 @@ func flattenRKEClusterServicesEtcdBackupConfig(in *rancher.BackupConfig, p []int
 		return []interface{}{}
 	}
 
-	obj["enabled"] = *in.Enabled
+	if in.Enabled != nil {
+		obj["enabled"] = *in.Enabled
+	}
 
 	if in.IntervalHours > 0 {
 		obj["interval_hours"] = int(in.IntervalHours)

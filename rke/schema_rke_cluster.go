@@ -1,6 +1,8 @@
 package rke
 
 import (
+	"fmt"
+	//"reflect"
 	"sort"
 
 	"github.com/hashicorp/go-version"
@@ -17,6 +19,24 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Specify a certificate dir path",
+		},
+		"cluster_yaml": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Sensitive:   true,
+			Description: "RKE k8s cluster config yaml",
+			ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				v, ok := val.(string)
+				if !ok || len(v) == 0 {
+					return
+				}
+				_, err := yamlToMapInterface(v)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("%q must be in yaml format, error: %v", key, err))
+					return
+				}
+				return
+			},
 		},
 		"custom_certs": {
 			Type:        schema.TypeBool,
@@ -131,7 +151,7 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"ignore_docker_version": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     false,
+			Computed:    true,
 			Description: "Enable/Disable RKE k8s cluster strict docker version checking",
 		},
 		"ingress": {
@@ -185,11 +205,10 @@ func rkeClusterFields() map[string]*schema.Schema {
 			},
 		},
 		"nodes_conf": {
-			Type:        schema.TypeList,
-			MinItems:    1,
-			Optional:    true,
-			Sensitive:   true,
-			Description: "RKE k8s cluster nodes (YAML | JSON)",
+			Type:       schema.TypeList,
+			MinItems:   1,
+			Optional:   true,
+			Deprecated: "Use cluster_yaml instead",
 			Elem: &schema.Schema{
 				Type:      schema.TypeString,
 				Sensitive: true,
@@ -306,7 +325,7 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"ssh_agent_auth": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     false,
+			Computed:    true,
 			Description: "SSH Agent Auth enable",
 		},
 		"ssh_cert_path": {
@@ -368,10 +387,10 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Description: "RKE k8s cluster kube config yaml",
 		},
 		"internal_kube_config_yaml": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Sensitive:   true,
-			Description: "RKE k8s cluster internal kube config yaml",
+			Type:       schema.TypeString,
+			Computed:   true,
+			Sensitive:  true,
+			Deprecated: "Use kube_config_yaml instead",
 		},
 		"rke_cluster_yaml": {
 			Type:        schema.TypeString,
