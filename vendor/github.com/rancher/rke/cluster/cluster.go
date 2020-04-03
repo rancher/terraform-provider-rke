@@ -12,6 +12,7 @@ import (
 	"github.com/docker/docker/api/types"
 	ghodssyaml "github.com/ghodss/yaml"
 	"github.com/rancher/norman/types/convert"
+	"github.com/rancher/norman/types/values"
 	"github.com/rancher/rke/authz"
 	"github.com/rancher/rke/docker"
 	"github.com/rancher/rke/hosts"
@@ -65,6 +66,9 @@ type Cluster struct {
 	v3.RancherKubernetesEngineConfig `yaml:",inline"`
 	WorkerHosts                      []*hosts.Host
 	EncryptionConfig                 encryptionConfig
+	NewHosts                         map[string]bool
+	MaxUnavailableForWorkerNodes     int
+	MaxUnavailableForControlNodes    int
 }
 
 type encryptionConfig struct {
@@ -96,16 +100,28 @@ const (
 	serviceAccountTokenFileParam = "service-account-key-file"
 
 	SystemNamespace = "kube-system"
+	daemonsetType   = "DaemonSet"
+	deploymentType  = "Deployment"
+	ingressAddon    = "ingress"
+	monitoringAddon = "monitoring"
+	dnsAddon        = "dns"
+	networkAddon    = "network"
+	nodelocalAddon  = "nodelocal"
 )
 
-func (c *Cluster) DeployControlPlane(ctx context.Context, svcOptionData map[string]*v3.KubernetesServicesOptions) error {
+func (c *Cluster) DeployControlPlane(ctx context.Context, svcOptionData map[string]*v3.KubernetesServicesOptions, reconcileCluster bool) (string, error) {
+	kubeClient, err := k8s.NewClient(c.LocalKubeConfigPath, c.K8sWrapTransport)
+	if err != nil {
+		return "", fmt.Errorf("failed to initialize new kubernetes client: %v", err)
+	}
+
 	// Deploy Etcd Plane
 	etcdNodePlanMap := make(map[string]v3.RKEConfigNodePlan)
 	// Build etcd node plan map
 	for _, etcdHost := range c.EtcdHosts {
 		svcOptions, err := c.GetKubernetesServicesOptions(etcdHost.DockerInfo.OSType, svcOptionData)
 		if err != nil {
-			return err
+			return "", err
 		}
 		etcdNodePlanMap[etcdHost.Address] = BuildRKEConfigNodePlan(ctx, c, etcdHost, etcdHost.DockerInfo, svcOptions)
 	}
@@ -114,7 +130,7 @@ func (c *Cluster) DeployControlPlane(ctx context.Context, svcOptionData map[stri
 		log.Infof(ctx, "[etcd] External etcd connection string has been specified, skipping etcd plane")
 	} else {
 		if err := services.RunEtcdPlane(ctx, c.EtcdHosts, etcdNodePlanMap, c.LocalConnDialerFactory, c.PrivateRegistriesMap, c.UpdateWorkersOnly, c.SystemImages.Alpine, c.Services.Etcd, c.Certificates); err != nil {
-			return fmt.Errorf("[etcd] Failed to bring up Etcd Plane: %v", err)
+			return "", fmt.Errorf("[etcd] Failed to bring up Etcd Plane: %v", err)
 		}
 	}
 
@@ -124,45 +140,205 @@ func (c *Cluster) DeployControlPlane(ctx context.Context, svcOptionData map[stri
 	for _, cpHost := range c.ControlPlaneHosts {
 		svcOptions, err := c.GetKubernetesServicesOptions(cpHost.DockerInfo.OSType, svcOptionData)
 		if err != nil {
-			return err
+			return "", err
 		}
 		cpNodePlanMap[cpHost.Address] = BuildRKEConfigNodePlan(ctx, c, cpHost, cpHost.DockerInfo, svcOptions)
 	}
-	if err := services.RunControlPlane(ctx, c.ControlPlaneHosts,
+
+	if !reconcileCluster {
+		if err := services.RunControlPlane(ctx, c.ControlPlaneHosts,
+			c.LocalConnDialerFactory,
+			c.PrivateRegistriesMap,
+			cpNodePlanMap,
+			c.UpdateWorkersOnly,
+			c.SystemImages.Alpine,
+			c.Certificates); err != nil {
+			return "", fmt.Errorf("[controlPlane] Failed to bring up Control Plane: %v", err)
+		}
+		return "", nil
+	}
+	return c.UpgradeControlPlane(ctx, kubeClient, cpNodePlanMap)
+}
+
+func (c *Cluster) UpgradeControlPlane(ctx context.Context, kubeClient *kubernetes.Clientset, cpNodePlanMap map[string]v3.RKEConfigNodePlan) (string, error) {
+	inactiveHosts := make(map[string]bool)
+	var controlPlaneHosts, notReadyHosts []*hosts.Host
+	var notReadyHostNames []string
+	var err error
+
+	for _, host := range c.InactiveHosts {
+		// include only hosts with controlplane role
+		if host.IsControl {
+			inactiveHosts[host.HostnameOverride] = true
+		}
+	}
+	c.MaxUnavailableForControlNodes, err = services.ResetMaxUnavailable(c.MaxUnavailableForControlNodes, len(inactiveHosts), services.ControlRole)
+	if err != nil {
+		return "", err
+	}
+	for _, host := range c.ControlPlaneHosts {
+		controlPlaneHosts = append(controlPlaneHosts, host)
+		if c.NewHosts[host.HostnameOverride] {
+			continue
+		}
+		// find existing nodes that are in NotReady state
+		if err := services.CheckNodeReady(kubeClient, host, services.ControlRole); err != nil {
+			logrus.Debugf("Found node %v in NotReady state", host.HostnameOverride)
+			notReadyHosts = append(notReadyHosts, host)
+			notReadyHostNames = append(notReadyHostNames, host.HostnameOverride)
+		}
+	}
+
+	if len(notReadyHostNames) > 0 {
+		// attempt upgrade on NotReady hosts without respecting max_unavailable_controlplane
+		logrus.Infof("Attempting upgrade of controlplane components on following hosts in NotReady status: %v", strings.Join(notReadyHostNames, ","))
+		err = services.RunControlPlane(ctx, notReadyHosts,
+			c.LocalConnDialerFactory,
+			c.PrivateRegistriesMap,
+			cpNodePlanMap,
+			c.UpdateWorkersOnly,
+			c.SystemImages.Alpine,
+			c.Certificates)
+		if err != nil {
+			logrus.Errorf("Failed to upgrade controlplane components on NotReady hosts, error: %v", err)
+		}
+		err = services.RunWorkerPlane(ctx, notReadyHosts,
+			c.LocalConnDialerFactory,
+			c.PrivateRegistriesMap,
+			cpNodePlanMap,
+			c.Certificates,
+			c.UpdateWorkersOnly,
+			c.SystemImages.Alpine)
+		if err != nil {
+			logrus.Errorf("Failed to upgrade worker components on NotReady hosts, error: %v", err)
+		}
+		// Calling CheckNodeReady wil give some time for nodes to get in Ready state
+		for _, host := range notReadyHosts {
+			err = services.CheckNodeReady(kubeClient, host, services.ControlRole)
+			if err != nil {
+				logrus.Errorf("Host %v failed to report Ready status with error: %v", host.HostnameOverride, err)
+			}
+		}
+	}
+	// rolling upgrade respecting maxUnavailable
+	errMsgMaxUnavailableNotFailed, err := services.UpgradeControlPlaneNodes(ctx, kubeClient, controlPlaneHosts,
 		c.LocalConnDialerFactory,
 		c.PrivateRegistriesMap,
 		cpNodePlanMap,
 		c.UpdateWorkersOnly,
 		c.SystemImages.Alpine,
-		c.Certificates); err != nil {
-		return fmt.Errorf("[controlPlane] Failed to bring up Control Plane: %v", err)
+		c.Certificates, c.UpgradeStrategy, c.NewHosts, inactiveHosts, c.MaxUnavailableForControlNodes)
+	if err != nil {
+		return "", fmt.Errorf("[controlPlane] Failed to upgrade Control Plane: %v", err)
 	}
-
-	return nil
+	return errMsgMaxUnavailableNotFailed, nil
 }
 
-func (c *Cluster) DeployWorkerPlane(ctx context.Context, svcOptionData map[string]*v3.KubernetesServicesOptions) error {
+func (c *Cluster) DeployWorkerPlane(ctx context.Context, svcOptionData map[string]*v3.KubernetesServicesOptions, reconcileCluster bool) (string, error) {
+	var workerOnlyHosts, etcdAndWorkerHosts []*hosts.Host
+	kubeClient, err := k8s.NewClient(c.LocalKubeConfigPath, c.K8sWrapTransport)
+	if err != nil {
+		return "", fmt.Errorf("failed to initialize new kubernetes client: %v", err)
+	}
 	// Deploy Worker plane
 	workerNodePlanMap := make(map[string]v3.RKEConfigNodePlan)
 	// Build cp node plan map
 	allHosts := hosts.GetUniqueHostList(c.EtcdHosts, c.ControlPlaneHosts, c.WorkerHosts)
-	for _, workerHost := range allHosts {
-		svcOptions, err := c.GetKubernetesServicesOptions(workerHost.DockerInfo.OSType, svcOptionData)
+	for _, host := range allHosts {
+		svcOptions, err := c.GetKubernetesServicesOptions(host.DockerInfo.OSType, svcOptionData)
 		if err != nil {
-			return err
+			return "", err
 		}
-		workerNodePlanMap[workerHost.Address] = BuildRKEConfigNodePlan(ctx, c, workerHost, workerHost.DockerInfo, svcOptions)
+		workerNodePlanMap[host.Address] = BuildRKEConfigNodePlan(ctx, c, host, host.DockerInfo, svcOptions)
+		if host.IsControl {
+			continue
+		}
+		if !host.IsEtcd {
+			// separating hosts with only worker role so they undergo upgrade in maxUnavailable batches
+			workerOnlyHosts = append(workerOnlyHosts, host)
+		} else {
+			// separating nodes with etcd role, since at this point worker components in controlplane nodes are already upgraded by `UpgradeControlPlaneNodes`
+			// and these nodes will undergo upgrade of worker components sequentially
+			etcdAndWorkerHosts = append(etcdAndWorkerHosts, host)
+		}
 	}
-	if err := services.RunWorkerPlane(ctx, allHosts,
+
+	if !reconcileCluster {
+		if err := services.RunWorkerPlane(ctx, allHosts,
+			c.LocalConnDialerFactory,
+			c.PrivateRegistriesMap,
+			workerNodePlanMap,
+			c.Certificates,
+			c.UpdateWorkersOnly,
+			c.SystemImages.Alpine); err != nil {
+			return "", fmt.Errorf("[workerPlane] Failed to bring up Worker Plane: %v", err)
+		}
+		return "", nil
+	}
+
+	return c.UpgradeWorkerPlane(ctx, kubeClient, workerNodePlanMap, etcdAndWorkerHosts, workerOnlyHosts)
+}
+
+func (c *Cluster) UpgradeWorkerPlane(ctx context.Context, kubeClient *kubernetes.Clientset, workerNodePlanMap map[string]v3.RKEConfigNodePlan, etcdAndWorkerHosts, workerOnlyHosts []*hosts.Host) (string, error) {
+	inactiveHosts := make(map[string]bool)
+	var notReadyHosts []*hosts.Host
+	var notReadyHostNames []string
+	var err error
+
+	for _, host := range c.InactiveHosts {
+		// if host has controlplane role, it already has worker components upgraded
+		if !host.IsControl {
+			inactiveHosts[host.HostnameOverride] = true
+		}
+	}
+	c.MaxUnavailableForWorkerNodes, err = services.ResetMaxUnavailable(c.MaxUnavailableForWorkerNodes, len(inactiveHosts), services.WorkerRole)
+	if err != nil {
+		return "", err
+	}
+	for _, host := range append(etcdAndWorkerHosts, workerOnlyHosts...) {
+		if c.NewHosts[host.HostnameOverride] {
+			continue
+		}
+		// find existing nodes that are in NotReady state
+		if err := services.CheckNodeReady(kubeClient, host, services.WorkerRole); err != nil {
+			logrus.Debugf("Found node %v in NotReady state", host.HostnameOverride)
+			notReadyHosts = append(notReadyHosts, host)
+			notReadyHostNames = append(notReadyHostNames, host.HostnameOverride)
+		}
+	}
+	if len(notReadyHostNames) > 0 {
+		// attempt upgrade on NotReady hosts without respecting max_unavailable_worker
+		logrus.Infof("Attempting upgrade of worker components on following hosts in NotReady status: %v", strings.Join(notReadyHostNames, ","))
+		err = services.RunWorkerPlane(ctx, notReadyHosts,
+			c.LocalConnDialerFactory,
+			c.PrivateRegistriesMap,
+			workerNodePlanMap,
+			c.Certificates,
+			c.UpdateWorkersOnly,
+			c.SystemImages.Alpine)
+		if err != nil {
+			logrus.Errorf("Failed to upgrade worker components on NotReady hosts, error: %v", err)
+		}
+		// Calling CheckNodeReady wil give some time for nodes to get in Ready state
+		for _, host := range notReadyHosts {
+			err = services.CheckNodeReady(kubeClient, host, services.WorkerRole)
+			if err != nil {
+				logrus.Errorf("Host %v failed to report Ready status with error: %v", host.HostnameOverride, err)
+			}
+		}
+	}
+
+	errMsgMaxUnavailableNotFailed, err := services.UpgradeWorkerPlaneForWorkerAndEtcdNodes(ctx, kubeClient, etcdAndWorkerHosts, workerOnlyHosts, inactiveHosts,
 		c.LocalConnDialerFactory,
 		c.PrivateRegistriesMap,
 		workerNodePlanMap,
 		c.Certificates,
 		c.UpdateWorkersOnly,
-		c.SystemImages.Alpine); err != nil {
-		return fmt.Errorf("[workerPlane] Failed to bring up Worker Plane: %v", err)
+		c.SystemImages.Alpine, c.UpgradeStrategy, c.NewHosts, c.MaxUnavailableForWorkerNodes)
+	if err != nil {
+		return "", fmt.Errorf("[workerPlane] Failed to upgrade Worker Plane: %v", err)
 	}
-	return nil
+	return errMsgMaxUnavailableNotFailed, nil
 }
 
 func parseAuditLogConfig(clusterFile string, rkeConfig *v3.RancherKubernetesEngineConfig) error {
@@ -264,6 +440,60 @@ func parseAdmissionConfig(clusterFile string, rkeConfig *v3.RancherKubernetesEng
 	return nil
 }
 
+func parseAddonConfig(clusterFile string, rkeConfig *v3.RancherKubernetesEngineConfig) error {
+	var r map[string]interface{}
+	err := ghodssyaml.Unmarshal([]byte(clusterFile), &r)
+	if err != nil {
+		return fmt.Errorf("[parseAddonConfig] error unmarshalling RKE config: %v", err)
+	}
+	addonsResourceType := map[string]string{
+		ingressAddon:    daemonsetType,
+		networkAddon:    daemonsetType,
+		monitoringAddon: deploymentType,
+		dnsAddon:        deploymentType,
+		nodelocalAddon:  daemonsetType,
+	}
+	for addonName, addonType := range addonsResourceType {
+		var updateStrategyField interface{}
+		// nodelocal is a field under dns
+		if addonName == nodelocalAddon {
+			updateStrategyField = values.GetValueN(r, "dns", addonName, "update_strategy")
+		} else {
+			updateStrategyField = values.GetValueN(r, addonName, "update_strategy")
+		}
+		if updateStrategyField == nil {
+			continue
+		}
+		switch addonType {
+		case daemonsetType:
+			updateStrategy, err := parseDaemonSetUpdateStrategy(updateStrategyField)
+			if err != nil {
+				return err
+			}
+			switch addonName {
+			case ingressAddon:
+				rkeConfig.Ingress.UpdateStrategy = updateStrategy
+			case networkAddon:
+				rkeConfig.Network.UpdateStrategy = updateStrategy
+			case nodelocalAddon:
+				rkeConfig.DNS.Nodelocal.UpdateStrategy = updateStrategy
+			}
+		case deploymentType:
+			updateStrategy, err := parseDeploymentUpdateStrategy(updateStrategyField)
+			if err != nil {
+				return err
+			}
+			switch addonName {
+			case dnsAddon:
+				rkeConfig.DNS.UpdateStrategy = updateStrategy
+			case monitoringAddon:
+				rkeConfig.Monitoring.UpdateStrategy = updateStrategy
+			}
+		}
+	}
+	return nil
+}
+
 func parseIngressConfig(clusterFile string, rkeConfig *v3.RancherKubernetesEngineConfig) error {
 	if &rkeConfig.Ingress == nil {
 		return nil
@@ -284,6 +514,33 @@ func parseIngressConfig(clusterFile string, rkeConfig *v3.RancherKubernetesEngin
 		return err
 	}
 	return nil
+}
+
+func parseDaemonSetUpdateStrategy(updateStrategyField interface{}) (*v3.DaemonSetUpdateStrategy, error) {
+	updateStrategyBytes, err := json.Marshal(updateStrategyField)
+	if err != nil {
+		return nil, fmt.Errorf("[parseDaemonSetUpdateStrategy] error marshalling updateStrategy: %v", err)
+	}
+	var updateStrategy *v3.DaemonSetUpdateStrategy
+	err = json.Unmarshal(updateStrategyBytes, &updateStrategy)
+	if err != nil {
+		return nil, fmt.Errorf("[parseIngressUpdateStrategy] error unmarshaling updateStrategy: %v", err)
+	}
+
+	return updateStrategy, nil
+}
+
+func parseDeploymentUpdateStrategy(updateStrategyField interface{}) (*v3.DeploymentStrategy, error) {
+	updateStrategyBytes, err := json.Marshal(updateStrategyField)
+	if err != nil {
+		return nil, fmt.Errorf("[parseDeploymentUpdateStrategy] error marshalling updateStrategy: %v", err)
+	}
+	var updateStrategy *v3.DeploymentStrategy
+	err = json.Unmarshal(updateStrategyBytes, &updateStrategy)
+	if err != nil {
+		return nil, fmt.Errorf("[parseDeploymentUpdateStrategy] error unmarshaling updateStrategy: %v", err)
+	}
+	return updateStrategy, nil
 }
 
 func parseIngressExtraEnv(ingressMap map[string]interface{}, rkeConfig *v3.RancherKubernetesEngineConfig) error {
@@ -340,8 +597,62 @@ func parseIngressExtraVolumeMounts(ingressMap map[string]interface{}, rkeConfig 
 	return nil
 }
 
+func parseNodeDrainInput(clusterFile string, rkeConfig *v3.RancherKubernetesEngineConfig) error {
+	// setting some defaults here because for these fields there's no way of differentiating between user provided null value vs golang setting it to null during unmarshal
+	if rkeConfig.UpgradeStrategy == nil || rkeConfig.UpgradeStrategy.DrainInput == nil {
+		return nil
+	}
+	var config map[string]interface{}
+	err := ghodssyaml.Unmarshal([]byte(clusterFile), &config)
+	if err != nil {
+		return fmt.Errorf("[parseNodeDrainInput] error unmarshalling: %v", err)
+	}
+	upgradeStrategy, err := convert.EncodeToMap(config["upgrade_strategy"])
+	if err != nil {
+		return err
+	}
+	nodeDrainInputMap, err := convert.EncodeToMap(upgradeStrategy["node_drain_input"])
+	if err != nil {
+		return err
+	}
+	nodeDrainInputBytes, err := ghodssyaml.Marshal(nodeDrainInputMap)
+	if err != nil {
+		return err
+	}
+	// this will only have fields that user set and none of the default empty values
+	var nodeDrainInput v3.NodeDrainInput
+	if err := ghodssyaml.Unmarshal(nodeDrainInputBytes, &nodeDrainInput); err != nil {
+		return err
+	}
+	var update bool
+	if _, ok := nodeDrainInputMap["ignore_daemonsets"]; !ok {
+		// user hasn't provided any input, default to true
+		nodeDrainInput.IgnoreDaemonSets = DefaultNodeDrainIgnoreDaemonsets
+		update = true
+	}
+	if _, ok := nodeDrainInputMap["timeout"]; !ok {
+		// user hasn't provided any input, default to 120
+		nodeDrainInput.Timeout = DefaultNodeDrainTimeout
+		update = true
+	}
+	if providedGracePeriod, ok := nodeDrainInputMap["grace_period"].(float64); !ok {
+		// user hasn't provided any input, default to -1
+		nodeDrainInput.GracePeriod = DefaultNodeDrainGracePeriod
+		update = true
+	} else {
+		// TODO: ghodssyaml.Marshal is losing the user provided value for GracePeriod, investigate why, till then assign the provided value explicitly
+		nodeDrainInput.GracePeriod = int(providedGracePeriod)
+	}
+
+	if update {
+		rkeConfig.UpgradeStrategy.DrainInput = &nodeDrainInput
+	}
+
+	return nil
+}
+
 func ParseConfig(clusterFile string) (*v3.RancherKubernetesEngineConfig, error) {
-	logrus.Debugf("Parsing cluster file [%v]", clusterFile)
+	logrus.Tracef("Parsing cluster file [%v]", clusterFile)
 	var rkeConfig v3.RancherKubernetesEngineConfig
 
 	// the customConfig is mapped to a k8s type, which doesn't unmarshal well because it has a
@@ -364,9 +675,14 @@ func ParseConfig(clusterFile string) (*v3.RancherKubernetesEngineConfig, error) 
 	if err := parseAuditLogConfig(clusterFile, &rkeConfig); err != nil {
 		return &rkeConfig, fmt.Errorf("error parsing audit log config: %v", err)
 	}
-
 	if err := parseIngressConfig(clusterFile, &rkeConfig); err != nil {
 		return &rkeConfig, fmt.Errorf("error parsing ingress config: %v", err)
+	}
+	if err := parseNodeDrainInput(clusterFile, &rkeConfig); err != nil {
+		return &rkeConfig, fmt.Errorf("error parsing upgrade strategy and node drain input: %v", err)
+	}
+	if err := parseAddonConfig(clusterFile, &rkeConfig); err != nil {
+		return &rkeConfig, fmt.Errorf("error parsing addon config: %v", err)
 	}
 	return &rkeConfig, nil
 }
@@ -388,7 +704,9 @@ func InitClusterObject(ctx context.Context, rkeConfig *v3.RancherKubernetesEngin
 		},
 	}
 	if metadata.K8sVersionToRKESystemImages == nil {
-		metadata.InitMetadata(ctx)
+		if err := metadata.InitMetadata(ctx); err != nil {
+			return nil, err
+		}
 	}
 	if len(c.ConfigPath) == 0 {
 		c.ConfigPath = pki.ClusterConfig
@@ -416,7 +734,9 @@ func InitClusterObject(ctx context.Context, rkeConfig *v3.RancherKubernetesEngin
 		return nil, err
 	}
 	// extract cluster network configuration
-	c.setNetworkOptions()
+	if err = c.setNetworkOptions(); err != nil {
+		return nil, fmt.Errorf("failed set network options: %v", err)
+	}
 
 	// Register cloud provider
 	if err := c.setCloudProvider(); err != nil {
@@ -495,14 +815,6 @@ func rebuildLocalAdminConfig(ctx context.Context, kubeCluster *Cluster) error {
 	currentKubeConfig.Config = workingConfig
 	kubeCluster.Certificates[pki.KubeAdminCertName] = currentKubeConfig
 	return nil
-}
-
-func isLocalConfigWorking(ctx context.Context, localKubeConfigPath string, k8sWrapTransport transport.WrapperFunc) bool {
-	if _, err := GetK8sVersion(localKubeConfigPath, k8sWrapTransport); err != nil {
-		log.Infof(ctx, "[reconcile] Local config is not valid (error: %v), rebuilding admin config", err)
-		return false
-	}
-	return true
 }
 
 func getLocalConfigAddress(localConfigPath string) (string, error) {
@@ -644,7 +956,7 @@ func setNodeAnnotationsLabelsTaints(k8sClient *kubernetes.Clientset, host *hosts
 	for retries := 0; retries <= 5; retries++ {
 		node, err = k8s.GetNode(k8sClient, host.HostnameOverride)
 		if err != nil {
-			logrus.Debugf("[hosts] Can't find node by name [%s], retrying..", host.HostnameOverride)
+			logrus.Debugf("[hosts] Can't find node by name [%s], error: %v", host.HostnameOverride, err)
 			time.Sleep(2 * time.Second)
 			continue
 		}

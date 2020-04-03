@@ -7,7 +7,6 @@ import (
 	apiserverv1alpha1 "k8s.io/apiserver/pkg/apis/apiserver/v1alpha1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
-	eventratelimitv1alpha1 "k8s.io/kubernetes/plugin/pkg/admission/eventratelimit/apis/eventratelimit/v1alpha1"
 )
 
 type RancherKubernetesEngineConfig struct {
@@ -59,6 +58,21 @@ type RancherKubernetesEngineConfig struct {
 	RotateCertificates *RotateCertificates `yaml:"rotate_certificates,omitempty" json:"rotateCertificates,omitempty"`
 	// DNS Config
 	DNS *DNSConfig `yaml:"dns" json:"dns,omitempty"`
+	// Upgrade Strategy for the cluster
+	UpgradeStrategy *NodeUpgradeStrategy `yaml:"upgrade_strategy,omitempty" json:"upgradeStrategy,omitempty"`
+}
+
+func (r *RancherKubernetesEngineConfig) ObjClusterName() string {
+	return r.ClusterName
+}
+
+type NodeUpgradeStrategy struct {
+	// MaxUnavailableWorker input can be a number of nodes or a percentage of nodes (example, max_unavailable_worker: 2 OR max_unavailable_worker: 20%)
+	MaxUnavailableWorker string `yaml:"max_unavailable_worker" json:"maxUnavailableWorker,omitempty" norman:"min=1,default=10%"`
+	// MaxUnavailableControlplane input can be a number of nodes or a percentage of nodes
+	MaxUnavailableControlplane string          `yaml:"max_unavailable_controlplane" json:"maxUnavailableControlplane,omitempty" norman:"min=1,default=1"`
+	Drain                      bool            `yaml:"drain" json:"drain,omitempty"`
+	DrainInput                 *NodeDrainInput `yaml:"node_drain_input" json:"nodeDrainInput,omitempty"`
 }
 
 type BastionHost struct {
@@ -114,6 +128,8 @@ type RKESystemImages struct {
 	CoreDNS string `yaml:"coredns" json:"coredns,omitempty"`
 	// CoreDNS autoscaler image
 	CoreDNSAutoscaler string `yaml:"coredns_autoscaler" json:"corednsAutoscaler,omitempty"`
+	// Nodelocal image
+	Nodelocal string `yaml:"nodelocal" json:"nodelocal,omitempty"`
 	// Kubernetes image
 	Kubernetes string `yaml:"kubernetes" json:"kubernetes,omitempty"`
 	// Flannel image
@@ -286,8 +302,8 @@ type KubeAPIService struct {
 }
 
 type EventRateLimit struct {
-	Enabled       bool                                  `yaml:"enabled" json:"enabled,omitempty"`
-	Configuration *eventratelimitv1alpha1.Configuration `yaml:"configuration" json:"configuration,omitempty" norman:"type=map[json]"`
+	Enabled       bool           `yaml:"enabled" json:"enabled,omitempty"`
+	Configuration *Configuration `yaml:"configuration" json:"configuration,omitempty" norman:"type=map[json]"`
 }
 
 type AuditLog struct {
@@ -366,6 +382,8 @@ type NetworkConfig struct {
 	WeaveNetworkProvider *WeaveNetworkProvider `yaml:"weave_network_provider,omitempty" json:"weaveNetworkProvider,omitempty"`
 	// NodeSelector key pair
 	NodeSelector map[string]string `yaml:"node_selector" json:"nodeSelector,omitempty"`
+	// Network plugin daemonset upgrade strategy
+	UpdateStrategy *DaemonSetUpdateStrategy `yaml:"update_strategy" json:"updateStrategy,omitempty"`
 }
 
 type AuthWebhookConfig struct {
@@ -408,6 +426,8 @@ type IngressConfig struct {
 	ExtraVolumes []ExtraVolume `yaml:"extra_volumes" json:"extraVolumes,omitempty" norman:"type=array[json]"`
 	// Extra volume mounts
 	ExtraVolumeMounts []ExtraVolumeMount `yaml:"extra_volume_mounts" json:"extraVolumeMounts,omitempty" norman:"type=array[json]"`
+	// nginx daemonset upgrade strategy
+	UpdateStrategy *DaemonSetUpdateStrategy `yaml:"update_strategy" json:"updateStrategy,omitempty"`
 }
 
 type ExtraEnv struct {
@@ -794,6 +814,10 @@ type MonitoringConfig struct {
 	Options map[string]string `yaml:"options" json:"options,omitempty"`
 	// NodeSelector key pair
 	NodeSelector map[string]string `yaml:"node_selector" json:"nodeSelector,omitempty"`
+	// Update strategy
+	UpdateStrategy *DeploymentStrategy `yaml:"update_strategy" json:"updateStrategy,omitempty"`
+	// Number of monitoring addon pods
+	Replicas *int32 `yaml:"replicas" json:"replicas,omitempty" norman:"default=1"`
 }
 
 type RestoreConfig struct {
@@ -818,6 +842,30 @@ type DNSConfig struct {
 	StubDomains map[string][]string `yaml:"stubdomains" json:"stubdomains,omitempty"`
 	// NodeSelector key pair
 	NodeSelector map[string]string `yaml:"node_selector" json:"nodeSelector,omitempty"`
+	// Nodelocal DNS
+	Nodelocal *Nodelocal `yaml:"nodelocal" json:"nodelocal,omitempy"`
+	// Update strategy
+	UpdateStrategy *DeploymentStrategy `yaml:"update_strategy" json:"updateStrategy,omitempty"`
+	// Autoscaler fields to determine number of dns replicas
+	LinearAutoscalerParams *LinearAutoscalerParams `yaml:"linear_autoscaler_params" json:"linearAutoscalerParams,omitempty"`
+}
+
+type Nodelocal struct {
+	// link-local IP for nodelocal DNS
+	IPAddress string `yaml:"ip_address" json:"ipAddress,omitempy"`
+	// Nodelocal DNS daemonset upgrade strategy
+	UpdateStrategy *DaemonSetUpdateStrategy `yaml:"update_strategy" json:"updateStrategy,omitempty"`
+	// NodeSelector key pair
+	NodeSelector map[string]string `yaml:"node_selector" json:"nodeSelector,omitempty"`
+}
+
+// LinearAutoscalerParams contains fields expected by the cluster-proportional-autoscaler https://github.com/kubernetes-incubator/cluster-proportional-autoscaler/blob/0c61e63fc81449abdd52315aa27179a17e5d1580/pkg/autoscaler/controller/linearcontroller/linear_controller.go#L50
+type LinearAutoscalerParams struct {
+	CoresPerReplica           float64 `yaml:"cores_per_replica" json:"coresPerReplica,omitempty" norman:"default=128"`
+	NodesPerReplica           float64 `yaml:"nodes_per_replica" json:"nodesPerReplica,omitempty" norman:"default=4"`
+	Min                       int     `yaml:"min" json:"min,omitempty" norman:"default=1"`
+	Max                       int     `yaml:"max" json:"max,omitempty"`
+	PreventSinglePointFailure bool    `yaml:"prevent_single_point_failure" json:"preventSinglePointFailure,omitempty" norman:"default=true"`
 }
 
 type RKETaint struct {

@@ -1,4 +1,4 @@
-## 1.0.0-rc5 (Unreleased)
+## 1.0.0-rc5 (April 3, 2020)
 
 FEATURES:
 
@@ -10,7 +10,9 @@ FEATURES:
 ENHANCEMENTS:
 
 * Updated `hashicorp/terraform-plugin-sdk` go modules and vendor files to v1.8.0
-* Updated go modules and vendor files to support [RKE v1.0.6](https://github.com/rancher/rke/releases/tag/v1.0.6)
+* Updated go modules and vendor files to support [RKE v1.1.0](https://github.com/rancher/rke/releases/tag/v1.1.0)
+* Added `upgrade_strategy` argument to `rke_cluster` resource
+* Updated `kubernetes_version` argument to get default and available k8s versions from rke metadata
 
 BUG FIXES:
 
@@ -18,6 +20,7 @@ BUG FIXES:
 * Disabled `debug` config option until next rke release (Breaking logs)
 * Fixed segmentation fault with deprecated fields
 * Fixed `vsphere_cloud_provider` argument to avoid false diff
+* Fixed segmentation fault with deprecated fields
 
 ## 1.0.0-rc4 (March 13, 2020)
 

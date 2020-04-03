@@ -36,6 +36,21 @@ resource "rke_cluster" "foo2" {
     role    = ["controlplane", "worker", "etcd"]
     ssh_key = file("~/.ssh/id_rsa")
   }
+  upgrade_strategy {
+	drain = true
+	max_unavailable_worker = "20%"
+  }
+}
+# Create a new RKE cluster using both. In case of conflict, arguments override cluster_yaml arguments
+resource "rke_cluster" "foo2" {
+  cluster_yaml = file("cluster.yaml")
+  ssh_agent_auth = true
+  ignore_docker_version = true
+  kubernetes_version = "<K8s_VERSION>"
+  upgrade_strategy {
+	drain = true
+	max_unavailable_worker = "20%"
+  }
 }
 # Create a new RKE cluster using both. In case of conflict, arguments override cluster_yaml arguments
 resource "rke_cluster" "foo2" {
@@ -69,7 +84,7 @@ The following arguments are supported:
 * `dns` - (Optional/Computed) RKE k8s cluster DNS Config (list maxitems:1)
 * `ignore_docker_version` - (Optional/Computed) Enable/Disable RKE k8s cluster strict docker version checking. Default `false` (bool)
 * `ingress` - (Optional/Computed) RKE k8s cluster ingress controller configuration (list maxitems:1)
-* `kubernetes_version` - (Optional/Computed) K8s version to deploy (if kubernetes image is specified, image version takes precedence) (string)
+* `kubernetes_version` - (Optional) K8s version to deploy. If kubernetes image is specified, image version takes precedence. Default: `rke default` (string)
 * `monitoring` - (Optional/Computed) RKE k8s cluster monitoring Config (list maxitems:1)
 * `network` - (Optional/Computed) RKE k8s cluster network configuration (list maxitems:1)
 * `nodes` - (Optional) RKE k8s cluster nodes (list)
@@ -89,6 +104,7 @@ The following arguments are supported:
 * `ssh_key_path` - (Optional/Computed) SSH Private Key Path (string)
 * `system_images` - (Optional) RKE k8s cluster system images list (list maxitems:1)
 * `update_only` - (Optional) Skip idempotent deployment of control and etcd plane. Default `false` (bool)
+* `upgrade_strategy` - (Optional/Computed) RKE k8s cluster upgrade strategy (list maxitems:1)
 
 ## Attributes Reference
 
@@ -646,6 +662,25 @@ The following attributes are exported:
 * `ingress_backend` - (Optional) Docker image for ingress_backend (string)
 * `metrics_server` - (Optional) Docker image for metrics_server (string)
 * `windows_pod_infra_container` - (Optional) Docker image for windows_pod_infra_container (string)
+
+### `upgrade_strategy`
+
+#### Arguments
+
+* `drain` - (Optional) RKE drain nodes. Default: `false` (bool)
+* `drain_input` - (Optional/Computed) RKE drain node input (list Maxitems: 1)
+* `max_unavailable_controlplane` - (Optional) RKE max unavailable controlplane nodes. Default: `1` (string)
+* `max_unavailable_worker` - (Optional) RKE max unavailable worker nodes. Default: `10%` (string)
+
+#### `drain_input`
+
+##### Arguments
+
+* `delete_local_data` - Delete RKE node local data. Default: `false` (bool)
+* `force` - Force RKE node drain. Default: `false` (bool)
+* `grace_period` - RKE node drain grace period. Default: `-1` (int)
+* `ignore_daemon_sets` - Ignore RKE daemon sets. Default: `true` (bool)
+* `timeout` - RKE node drain timeout. Default: `60` (int)
 
 ## Timeouts
 

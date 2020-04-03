@@ -1,14 +1,14 @@
 package rke
 
 import (
+	"context"
 	"fmt"
-	//"reflect"
 	"sort"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/rancher/kontainer-driver-metadata/rke"
+	"github.com/rancher/rke/metadata"
 )
 
 //Schemas
@@ -167,12 +167,11 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"kubernetes_version": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "K8s version to deploy (if kubernetes image is specified, image version takes precedence)",
 			ValidateFunc: validation.StringInSlice(func() []string {
-				rkeData := rke.DriverData
-				versions := make([]*version.Version, 0, len(rkeData.K8sVersionRKESystemImages))
-				for k := range rkeData.K8sVersionRKESystemImages {
+				metadata.InitMetadata(context.Background())
+				versions := make([]*version.Version, 0, len(metadata.K8sVersionToRKESystemImages))
+				for k := range metadata.K8sVersionToRKESystemImages {
 					v, _ := version.NewVersion(k)
 					versions = append(versions, v)
 				}
@@ -183,6 +182,10 @@ func rkeClusterFields() map[string]*schema.Schema {
 				}
 				return keys
 			}(), false),
+			DefaultFunc: func() (interface{}, error) {
+				metadata.InitMetadata(context.Background())
+				return metadata.DefaultK8sVersion, nil
+			},
 		},
 		"monitoring": {
 			Type:        schema.TypeList,
@@ -347,6 +350,15 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Description: "RKE k8s cluster system images list",
 			Elem: &schema.Resource{
 				Schema: rkeClusterSystemImagesFields(),
+			},
+		},
+		"upgrade_strategy": {
+			Type:        schema.TypeList,
+			Description: "RKE k8s cluster upgrade strategy",
+			MaxItems:    1,
+			Optional:    true,
+			Elem: &schema.Resource{
+				Schema: rkeClusterNodeUpgradeStrategyFields(),
 			},
 		},
 		"update_only": {

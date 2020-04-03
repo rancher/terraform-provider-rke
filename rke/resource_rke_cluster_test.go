@@ -234,6 +234,10 @@ resource rke_cluster "cluster" {
     user    = "docker"
     role    = ["controlplane", "worker", "etcd"]
   }
+  upgrade_strategy {
+    drain = true
+    max_unavailable_worker = "20%%"
+  }
 }
 `, testAccRKEClusterNodes[0])
 
@@ -254,6 +258,10 @@ resource rke_cluster "cluster" {
       foo = "foo"
       bar = "bar"
     }
+  }
+  upgrade_strategy {
+    drain = true
+    max_unavailable_worker = "20%%"
   }
 }
 `, testAccRKEClusterNodes[0])
@@ -276,6 +284,10 @@ resource rke_cluster "cluster" {
     address = "%s"
     user    = "docker"
     role    = ["worker"]
+  }
+  upgrade_strategy {
+    drain = true
+    max_unavailable_worker = "20%%"
   }
 }
 `, testAccRKEClusterNodes[0], testAccRKEClusterNodes[1])

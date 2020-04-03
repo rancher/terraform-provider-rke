@@ -47,8 +47,6 @@ const (
 	KubeletDockerConfigFileEnv = "RKE_KUBELET_DOCKER_FILE"
 	KubeletDockerConfigPath    = "/var/lib/kubelet/config.json"
 
-	AWSCloudProviderName = "aws"
-
 	// MaxEtcdOldEnvVersion The versions are maxed out for minor versions because -rancher1 suffix will cause semver to think its older, example: v1.15.0 > v1.15.0-rancher1
 	MaxEtcdOldEnvVersion = "v3.2.99"
 	MaxK8s115Version     = "v1.15"
@@ -571,6 +569,11 @@ func (c *Cluster) BuildKubeletProcess(host *hosts.Host, prefixPath string, servi
 		if _, ok := c.Services.Kubelet.ExtraArgs[arg]; ok {
 			CommandArgs[arg] = value
 		}
+	}
+
+	// If nodelocal DNS is configured, set cluster-dns to local IP
+	if c.DNS.Nodelocal != nil && c.DNS.Nodelocal.IPAddress != "" {
+		CommandArgs["cluster-dns"] = c.DNS.Nodelocal.IPAddress
 	}
 
 	for arg, value := range CommandArgs {
@@ -1099,7 +1102,8 @@ func (c *Cluster) getDefaultKubernetesServicesOptions(osType string) (v3.Kuberne
 	// Example c.Version: v1.16.3-rancher1-1
 	logrus.Debugf("getDefaultKubernetesServicesOptions: getting serviceOptions for cluster version [%s]", c.Version)
 	if serviceOptions, ok := serviceOptionsTemplate[c.Version]; ok {
-		logrus.Debugf("getDefaultKubernetesServicesOptions: serviceOptions [%v] found for cluster version [%s]", serviceOptions, c.Version)
+		logrus.Debugf("getDefaultKubernetesServicesOptions: serviceOptions found for cluster version [%s]", c.Version)
+		logrus.Tracef("getDefaultKubernetesServicesOptions: [%s] serviceOptions [%v]", c.Version, serviceOptions)
 		return serviceOptions, nil
 	}
 
@@ -1123,7 +1127,8 @@ func (c *Cluster) getDefaultKubernetesServicesOptions(osType string) (v3.Kuberne
 	}
 
 	if serviceOptions, ok := serviceOptionsTemplate[clusterMajorVersion]; ok {
-		logrus.Debugf("getDefaultKubernetesServicesOptions: serviceOptions [%v] found for cluster major version [%s]", serviceOptions, clusterMajorVersion)
+		logrus.Debugf("getDefaultKubernetesServicesOptions: serviceOptions found for cluster major version [%s]", clusterMajorVersion)
+		logrus.Tracef("getDefaultKubernetesServicesOptions: [%s] serviceOptions [%v]", clusterMajorVersion, serviceOptions)
 		return serviceOptions, nil
 	}
 

@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 
-	//rkelog "github.com/rancher/rke/log"
 	log "github.com/sirupsen/logrus"
 )
 

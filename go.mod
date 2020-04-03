@@ -3,22 +3,24 @@ module github.com/rancher/terraform-provider-rke
 go 1.12
 
 require (
+	github.com/aws/aws-sdk-go v1.25.48 // indirect
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-openapi/strfmt v0.19.2 // indirect
+	github.com/google/pprof v0.0.0-20190723021845-34ac40c74b70 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
+	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-version v1.2.0
 	github.com/hashicorp/terraform-plugin-sdk v1.8.0
-	github.com/rancher/kontainer-driver-metadata v0.0.0-20200329153031-ee56d7c311b4
-	github.com/rancher/rke v1.0.6
-	github.com/rancher/types v0.0.0-20191220141556-ad31d6815bbd
+	github.com/rancher/rke v1.1.0
+	github.com/rancher/types v0.0.0-20200326224903-b4612bd96d9b
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/sirupsen/logrus v1.4.2
-	gopkg.in/ini.v1 v1.48.0 // indirect
-	gopkg.in/yaml.v2 v2.2.4
-	k8s.io/api v0.0.0
-	k8s.io/apimachinery v0.0.0
-	k8s.io/apiserver v0.0.0
-	k8s.io/client-go v11.0.1-0.20190805182715-88a2adca7e76+incompatible
+	github.com/soheilhy/cmux v0.1.4 // indirect
+	gopkg.in/yaml.v2 v2.2.5
+	k8s.io/api v0.17.2
+	k8s.io/apimachinery v0.17.2
+	k8s.io/apiserver v0.17.2
+	k8s.io/client-go v12.0.0+incompatible
 )
 
 replace (

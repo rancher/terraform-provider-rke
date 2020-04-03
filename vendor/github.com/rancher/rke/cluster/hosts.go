@@ -61,7 +61,6 @@ func (c *Cluster) TunnelHosts(ctx context.Context, flags ExternalFlags) error {
 		c.RancherKubernetesEngineConfig.Nodes = removeFromRKENodes(host.RKEConfigNode, c.RancherKubernetesEngineConfig.Nodes)
 	}
 	return ValidateHostCount(c)
-
 }
 
 func (c *Cluster) InvertIndexHosts() error {
@@ -117,6 +116,34 @@ func (c *Cluster) InvertIndexHosts() error {
 		}
 	}
 	return nil
+}
+
+func (c *Cluster) CalculateMaxUnavailable() (int, int, error) {
+	var inactiveControlPlaneHosts, inactiveWorkerHosts []string
+	var workerHosts, controlHosts, maxUnavailableWorker, maxUnavailableControl int
+
+	for _, host := range c.InactiveHosts {
+		if host.IsControl {
+			inactiveControlPlaneHosts = append(inactiveControlPlaneHosts, host.HostnameOverride)
+		}
+		if !host.IsWorker {
+			inactiveWorkerHosts = append(inactiveWorkerHosts, host.HostnameOverride)
+		}
+		// not breaking out of the loop so we can log all of the inactive hosts
+	}
+
+	// maxUnavailable should be calculated against all hosts provided in cluster.yml
+	workerHosts = len(c.WorkerHosts) + len(inactiveWorkerHosts)
+	maxUnavailableWorker, err := services.CalculateMaxUnavailable(c.UpgradeStrategy.MaxUnavailableWorker, workerHosts, services.WorkerRole)
+	if err != nil {
+		return maxUnavailableWorker, maxUnavailableControl, err
+	}
+	controlHosts = len(c.ControlPlaneHosts) + len(inactiveControlPlaneHosts)
+	maxUnavailableControl, err = services.CalculateMaxUnavailable(c.UpgradeStrategy.MaxUnavailableControlplane, controlHosts, services.ControlRole)
+	if err != nil {
+		return maxUnavailableWorker, maxUnavailableControl, err
+	}
+	return maxUnavailableWorker, maxUnavailableControl, nil
 }
 
 func (c *Cluster) getConsolidatedAdmissionConfiguration() (*v1alpha1.AdmissionConfiguration, error) {
