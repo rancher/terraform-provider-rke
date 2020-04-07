@@ -24,14 +24,14 @@ Installing The Provider
 Download the binary for your platform from the [releases](https://github.com/rancher/terraform-provider-rke/releases) page
 
 ```
-wget https://github.com/rancher/terraform-provider-rke/releases/download/x.x.x/terraform-provider-rke_<platform>
+wget https://github.com/rancher/terraform-provider-rke/releases/download/x.y.z/terraform-provider-rke_<platform>
 ```
 
-- rename the `terraform-provider-rke_<OS_ARCH>` to `terraform-provider-rke_v0.14.1_x4`
-  - the `v0.14.1` is based on the downloaded version
-- put it to `project_directory`.
-  - e.g. `Users/$(whoami)/works/src/github.com/quickstart/azure/.terraform/plugins/darwin_amd64`
-- run `terraform init`
+1. rename it to `terraform-provider-rke_<VERSION>`
+1. put it to follow directory `~/.terraform.d/plugins/<OS>_<ARCH>/`
+1. remove the `.terraform` in ur `project_directory`
+  - for more reference plz visit https://terra-farm.github.io/main/installation.html
+1. run `terraform init`
 you should get the following response
 ```console
 > terraform init
