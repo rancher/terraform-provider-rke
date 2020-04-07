@@ -27,7 +27,32 @@ Download the binary for your platform from the [releases](https://github.com/ran
 wget https://github.com/rancher/terraform-provider-rke/releases/download/x.x.x/terraform-provider-rke_<platform>
 ```
 
-Rename the binary to to remove the platform ending (so it looks like `terraform-provider-rke`)and move it to your terraform plugin directory (`~/terraform.d/plugins/linux_amd64`) or a custom directory. If using a custom directory use the `-plug-in=/my/custom/path` when running `terraform init` to specify the path.
+- rename the `terraform-provider-rke_<OS_ARCH>` to `terraform-provider-rke_v0.14.1_x4`
+  - the `v0.14.1` is based on the downloaded version
+- put it to `project_directory`.
+  - e.g. `Users/$(whoami)/works/src/github.com/quickstart/azure/.terraform/plugins/darwin_amd64`
+- run `terraform init`
+you should get the following response
+```console
+> terraform init
+Initializing modules...
+
+Initializing the backend...
+
+Initializing provider plugins...
+
+Terraform has been successfully initialized!
+
+You may now begin working with Terraform. Try running "terraform plan" to see
+any changes that are required for your infrastructure. All Terraform commands
+should now work.
+
+If you ever set or change modules or backend configuration for Terraform,
+rerun this command to reinitialize your working directory. If you forget, other
+commands will detect it and remind you to do so if necessary.
+```
+
+If using a custom directory use the `-plug-in=/my/custom/path` when running `terraform init` to specify the path.
 
 Building The Provider
 ---------------------
