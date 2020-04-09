@@ -1,3 +1,20 @@
+## 1.0.0-rc6 (Unreleased)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Set arguments as computed to avoid false diff:
+  * `upgrade_strategy` on `rke_cluster` resource 
+  * `ssh_key_path` on `bastion_host` argument 
+  * `audit_log` on `services.kube_api` argument
+
+BUG FIXES:
+
+
+
 ## 1.0.0-rc5 (April 3, 2020)
 
 FEATURES:
