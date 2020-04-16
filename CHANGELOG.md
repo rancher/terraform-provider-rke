@@ -1,4 +1,4 @@
-## 1.0.0-rc6 (Unreleased)
+## 1.0.0 (May 6, 2020)
 
 FEATURES:
 
@@ -10,6 +10,7 @@ ENHANCEMENTS:
   * `upgrade_strategy` on `rke_cluster` resource 
   * `ssh_key_path` on `bastion_host` argument 
   * `audit_log` on `services.kube_api` argument
+* Add `external` as allowed value on `cloud_provider` argument
 
 BUG FIXES:
 

@@ -6,7 +6,8 @@ import (
 )
 
 const (
-	rkeClusterCloudProviderCustomName = "custom"
+	rkeClusterCloudProviderCustomName   = "custom"
+	rkeClusterCloudProviderExternalName = "external"
 )
 
 var (
@@ -14,6 +15,7 @@ var (
 		rkeClusterCloudProviderAwsName,
 		rkeClusterCloudProviderAzureName,
 		rkeClusterCloudProviderCustomName,
+		rkeClusterCloudProviderExternalName,
 		rkeClusterCloudProviderOpenstackName,
 		rkeClusterCloudProviderVsphereName,
 	}

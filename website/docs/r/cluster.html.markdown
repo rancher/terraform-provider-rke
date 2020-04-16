@@ -171,7 +171,7 @@ The following attributes are exported:
 
 #### Arguments
 
-* `name` - (Required) Cloud Provider name. `aws`, `azure`, `custom`, `openstack`, `vsphere` are supported (string)
+* `name` - (Required) Cloud Provider name. `aws`, `azure`, `custom`, `external`, `openstack`, `vsphere` are supported (string)
 * `aws_cloud_config` - (DEPRECATED) Use aws_cloud_provider instead
 * `aws_cloud_provider` - (Optional) AWS Cloud Provider config [rke-aws-cloud-provider](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/) (list maxitems:1)
 * `azure_cloud_config` - (DEPRECATED) Use azure_cloud_provider instead
