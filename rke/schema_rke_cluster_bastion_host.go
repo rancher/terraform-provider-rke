@@ -39,8 +39,8 @@ func rkeClusterBastionHostFields() map[string]*schema.Schema {
 		"ssh_cert_path": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "SSH Certificate Key Path",
 			Computed:    true,
+			Description: "SSH Certificate Key Path",
 		},
 		"ssh_key": {
 			Type:        schema.TypeString,
@@ -51,6 +51,7 @@ func rkeClusterBastionHostFields() map[string]*schema.Schema {
 		"ssh_key_path": {
 			Type:        schema.TypeString,
 			Optional:    true,
+			Computed:    true,
 			Description: "SSH Private Key Path",
 		},
 	}

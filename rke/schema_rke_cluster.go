@@ -357,6 +357,7 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Description: "RKE k8s cluster upgrade strategy",
 			MaxItems:    1,
 			Optional:    true,
+			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: rkeClusterNodeUpgradeStrategyFields(),
 			},
