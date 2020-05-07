@@ -375,10 +375,18 @@ The following attributes are exported:
 
 #### Arguments
 
+* `nodelocal` - (Optional) Nodelocal dns config  (list Maxitem: 1)
 * `node_selector` - (Optional) Node selector key pair (map)
 * `provider` - (Optional) DNS provider. `kube-dns`, `coredns` (default), and `none` are supported (string)
 * `reverse_cidrs` - (Optional) Reverse CIDRs  (list)
 * `upstream_nameservers` - (Optional) Upstream nameservers  (list)
+
+#### `nodelocal`
+
+##### Arguments
+
+* `ip_address` - (required) Nodelocal dns ip address (string)
+* `node_selector` - (Optional) Node selector key pair (map)
 
 ### `ingress`
 
