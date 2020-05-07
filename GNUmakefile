@@ -86,7 +86,7 @@ test-compile:
 
 vendor:
 	@echo "==> Updating vendor modules..."
-	@GO111MODULE=${GO111MODULE} go mod vendor
+	@GO111MODULE=on go mod vendor
 
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))

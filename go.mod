@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.2 // indirect
 	github.com/hashicorp/go-version v1.2.0
 	github.com/hashicorp/terraform-plugin-sdk v1.8.0
-	github.com/rancher/rke v1.1.0
+	github.com/rancher/rke v1.1.1
 	github.com/rancher/types v0.0.0-20200326224903-b4612bd96d9b
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/sirupsen/logrus v1.4.2
