@@ -171,7 +171,7 @@ The following attributes are exported:
 
 #### Arguments
 
-* `name` - (Required) Cloud Provider name. `aws`, `azure`, `custom`, `openstack`, `vsphere` are supported (string)
+* `name` - (Required) Cloud Provider name. `aws`, `azure`, `custom`, `external`, `openstack`, `vsphere` are supported (string)
 * `aws_cloud_config` - (DEPRECATED) Use aws_cloud_provider instead
 * `aws_cloud_provider` - (Optional) AWS Cloud Provider config [rke-aws-cloud-provider](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/aws/) (list maxitems:1)
 * `azure_cloud_config` - (DEPRECATED) Use azure_cloud_provider instead
@@ -375,10 +375,18 @@ The following attributes are exported:
 
 #### Arguments
 
+* `nodelocal` - (Optional) Nodelocal dns config  (list Maxitem: 1)
 * `node_selector` - (Optional) Node selector key pair (map)
 * `provider` - (Optional) DNS provider. `kube-dns`, `coredns` (default), and `none` are supported (string)
 * `reverse_cidrs` - (Optional) Reverse CIDRs  (list)
 * `upstream_nameservers` - (Optional) Upstream nameservers  (list)
+
+#### `nodelocal`
+
+##### Arguments
+
+* `ip_address` - (required) Nodelocal dns ip address (string)
+* `node_selector` - (Optional) Node selector key pair (map)
 
 ### `ingress`
 

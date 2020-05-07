@@ -8,12 +8,31 @@ import (
 )
 
 var (
-	testRKEClusterDNSConf      *rancher.DNSConfig
-	testRKEClusterDNSInterface []interface{}
+	testRKEClusterDNSNodelocalConf      *rancher.Nodelocal
+	testRKEClusterDNSNodelocalInterface []interface{}
+	testRKEClusterDNSConf               *rancher.DNSConfig
+	testRKEClusterDNSInterface          []interface{}
 )
 
 func init() {
+	testRKEClusterDNSNodelocalConf = &rancher.Nodelocal{
+		NodeSelector: map[string]string{
+			"sel1": "value1",
+			"sel2": "value2",
+		},
+		IPAddress: "ip_address",
+	}
+	testRKEClusterDNSNodelocalInterface = []interface{}{
+		map[string]interface{}{
+			"node_selector": map[string]interface{}{
+				"sel1": "value1",
+				"sel2": "value2",
+			},
+			"ip_address": "ip_address",
+		},
+	}
 	testRKEClusterDNSConf = &rancher.DNSConfig{
+		Nodelocal: testRKEClusterDNSNodelocalConf,
 		NodeSelector: map[string]string{
 			"sel1": "value1",
 			"sel2": "value2",
@@ -24,6 +43,7 @@ func init() {
 	}
 	testRKEClusterDNSInterface = []interface{}{
 		map[string]interface{}{
+			"nodelocal": testRKEClusterDNSNodelocalInterface,
 			"node_selector": map[string]interface{}{
 				"sel1": "value1",
 				"sel2": "value2",
@@ -32,6 +52,27 @@ func init() {
 			"reverse_cidrs":        []interface{}{"rev1", "rev2"},
 			"upstream_nameservers": []interface{}{"up1", "up2"},
 		},
+	}
+}
+
+func TestFlattenRKEClusterDNSNodelocal(t *testing.T) {
+
+	cases := []struct {
+		Input          *rancher.Nodelocal
+		ExpectedOutput []interface{}
+	}{
+		{
+			testRKEClusterDNSNodelocalConf,
+			testRKEClusterDNSNodelocalInterface,
+		},
+	}
+
+	for _, tc := range cases {
+		output := flattenRKEClusterDNSNodelocal(tc.Input)
+		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
+			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
+				tc.ExpectedOutput, output)
+		}
 	}
 }
 
@@ -51,6 +92,27 @@ func TestFlattenRKEClusterDNS(t *testing.T) {
 		output := flattenRKEClusterDNS(tc.Input)
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
+				tc.ExpectedOutput, output)
+		}
+	}
+}
+
+func TestExpandRKEClusterDNSNodelocal(t *testing.T) {
+
+	cases := []struct {
+		Input          []interface{}
+		ExpectedOutput *rancher.Nodelocal
+	}{
+		{
+			testRKEClusterDNSNodelocalInterface,
+			testRKEClusterDNSNodelocalConf,
+		},
+	}
+
+	for _, tc := range cases {
+		output := expandRKEClusterDNSNodelocal(tc.Input)
+		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
+			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
 		}
 	}
