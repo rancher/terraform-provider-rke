@@ -1,4 +1,4 @@
-## 1.0.0 (May 6, 2020)
+## 1.0.0 (May 7, 2020)
 
 FEATURES:
 
@@ -11,6 +11,8 @@ ENHANCEMENTS:
   * `ssh_key_path` on `bastion_host` argument 
   * `audit_log` on `services.kube_api` argument
 * Add `external` as allowed value on `cloud_provider` argument
+* Add `nodelocal` argument to `dns` argument on `rke_cluster` resource
+* Updated RKE to v1.1.1
 
 BUG FIXES:
 
