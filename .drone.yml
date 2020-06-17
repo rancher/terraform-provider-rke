@@ -13,7 +13,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: build-all-binaries
-  image: golang:1.12.3
+  image: golang:1.13.12
   environment:
     CROSS: 1
   commands:
