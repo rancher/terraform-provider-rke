@@ -1,6 +1,7 @@
 package rke
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -142,7 +143,7 @@ func testAccCheckRKENodeExists(n string, nodeIPs ...string) resource.TestCheckFu
 		}
 
 		// getNodes
-		nodes, err := client.CoreV1().Nodes().List(meta_v1.ListOptions{})
+		nodes, err := client.CoreV1().Nodes().List(context.Background(), meta_v1.ListOptions{})
 		if err != nil {
 			return err
 		}
