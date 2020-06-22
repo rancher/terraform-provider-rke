@@ -1,3 +1,19 @@
+## 1.0.1 (Unreleased)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Updated go to 1.13
+* Updated RKE to v1.1.3
+* Adapt provider release to met terraform registry requirements
+
+BUG FIXES:
+
+
+
 ## 1.0.0 (May 7, 2020)
 
 FEATURES:
