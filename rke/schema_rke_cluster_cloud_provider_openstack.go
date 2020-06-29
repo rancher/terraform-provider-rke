@@ -178,6 +178,7 @@ func rkeClusterCloudProviderOpenstackFields() map[string]*schema.Schema {
 			Type:     schema.TypeList,
 			MaxItems: 1,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Resource{
 				Schema: rkeClusterCloudProviderOpenstackBlockStorageFields(),
 			},
@@ -186,6 +187,7 @@ func rkeClusterCloudProviderOpenstackFields() map[string]*schema.Schema {
 			Type:     schema.TypeList,
 			MaxItems: 1,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Resource{
 				Schema: rkeClusterCloudProviderOpenstackLoadBalancerFields(),
 			},
@@ -194,6 +196,7 @@ func rkeClusterCloudProviderOpenstackFields() map[string]*schema.Schema {
 			Type:     schema.TypeList,
 			MaxItems: 1,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Resource{
 				Schema: rkeClusterCloudProviderOpenstackMetadataFields(),
 			},
@@ -202,6 +205,7 @@ func rkeClusterCloudProviderOpenstackFields() map[string]*schema.Schema {
 			Type:     schema.TypeList,
 			MaxItems: 1,
 			Optional: true,
+			Computed: true,
 			Elem: &schema.Resource{
 				Schema: rkeClusterCloudProviderOpenstackRouteFields(),
 			},

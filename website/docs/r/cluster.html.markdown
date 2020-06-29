@@ -161,7 +161,7 @@ The following attributes are exported:
 * `address` - (Required) Address of Bastion Host (string)
 * `user` - (Required) SSH User to Bastion Host (string)
 * `port` - (Optional) SSH Port of Bastion Host. Default `22` (string)
-* `ssh_agent_auth` - (Optional) SSH Agent Auth enable. Default `false` (bool)
+* `ssh_agent_auth` - (Optional/Computed) SSH Agent Auth enable (bool)
 * `ssh_cert` - (Optional/Sensitive) SSH Certificate Key (string)
 * `ssh_cert_path` - (Optional) SSH Certificate Key Path (string)
 * `ssh_key` - (Optional/Sensitive) SSH Private Key (string)
