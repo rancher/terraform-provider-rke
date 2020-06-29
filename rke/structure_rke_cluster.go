@@ -251,7 +251,7 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 		obj.DNS = expandRKEClusterDNS(v)
 	}
 
-	if v, ok := in.Get("ignore_docker_version").(bool); ok && v {
+	if v, ok := in.Get("ignore_docker_version").(bool); ok {
 		obj.IgnoreDockerVersion = &v
 	}
 
