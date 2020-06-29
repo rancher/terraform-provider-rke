@@ -16,6 +16,7 @@ steps:
   image: golang:1.13.12
   environment:
     CROSS: 1
+    VERSION: ${DRONE_TAG}
   commands:
   - apt-get update
   - apt-get install -y xz-utils zip rsync jq curl ca-certificates

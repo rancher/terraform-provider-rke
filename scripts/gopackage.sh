@@ -2,9 +2,9 @@
 
 set -e
 
-echo "==> Packaging binaries..."
-
 source $(dirname $0)/version.sh
+
+echo "==> Packaging binaries version ${VERSION} ..."
 
 DIST=$(pwd)/dist/artifacts
 
@@ -33,7 +33,7 @@ for i in build/bin/*; do
         NAME=$(basename $i | cut -f1 -d_)
         ARCH=$(basename $i | cut -f2,3 -d_ | cut -f1 -d.)
         ARCHIVE=${NAME}_${VERSION}_${ARCH}.zip
-        echo "${ARCHIVE}"
+        echo "Packaging dist/artifacts/${VERSION}/${ARCHIVE} ..."
         zip -q $DIST/${VERSION}/${ARCHIVE}.zip *
     )
 done
