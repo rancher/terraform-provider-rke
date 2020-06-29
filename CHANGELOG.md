@@ -1,3 +1,17 @@
+## 1.0.1 (Unreleased)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+
+
+BUG FIXES:
+
+* Fix cloud_provider and bastion_host arguments to avoid false diff
+
 ## 1.0.0 (May 7, 2020)
 
 FEATURES:
