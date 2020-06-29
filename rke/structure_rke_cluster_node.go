@@ -16,7 +16,9 @@ func flattenRKEClusterNodeDrainInput(in *rancher.NodeDrainInput) []interface{} {
 	obj["delete_local_data"] = in.DeleteLocalData
 	obj["force"] = in.Force
 	obj["grace_period"] = in.GracePeriod
-	obj["ignore_daemon_sets"] = in.IgnoreDaemonSets
+	if in.IgnoreDaemonSets != nil {
+		obj["ignore_daemon_sets"] = *in.IgnoreDaemonSets
+	}
 	obj["timeout"] = in.Timeout
 
 	return []interface{}{obj}
@@ -157,7 +159,7 @@ func expandRKEClusterNodeDrainInput(p []interface{}) *rancher.NodeDrainInput {
 	}
 
 	if v, ok := in["ignore_daemon_sets"].(bool); ok {
-		obj.IgnoreDaemonSets = v
+		obj.IgnoreDaemonSets = &v
 	}
 
 	if v, ok := in["timeout"].(int); ok {

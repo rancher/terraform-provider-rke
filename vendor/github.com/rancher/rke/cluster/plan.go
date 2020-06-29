@@ -659,8 +659,15 @@ func (c *Cluster) BuildKubeProxyProcess(host *hosts.Host, prefixPath string, ser
 	Binds := []string{
 		fmt.Sprintf("%s:/etc/kubernetes:z", path.Join(prefixPath, "/etc/kubernetes")),
 		"/run:/run",
-		"/lib/modules:/lib/modules:z,ro",
 	}
+
+	BindModules := "/lib/modules:/lib/modules:z,ro"
+	if hosts.IsEnterpriseLinuxHost(host) && hosts.IsDockerSELinuxEnabled(host) && !hosts.IsEnterpriseLinuxDocker(host) {
+		// Avoid relabing on Enterprise Linux with Docker SELinux and upstream Docker
+		BindModules = "/lib/modules:/lib/modules:ro"
+	}
+	Binds = append(Binds, BindModules)
+
 	if host.DockerInfo.OSType == "windows" { // compatible with Windows
 		Binds = []string{
 			// put the execution binaries to the host

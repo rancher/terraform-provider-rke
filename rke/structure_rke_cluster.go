@@ -77,7 +77,7 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 
 	d.Set("dind", in.DinD)
 
-	d.Set("ignore_docker_version", in.IgnoreDockerVersion)
+	d.Set("ignore_docker_version", *in.IgnoreDockerVersion)
 
 	err = d.Set("ingress", flattenRKEClusterIngress(in.Ingress))
 	if err != nil {
@@ -252,7 +252,7 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 	}
 
 	if v, ok := in.Get("ignore_docker_version").(bool); ok && v {
-		obj.IgnoreDockerVersion = v
+		obj.IgnoreDockerVersion = &v
 	}
 
 	if v, ok := in.Get("ingress").([]interface{}); ok && len(v) > 0 {

@@ -28,6 +28,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	apiserverv1alpha1 "k8s.io/apiserver/pkg/apis/apiserver/v1alpha1"
@@ -627,7 +628,7 @@ func parseNodeDrainInput(clusterFile string, rkeConfig *v3.RancherKubernetesEngi
 	var update bool
 	if _, ok := nodeDrainInputMap["ignore_daemonsets"]; !ok {
 		// user hasn't provided any input, default to true
-		nodeDrainInput.IgnoreDaemonSets = DefaultNodeDrainIgnoreDaemonsets
+		nodeDrainInput.IgnoreDaemonSets = &DefaultNodeDrainIgnoreDaemonsets
 		update = true
 	}
 	if _, ok := nodeDrainInputMap["timeout"]; !ok {
@@ -970,7 +971,7 @@ func setNodeAnnotationsLabelsTaints(k8sClient *kubernetes.Clientset, host *hosts
 			logrus.Debugf("skipping syncing labels for node [%s]", node.Name)
 			return nil
 		}
-		_, err = k8sClient.CoreV1().Nodes().Update(node)
+		_, err = k8sClient.CoreV1().Nodes().Update(context.TODO(), node, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Debugf("Error syncing labels for node [%s]: %v", node.Name, err)
 			time.Sleep(5 * time.Second)

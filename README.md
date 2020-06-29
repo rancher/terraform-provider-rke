@@ -1,7 +1,7 @@
 Terraform Provider for RKE
 ==================================
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/rancher/terraform-provider-rke)](https://goreportcard.com/report/github.com/rancher/terraform-provider-rke)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rancher/terraform-provider-rke)](https://goreportcard.com/report/github.com/rancher/terraform-provider-rke) [![Build Status](https://drone-publish.rancher.io/api/badges/rancher/terraform-provider-rke/status.svg)](https://drone-publish.rancher.io/rancher/terraform-provider-rke)
 
 Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kubernetes Engine](https://github.com/rancher/rke).  
 

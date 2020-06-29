@@ -23,7 +23,7 @@ func init() {
 		DeleteLocalData:  false,
 		Force:            false,
 		GracePeriod:      -1,
-		IgnoreDaemonSets: true,
+		IgnoreDaemonSets: newTrue(),
 		Timeout:          60,
 	}
 	testRKEClusterNodeDrainInputInterface = []interface{}{

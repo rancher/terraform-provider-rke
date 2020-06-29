@@ -13,7 +13,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: build-all-binaries
-  image: golang:1.12.3
+  image: golang:1.13.12
   environment:
     CROSS: 1
   commands:
@@ -27,15 +27,25 @@ steps:
   when:
     event: tag
 
+- name: gpg_sign_release  
+  image: plugins/gpgsign
+  settings:
+    key:
+      from_secret: gpg_key
+    passphrase:
+      from_secret: gpg_passphrase
+    files:
+      - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_${DRONE_TAG}_SHA256SUMS
+    detach_sign: true
+  when:
+    event: tag
+
 - name: github_binary_prerelease
   image: plugins/github-release
   settings:
     prerelease: true
     files:
-    - build/bin/terraform-provider-rke_*
-    - dist/artifacts/latest/terraform-provider-rke-*
-    checksum:
-    - sha256
+    - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_${DRONE_TAG}_*
     api_key: 
       from_secret: github_token
   when:
@@ -47,10 +57,7 @@ steps:
   image: plugins/github-release
   settings:
     files:
-    - build/bin/terraform-provider-rke_*
-    - dist/artifacts/latest/terraform-provider-rke-*
-    checksum:
-    - sha256
+    - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_${DRONE_TAG}_*
     api_key: 
       from_secret: github_token
   when:
