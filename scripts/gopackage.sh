@@ -4,7 +4,9 @@ set -e
 
 source $(dirname $0)/version.sh
 
-echo "==> Packaging binaries version ${VERSION} ..."
+VERSION_NO_V=$(echo $VERSION | sed "s/^[v|V]//")
+
+echo "==> Packaging binaries version ${VERSION_NO_V} ..."
 
 DIST=$(pwd)/dist/artifacts
 
@@ -32,7 +34,7 @@ for i in build/bin/*; do
         cd $DIR
         NAME=$(basename $i | cut -f1 -d_)
         ARCH=$(basename $i | cut -f2,3 -d_ | cut -f1 -d.)
-        ARCHIVE=${NAME}_$(echo $VERSION | sed "s/^[v|V]//")_${ARCH}.zip
+        ARCHIVE=${NAME}_${VERSION_NO_V}_${ARCH}.zip
         echo "Packaging dist/artifacts/${VERSION}/${ARCHIVE} ..."
         zip -q $DIST/${VERSION}/${ARCHIVE} *
     )
@@ -40,6 +42,6 @@ done
 
 (
     cd $DIST/${VERSION}/
-    shasum -a 256 * > terraform-provider-rke_${VERSION}_SHA256SUMS
+    shasum -a 256 * > terraform-provider-rke_${VERSION_NO_V}_SHA256SUMS
 )
 
