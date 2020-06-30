@@ -36,7 +36,7 @@ steps:
     passphrase:
       from_secret: gpg_passphrase
     files:
-      - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_${DRONE_TAG}_SHA256SUMS
+      - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_*_SHA256SUMS
     detach_sign: true
   when:
     event: tag
@@ -46,7 +46,7 @@ steps:
   settings:
     prerelease: true
     files:
-    - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_${DRONE_TAG}_*
+    - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_*
     api_key: 
       from_secret: github_token
   when:
@@ -58,7 +58,7 @@ steps:
   image: plugins/github-release
   settings:
     files:
-    - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_${DRONE_TAG}_*
+    - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_*
     api_key: 
       from_secret: github_token
   when:
