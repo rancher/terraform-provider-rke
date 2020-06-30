@@ -38,6 +38,7 @@ steps:
     files:
       - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_*_SHA256SUMS
     detach_sign: true
+    armor: false
   when:
     event: tag
 
