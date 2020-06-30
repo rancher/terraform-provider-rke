@@ -26,13 +26,13 @@ for i in build/bin/*; do
         EXT=.exe
     fi
 
-    cp $i ${DIR}/terraform-provider-rke_v${VERSION}${EXT}
+    cp $i ${DIR}/terraform-provider-rke_${VERSION}${EXT}
 
     (
         cd $DIR
         NAME=$(basename $i | cut -f1 -d_)
         ARCH=$(basename $i | cut -f2,3 -d_ | cut -f1 -d.)
-        ARCHIVE=${NAME}_${VERSION}_${ARCH}.zip
+        ARCHIVE=${NAME}_$(echo $VERSION | sed "s/^[v|V]//")_${ARCH}.zip
         echo "Packaging dist/artifacts/${VERSION}/${ARCHIVE} ..."
         zip -q $DIST/${VERSION}/${ARCHIVE} *
     )
@@ -42,3 +42,4 @@ done
     cd $DIST/${VERSION}/
     shasum -a 256 * > terraform-provider-rke_${VERSION}_SHA256SUMS
 )
+
