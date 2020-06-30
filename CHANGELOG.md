@@ -1,4 +1,4 @@
-## 1.0.1 (June 29, 2020)
+## 1.0.1 (June 30, 2020)
 
 FEATURES:
 
@@ -12,7 +12,8 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-* Fix cloud_provider and bastion_host arguments to avoid false diff
+* Updated `cloud_provider` and `bastion_host` arguments on `rancher2_cluster` resource to fix false diff 
+* Updated `ignore_docker_version` argument on `rancher2_cluster` resource to fix provider crash 
 
 ## 1.0.0 (May 7, 2020)
 

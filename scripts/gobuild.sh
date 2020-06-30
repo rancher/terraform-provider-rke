@@ -2,9 +2,9 @@
 
 set -e
 
-echo "==> Building code binaries..."
-
 source $(dirname $0)/version.sh
+
+echo "==> Building code binaries version ${VERSION} ..."
 
 declare -A OS_ARCH_ARG
 
@@ -30,7 +30,7 @@ if [ -n "$CROSS" ]; then
             if test "$OS" = "windows"; then
                 OUTPUT_BIN="${OUTPUT_BIN}.exe"
             fi
-            echo "Building binary for $OS/$ARCH..."
+            echo "Building ${BIN_NAME}_${OS}_${ARCH} ..."
             GOARCH=$ARCH GOOS=$OS CGO_ENABLED=0 go build \
                   -ldflags="-w -X main.VERSION=$VERSION" \
                   -o ${OUTPUT_BIN} ./
