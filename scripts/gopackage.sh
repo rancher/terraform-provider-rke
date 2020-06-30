@@ -34,7 +34,7 @@ for i in build/bin/*; do
         ARCH=$(basename $i | cut -f2,3 -d_ | cut -f1 -d.)
         ARCHIVE=${NAME}_${VERSION}_${ARCH}.zip
         echo "Packaging dist/artifacts/${VERSION}/${ARCHIVE} ..."
-        zip -q $DIST/${VERSION}/${ARCHIVE}.zip *
+        zip -q $DIST/${VERSION}/${ARCHIVE} *
     )
 done
 
