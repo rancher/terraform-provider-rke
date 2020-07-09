@@ -37,8 +37,8 @@ resource "rke_cluster" "foo2" {
     ssh_key = file("~/.ssh/id_rsa")
   }
   upgrade_strategy {
-	drain = true
-	max_unavailable_worker = "20%"
+	  drain = true
+	  max_unavailable_worker = "20%"
   }
 }
 # Create a new RKE cluster using both. In case of conflict, arguments override cluster_yaml arguments
@@ -48,18 +48,35 @@ resource "rke_cluster" "foo2" {
   ignore_docker_version = true
   kubernetes_version = "<K8s_VERSION>"
   upgrade_strategy {
-	drain = true
-	max_unavailable_worker = "20%"
+	  drain = true
+	  max_unavailable_worker = "20%"
   }
 }
-# Create a new RKE cluster using both. In case of conflict, arguments override cluster_yaml arguments
-resource "rke_cluster" "foo2" {
-  cluster_yaml = file("cluster.yaml")
-  ssh_agent_auth = true
-  ignore_docker_version = true
-  kubernetes_version = "<K8s_VERSION>"
+```
+
+Restore RKE cluster. RKE cluster must be already managed by terraform and etcd snapshot must exist
+
+```hcl
+resource rke_cluster "cluster" {
+  cluster_name = "foo"
+  nodes {
+    address = "1.2.3.4"
+    user    = "ubuntu"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = file("~/.ssh/id_rsa")
+  }
+  restore {
+    restore = true
+    snapshot_name = "test.db"
+  }
+  upgrade_strategy {
+    drain = true
+    max_unavailable_worker = "20%"
+  }
 }
 ```
+
+**Note** Once the RKE cluster is restored, `rke_cluster.restore.restore` will be set to `false` to force tf diff on next apply until user set `rke_cluster.restore.restore = false` on tf file
 
 ## Argument Reference
 
