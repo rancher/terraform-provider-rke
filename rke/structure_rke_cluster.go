@@ -209,7 +209,8 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 	obj := &rancher.RancherKubernetesEngineConfig{}
 
 	if v, ok := in.Get("cluster_yaml").(string); ok && len(v) > 0 {
-		err := yamlToInterface(v, obj)
+		var err error
+		obj, err = cluster.ParseConfig(v)
 		if err != nil {
 			return "", err
 		}
@@ -311,18 +312,19 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 		obj.UpgradeStrategy = expandRKEClusterNodeUpgradeStrategy(v)
 	}
 
-	policyJSON := ""
 	if v, ok := in.Get("services").([]interface{}); ok && len(v) > 0 {
 		services, err := expandRKEClusterServices(v)
 		if err != nil {
 			return "", err
 		}
 		obj.Services = services
-		if obj.Services.KubeAPI.AuditLog != nil && obj.Services.KubeAPI.AuditLog.Configuration != nil {
-			policyJSON, err = interfaceToJSON(obj.Services.KubeAPI.AuditLog.Configuration.Policy)
-			if err != nil {
-				return "", err
-			}
+	}
+	policyJSON := ""
+	if obj.Services.KubeAPI.AuditLog != nil && obj.Services.KubeAPI.AuditLog.Configuration != nil {
+		var err error
+		policyJSON, err = interfaceToJSON(obj.Services.KubeAPI.AuditLog.Configuration.Policy)
+		if err != nil {
+			return "", err
 		}
 	}
 
