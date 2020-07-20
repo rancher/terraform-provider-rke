@@ -11,6 +11,7 @@ ENHANCEMENTS:
 BUG FIXES:
 
 * Fixed missing `nodelocal` system image custom registration
+* Updated `expandRKECluster` function to fix `rancher2_cluster` import when audit log policy is defined
 
 ## 1.0.1 (June 30, 2020)
 
