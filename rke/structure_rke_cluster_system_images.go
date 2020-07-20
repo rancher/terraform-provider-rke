@@ -39,6 +39,7 @@ func flattenRKEClusterSystemImages(in rancher.RKESystemImages) []interface{} {
 	obj["ingress_backend"] = in.IngressBackend
 	obj["metrics_server"] = in.MetricsServer
 	obj["windows_pod_infra_container"] = in.WindowsPodInfraContainer
+	obj["nodelocal"] = in.Nodelocal
 
 	return []interface{}{obj}
 }
@@ -170,6 +171,10 @@ func expandRKEClusterSystemImages(p []interface{}) rancher.RKESystemImages {
 
 	if v, ok := in["windows_pod_infra_container"].(string); ok && len(v) > 0 {
 		obj.WindowsPodInfraContainer = v
+	}
+
+	if v, ok := in["nodelocal"].(string); ok && len(v) > 0 {
+		obj.Nodelocal = v
 	}
 
 	return obj

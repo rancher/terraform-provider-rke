@@ -44,6 +44,7 @@ func init() {
 		IngressBackend:            "ingress_backend",
 		MetricsServer:             "metrics_server",
 		WindowsPodInfraContainer:  "windows_pod_infra_container",
+		Nodelocal:                 "nodelocal",
 	}
 	testRKEClusterSystemImagesInterface = []interface{}{
 		map[string]interface{}{
@@ -77,6 +78,7 @@ func init() {
 			"ingress_backend":             "ingress_backend",
 			"metrics_server":              "metrics_server",
 			"windows_pod_infra_container": "windows_pod_infra_container",
+			"nodelocal":                   "nodelocal",
 		},
 	}
 }
