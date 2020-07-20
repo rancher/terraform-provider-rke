@@ -1,3 +1,17 @@
+## 1.0.2 (Unreleased)
+
+FEATURES:
+
+* **New Feature:** Added restore feature on `rancher2_cluster` resource
+
+ENHANCEMENTS:
+
+
+
+BUG FIXES:
+
+* Fixed missing `nodelocal` system image custom registration
+
 ## 1.0.1 (June 30, 2020)
 
 FEATURES:

@@ -82,13 +82,23 @@ func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
 	if delay, ok := d.Get("delay_on_creation").(int); ok && delay > 0 {
 		time.Sleep(time.Duration(delay) * time.Second)
 	}
-	return resourceRKEClusterUpdate(d, meta)
+	if err := clusterUp(d); err != nil {
+		return meta.(*Config).saveRKEOutput(err)
+	}
+	return resourceRKEClusterRead(d, meta)
 }
 
 func resourceRKEClusterUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Info("Updating RKE cluster...")
-	if err := clusterUp(d); err != nil {
+
+	restored, err := clusterRestore(d)
+	if err != nil {
 		return meta.(*Config).saveRKEOutput(err)
+	}
+	if !restored {
+		if err := clusterUp(d); err != nil {
+			return meta.(*Config).saveRKEOutput(err)
+		}
 	}
 	return resourceRKEClusterRead(d, meta)
 }
@@ -155,6 +165,41 @@ func clusterUp(d *schema.ResourceData) error {
 	}
 
 	return nil
+}
+
+func clusterRestore(d *schema.ResourceData) (bool, error) {
+	rkeConfig, _, clusterFilePath, tempDir, err := getRKEClusterConfig(d)
+	defer removeTempDir(tempDir)
+	if err != nil {
+		return false, err
+	}
+
+	if !rkeConfig.Restore.Restore {
+		return false, nil
+	}
+	if len(rkeConfig.Restore.SnapshotName) == 0 {
+		return false, fmt.Errorf("Failed restoring cluster: snapshop_name must be provided")
+	}
+
+	// setting up the flags, dialers and context
+	flags := expandRKEClusterFlag(d, clusterFilePath)
+	dialers := hosts.DialersOptions{}
+
+	// set restore to false to force diff on next apply
+	rkeConfig.Restore.Restore = false
+	_, _, _, _, _, clusterRestoreErr := cmd.RestoreEtcdSnapshot(context.Background(), rkeConfig, dialers, flags, map[string]interface{}{}, rkeConfig.Restore.SnapshotName)
+
+	// set cluster state to resourceData
+	flattenRKEClusterFlag(d, &flags)
+	err = setRKEClusterState(d, tempDir)
+	if clusterRestoreErr != nil {
+		return false, fmt.Errorf("Failed restoring cluster err:%v", clusterRestoreErr)
+	}
+	if err != nil {
+		return false, fmt.Errorf("Failed setting cluster state err:%v", err)
+	}
+
+	return true, nil
 }
 
 func prepareDINDEnv(ctx context.Context, rkeConfig *v3.RancherKubernetesEngineConfig, dindStorageDriver, dindDNS string) error {
