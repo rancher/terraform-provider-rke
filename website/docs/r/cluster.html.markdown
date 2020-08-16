@@ -567,14 +567,14 @@ The following attributes are exported:
 
 ##### Arguments
 
-* `always_pull_images` - (Optional) Enable [AlwaysPullImages](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages) Admission controller plugin. [Rancher docs](https://rancher.com/docs/rke/latest/en/config-options/services/#kubernetes-api-server-options) Default: `false` (bool)
-* `audit_log` - (Optional) K8s audit log configuration. (list maxitem: 1)
+* `always_pull_images` - (Optional/Computed) Enable [AlwaysPullImages](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages) Admission controller plugin. [Rancher docs](https://rancher.com/docs/rke/latest/en/config-options/services/#kubernetes-api-server-options) (bool)
+* `audit_log` - (Optional/Computed) K8s audit log configuration. (list maxitem: 1)
 * `event_rate_limit` - (Optional) K8s event rate limit configuration. (list maxitem: 1)
 * `extra_args` - (Optional/Computed) Extra arguments for kube API service (map)
 * `extra_binds` - (Optional/Computed) Extra binds for kube API service (list)
 * `extra_env` - (Optional/Computed) Extra environment for kube API service (list)
 * `image` - (Optional/Computed) Docker image for kube API service (string)
-* `pod_security_policy` - (Optional) Pod Security Policy option for kube API service. Default `false` (bool)
+* `pod_security_policy` - (Optional/Computed) Pod Security Policy option for kube API service (bool)
 * `secrets_encryption_config` - (Optional) [Encrypt k8s secret data configration](https://rancher.com/docs/rke/latest/en/config-options/secrets-encryption/). (list maxitem: 1)
 * `service_cluster_ip_range` - (Optional/Computed) Service Cluster IP Range option for kube API service (string)
 * `service_node_port_range` - (Optional/Computed) Service Node Port Range option for kube API service (string)
@@ -583,31 +583,33 @@ The following attributes are exported:
 
 ###### Arguments
 
-* `configuration` - (Optional) Audit log configuration. (list maxtiem: 1)
-* `enabled` - (Optional) Enable audit log. Default: `false` (bool)
+* `configuration` - (Optional/Computed) Audit log configuration. (list maxtiem: 1)
+* `enabled` - (Optional/Computed) Enable audit log (bool)
 
 ###### `configuration`
 
 ###### Arguments
 
-* `format` - (Optional) Audit log format. Default: `json` (string)
-* `max_age` - (Optional) Audit log max age. Default: `30` (int)
-* `max_backup` - (Optional) Audit log max backup. Default: `10` (int)
-* `max_size` - (Optional) Audit log max size. Default: `100` (int)
-* `path` - (Optional) Audit log path. Default: `/var/log/kube-audit/audit-log.json` (string)
+* `format` - (Optional/Computed) Audit log format (string)
+* `max_age` - (Optional/Computed) Audit log max age (int)
+* `max_backup` - (Optional/Computed) Audit log max backup. Default: `10` (int)
+* `max_size` - (Optional/Computed) Audit log max size. Default: `100` (int)
+* `path` - (Optional/Computed) Audit log path. Default: `/var/log/kube-audit/audit-log.json` (string)
 * `policy` - (Optional/Computed) Audit policy json encoded definition. `"apiVersion"` and `"kind":"Policy","rules"` fields are required in the json. Ex. `jsonencode({"apiVersion":"audit.k8s.io/v1","kind":"Policy","rules":[{"level":"RequestResponse","resources":[{"group":"","resources":["pods"]}]}]})` [More info](https://rancher.com/docs/rke/latest/en/config-options/audit-log/) (string)
 
 ##### `event_rate_limit`
 
 ###### Arguments
 
-* `enabled` - (Optional) Enable event rate limit. Default: `false` (bool)
+* `enabled` - (Optional/Computed) Enable event rate limit (bool)
+* `configuration` - (Optional) Event rate limit yaml encoded configuration. `"apiVersion"` and `"kind":"Configuration"` fields are required in the yaml. Ex. `apiVersion: eventratelimit.admission.k8s.io/v1alpha1\nkind: Configuration\nlimits:\n- type: Server\n  burst: 30000\n  qps: 6000\n` [More info](https://rancher.com/docs/rke/latest/en/config-options/rate-limiting/) (string)
 
 ##### `secrets_encryption_config`
 
 ###### Arguments
 
-* `enabled` - (Optional) Enable secrets encryption. Default: `false` (bool)
+* `enabled` - (Optional/Computed) Enable secrets encryption (bool)
+* `custom_config` - (Optional) Secrets encryption yaml encoded custom configuration. `"apiVersion"` and `"kind":"EncryptionConfiguration"` fields are required in the yaml. Ex. `apiVersion: apiserver.config.k8s.io/v1\nkind: EncryptionConfiguration\nresources:\n- resources:\n  - secrets\n  providers:\n  - aescbc:\n      keys:\n      - name: k-fw5hn\n        secret: RTczRjFDODMwQzAyMDVBREU4NDJBMUZFNDhCNzM5N0I=\n    identity: {}\n` [More info](https://rancher.com/docs/rke/latest/en/config-options/secrets-encryption/) (string)
 
 #### `kube_controller`
 

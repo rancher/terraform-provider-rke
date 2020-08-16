@@ -5,19 +5,27 @@ import (
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
+	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
 )
 
 const (
-	clusterServicesKubeAPIAuditLogConfigPolicyApiversionTag = "apiVersion"
-	clusterServicesKubeAPIAuditLogConfigPolicyKindDefault   = "Policy"
-	clusterServicesKubeAPIAuditLogConfigPolicyKindTag       = "kind"
+	clusterServicesKubeAPIApiversionTag                      = "apiVersion"
+	clusterServicesKubeAPIKindTag                            = "kind"
+	clusterServicesKubeAPIAuditLogConfigPolicyAPIDefault     = "audit.k8s.io/v1"
+	clusterServicesKubeAPIEventRateLimitConfigAPIDefault     = "eventratelimit.admission.k8s.io/v1alpha1"
+	clusterServicesKubeAPISecretsEncryptionConfigAPIDefault  = "apiserver.config.k8s.io/v1"
+	clusterServicesKubeAPIAuditLogConfigPolicyKindDefault    = "Policy"
+	clusterServicesKubeAPIEventRateLimitConfigKindDefault    = "Configuration"
+	clusterServicesKubeAPISecretsEncryptionConfigKindDefault = "EncryptionConfiguration"
 )
 
 var (
-	clusterServicesKubeAPIAuditLogConfigPolicyRequired = []string{
-		clusterServicesKubeAPIAuditLogConfigPolicyApiversionTag,
-		clusterServicesKubeAPIAuditLogConfigPolicyKindTag}
+	clusterServicesKubeAPIRequired = []string{
+		clusterServicesKubeAPIApiversionTag,
+		clusterServicesKubeAPIKindTag,
+	}
 )
 
 //Schemas
@@ -27,27 +35,27 @@ func rkeClusterServicesKubeAPIAuditLogConfigFields() map[string]*schema.Schema {
 		"format": {
 			Type:     schema.TypeString,
 			Optional: true,
-			Default:  "json",
+			Computed: true,
 		},
 		"max_age": {
 			Type:     schema.TypeInt,
 			Optional: true,
-			Default:  30,
+			Computed: true,
 		},
 		"max_backup": {
 			Type:     schema.TypeInt,
 			Optional: true,
-			Default:  10,
+			Computed: true,
 		},
 		"max_size": {
 			Type:     schema.TypeInt,
 			Optional: true,
-			Default:  100,
+			Computed: true,
 		},
 		"path": {
 			Type:     schema.TypeString,
 			Optional: true,
-			Default:  "/var/log/kube-audit/audit-log.json",
+			Computed: true,
 		},
 		"policy": {
 			Type:     schema.TypeString,
@@ -63,12 +71,12 @@ func rkeClusterServicesKubeAPIAuditLogConfigFields() map[string]*schema.Schema {
 					errs = append(errs, fmt.Errorf("%q must be in json format, error: %v", key, err))
 					return
 				}
-				for _, k := range clusterServicesKubeAPIAuditLogConfigPolicyRequired {
+				for _, k := range clusterServicesKubeAPIRequired {
 					check, ok := m[k].(string)
 					if !ok || len(check) == 0 {
 						errs = append(errs, fmt.Errorf("%s is required on json", k))
 					}
-					if k == clusterServicesKubeAPIAuditLogConfigPolicyKindTag {
+					if k == clusterServicesKubeAPIKindTag {
 						if check != clusterServicesKubeAPIAuditLogConfigPolicyKindDefault {
 							errs = append(errs, fmt.Errorf("%s value %s should be: %s", k, check, clusterServicesKubeAPIAuditLogConfigPolicyKindDefault))
 						}
@@ -106,7 +114,7 @@ func rkeClusterServicesKubeAPIAuditLogFields() map[string]*schema.Schema {
 		"enabled": {
 			Type:     schema.TypeBool,
 			Optional: true,
-			Default:  true,
+			Computed: true,
 		},
 	}
 	return s
@@ -114,10 +122,53 @@ func rkeClusterServicesKubeAPIAuditLogFields() map[string]*schema.Schema {
 
 func rkeClusterServicesKubeAPIEventRateLimitFields() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
+		"configuration": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Computed: true,
+			ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				v, ok := val.(string)
+				if !ok || len(v) == 0 {
+					return
+				}
+				m, err := ghodssyamlToMapInterface(v)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("%q must be in yaml format, error: %v", key, err))
+					return
+				}
+				for _, k := range clusterServicesKubeAPIRequired {
+					check, ok := m[k].(string)
+					if !ok || len(check) == 0 {
+						errs = append(errs, fmt.Errorf("%s is required on yaml", k))
+					}
+					if k == clusterServicesKubeAPIKindTag {
+						if check != clusterServicesKubeAPIEventRateLimitConfigKindDefault {
+							errs = append(errs, fmt.Errorf("%s value %s should be: %s", k, check, clusterServicesKubeAPIEventRateLimitConfigKindDefault))
+						}
+					}
+
+				}
+				return
+			},
+			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				if old == "" || new == "" {
+					return false
+				}
+				oldObject := &rancher.Configuration{}
+				newObject := &rancher.Configuration{}
+				oldMap, _ := ghodssyamlToMapInterface(old)
+				newMap, _ := ghodssyamlToMapInterface(new)
+				oldStr, _ := mapInterfaceToJSON(oldMap)
+				newStr, _ := mapInterfaceToJSON(newMap)
+				jsonToInterface(oldStr, oldObject)
+				jsonToInterface(newStr, newObject)
+				return reflect.DeepEqual(oldObject, newObject)
+			},
+		},
 		"enabled": {
 			Type:     schema.TypeBool,
 			Optional: true,
-			Default:  false,
+			Computed: true,
 		},
 	}
 	return s
@@ -125,10 +176,53 @@ func rkeClusterServicesKubeAPIEventRateLimitFields() map[string]*schema.Schema {
 
 func rkeClusterServicesKubeAPISecretsEncryptionConfigFields() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
+		"custom_config": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Computed: true,
+			ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				v, ok := val.(string)
+				if !ok || len(v) == 0 {
+					return
+				}
+				m, err := ghodssyamlToMapInterface(v)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("%q must be in yaml format, error: %v", key, err))
+					return
+				}
+				for _, k := range clusterServicesKubeAPIRequired {
+					check, ok := m[k].(string)
+					if !ok || len(check) == 0 {
+						errs = append(errs, fmt.Errorf("%s is required on yaml", k))
+					}
+					if k == clusterServicesKubeAPIKindTag {
+						if check != clusterServicesKubeAPISecretsEncryptionConfigKindDefault {
+							errs = append(errs, fmt.Errorf("%s value %s should be: %s", k, check, clusterServicesKubeAPISecretsEncryptionConfigKindDefault))
+						}
+					}
+
+				}
+				return
+			},
+			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				if old == "" || new == "" {
+					return false
+				}
+				oldObject := &apiserverconfig.EncryptionConfiguration{}
+				newObject := &apiserverconfig.EncryptionConfiguration{}
+				oldMap, _ := ghodssyamlToMapInterface(old)
+				newMap, _ := ghodssyamlToMapInterface(new)
+				oldStr, _ := mapInterfaceToJSON(oldMap)
+				newStr, _ := mapInterfaceToJSON(newMap)
+				jsonToInterface(oldStr, oldObject)
+				jsonToInterface(newStr, newObject)
+				return reflect.DeepEqual(oldObject, newObject)
+			},
+		},
 		"enabled": {
 			Type:     schema.TypeBool,
 			Optional: true,
-			Default:  false,
+			Computed: true,
 		},
 	}
 	return s
@@ -139,7 +233,7 @@ func rkeClusterServicesKubeAPIFields() map[string]*schema.Schema {
 		"always_pull_images": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     false,
+			Computed:    true,
 			Description: "Enable/Disable AlwaysPullImages admissions plugin",
 		},
 		"audit_log": {
@@ -191,7 +285,7 @@ func rkeClusterServicesKubeAPIFields() map[string]*schema.Schema {
 		"pod_security_policy": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     false,
+			Computed:    true,
 			Description: "Enabled/Disable PodSecurityPolicy",
 		},
 		"secrets_encryption_config": {
