@@ -47,29 +47,60 @@ func flattenRKEClusterNodeUpgradeStrategy(in *rancher.NodeUpgradeStrategy) []int
 	return []interface{}{obj}
 }
 
-func flattenRKEClusterNodes(p []rancher.RKEConfigNode) []interface{} {
-	out := []interface{}{}
+func flattenRKEClusterNodes(input []rancher.RKEConfigNode, p []interface{}) []interface{} {
+	if input == nil || len(input) == 0 {
+		return []interface{}{}
+	}
 
-	for _, in := range p {
-		obj := make(map[string]interface{})
+	// Sorting input array by data interface
+	pIndexAddress := map[string]int{}
+	for i := range p {
+		if row, ok := p[i].(map[string]interface{}); ok {
+			if v, ok := row["address"].(string); ok {
+				pIndexAddress[v] = i
+			}
+		}
+	}
+	sortedInput := make([]rancher.RKEConfigNode, len(input))
+	newNodes := []rancher.RKEConfigNode{}
+	lastIndex := 0
+	for i := range sortedInput {
+		if v, ok := pIndexAddress[input[i].Address]; ok {
+			sortedInput[v] = input[i]
+			lastIndex++
+			continue
+		}
+		newNodes = append(newNodes, input[i])
+	}
 
-		if len(in.Address) > 0 {
-			obj["address"] = in.Address
+	for i := range newNodes {
+		sortedInput[lastIndex+i] = newNodes[i]
+	}
+
+	out := make([]interface{}, len(sortedInput))
+	for i, in := range sortedInput {
+		var obj map[string]interface{}
+		if v, ok := pIndexAddress[in.Address]; ok {
+			if row, ok := p[v].(map[string]interface{}); ok {
+				obj = row
+			}
+		}
+		if obj == nil {
+			obj = make(map[string]interface{})
 		}
 
-		if len(in.Role) > 0 {
-			obj["role"] = toArrayInterface(in.Role)
-		}
+		obj["address"] = in.Address
+		obj["role"] = toArrayInterface(in.Role)
+		obj["user"] = in.User
 
 		if len(in.DockerSocket) > 0 {
 			obj["docker_socket"] = in.DockerSocket
 		}
 
-		if len(in.HostnameOverride) > 0 {
+		if v, ok := obj["hostname_override"].(string); ok && len(v) > 0 && len(in.HostnameOverride) > 0 {
 			obj["hostname_override"] = in.HostnameOverride
 		}
-
-		if len(in.InternalAddress) > 0 {
+		if v, ok := obj["internal_address"].(string); ok && len(v) > 0 && len(in.InternalAddress) > 0 {
 			obj["internal_address"] = in.InternalAddress
 		}
 
@@ -81,37 +112,32 @@ func flattenRKEClusterNodes(p []rancher.RKEConfigNode) []interface{} {
 			obj["node_name"] = in.NodeName
 		}
 
-		if len(in.Port) > 0 {
+		if v, ok := obj["port"].(string); ok && len(v) > 0 && len(in.Port) > 0 {
 			obj["port"] = in.Port
 		}
 
 		obj["ssh_agent_auth"] = in.SSHAgentAuth
 
-		if len(in.SSHCert) > 0 {
+		if v, ok := obj["ssh_cert"].(string); ok && len(v) > 0 && len(in.SSHCert) > 0 {
 			obj["ssh_cert"] = in.SSHCert
 		}
 
-		if len(in.SSHCertPath) > 0 {
+		if v, ok := obj["ssh_cert_path"].(string); ok && len(v) > 0 && len(in.SSHCertPath) > 0 {
 			obj["ssh_cert_path"] = in.SSHCertPath
 		}
 
-		if len(in.SSHKey) > 0 {
+		if v, ok := obj["ssh_key"].(string); ok && len(v) > 0 && len(in.SSHKey) > 0 {
 			obj["ssh_key"] = in.SSHKey
 		}
-
-		if len(in.SSHKeyPath) > 0 {
+		if v, ok := obj["ssh_key_path"].(string); ok && len(v) > 0 && len(in.SSHKeyPath) > 0 {
 			obj["ssh_key_path"] = in.SSHKeyPath
-		}
-
-		if len(in.User) > 0 {
-			obj["user"] = in.User
 		}
 
 		if in.Taints != nil {
 			obj["taints"] = flattenRKEClusterTaints(in.Taints)
 		}
 
-		out = append(out, obj)
+		out[i] = obj
 	}
 
 	return out

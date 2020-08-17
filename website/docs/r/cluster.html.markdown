@@ -466,17 +466,17 @@ The following attributes are exported:
 * `address` - (Required) Address ip for node (string)
 * `role` - (Required) Node roles in k8s cluster. `controlplane`, `etcd` and `worker` are supported. (list)
 * `user` - (Required/Sensitive) SSH user that will be used by RKE (string)
-* `docker_socket` - (Optional/Computed) Docker socket on the node that will be used in tunneling (string)
-* `hostname_override` - (Optional/Computed) Hostname override for node (string)
-* `internal_address` - (Optional/Computed) Internal address that will be used for components communication (string)
+* `docker_socket` - (Optional) Docker socket on the node that will be used in tunneling (string)
+* `hostname_override` - (Optional) Hostname override for node (string)
+* `internal_address` - (Optional) Internal address that will be used for components communication (string)
 * `labels` - (Optional) Node labels (map)
 * `node_name` - (Optional) Name of the host provisioned via docker machine (string)
-* `port` - (Optional) Port used for SSH communication. Default `22` (string)
+* `port` - (Optional) Port used for SSH communication (string)
 * `ssh_agent_auth` - (Optional/Computed) SSH Agent Auth enable (bool)
-* `ssh_cert` - (Optional/Computed/Sensitive) SSH Certificate (string)
-* `ssh_cert_path` - (Optional/Computed) SSH Certificate path (string)
-* `ssh_key` - (Optional/Computed/Sensitive) SSH Private Key (string)
-* `ssh_key_path` - (Optional/Computed) SSH Private Key path (string)
+* `ssh_cert` - (Optional/Sensitive) SSH Certificate (string)
+* `ssh_cert_path` - (Optional) SSH Certificate path (string)
+* `ssh_key` - (Optional/Sensitive) SSH Private Key (string)
+* `ssh_key_path` - (Optional) SSH Private Key path (string)
 * `taints` - (Optional) Node taints (list)
 
 #### `taint`
@@ -694,20 +694,20 @@ The following attributes are exported:
 
 #### Arguments
 
-* `drain` - (Optional) RKE drain nodes. Default: `false` (bool)
+* `drain` - (Optional/Computed) RKE drain nodes (bool)
 * `drain_input` - (Optional/Computed) RKE drain node input (list Maxitems: 1)
-* `max_unavailable_controlplane` - (Optional) RKE max unavailable controlplane nodes. Default: `1` (string)
-* `max_unavailable_worker` - (Optional) RKE max unavailable worker nodes. Default: `10%` (string)
+* `max_unavailable_controlplane` - (Optional/Computed) RKE max unavailable controlplane nodes (string)
+* `max_unavailable_worker` - (Optional/Computed) RKE max unavailable worker nodes (string)
 
 #### `drain_input`
 
 ##### Arguments
 
-* `delete_local_data` - Delete RKE node local data. Default: `false` (bool)
-* `force` - Force RKE node drain. Default: `false` (bool)
-* `grace_period` - RKE node drain grace period. Default: `-1` (int)
-* `ignore_daemon_sets` - Ignore RKE daemon sets. Default: `true` (bool)
-* `timeout` - RKE node drain timeout. Default: `60` (int)
+* `delete_local_data` - (Optional/Computed) Delete RKE node local data (bool)
+* `force` - (Optional/Computed) Force RKE node drain (bool)
+* `grace_period` - (Optional/Computed) RKE node drain grace period (int)
+* `ignore_daemon_sets` - (Optional/Computed) Ignore RKE daemon sets (bool)
+* `timeout` - (Optional/Computed) RKE node drain timeout (int)
 
 ## Timeouts
 
@@ -722,6 +722,7 @@ The following attributes are exported:
 
 rke_cluster can be imported using the RKE cluster config and state files as ID in the format `<cluster_config_file>:<rke_state_file>`
 
+
 ```
-$ terraform import rke_cluster.foo <cluster_config_file>:<rke_state_file>
+$ terraform import rke_cluster.foo  &lt;cluster_config_file&gt;:&lt;rke_state_file&gt;
 ```

@@ -32,8 +32,14 @@ func resourceRKECluster() *schema.Resource {
 		},
 		Schema: rkeClusterFields(),
 		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
-			changed, changedKeys := getChangedKeys(d)
-			if changed > 0 {
+			if changedKeys := getChangedKeys(d); len(changedKeys) > 0 {
+				log.Infof("[rke_provider] rke cluster changed arguments: %v", changedKeys)
+				if log.IsLevelEnabled(log.DebugLevel) {
+					for k := range changedKeys {
+						old, new := d.GetChange(k)
+						log.Debugf("[rke_provider] %s values old: %v new: %v", k, old, new)
+					}
+				}
 				computedFields := []string{
 					"rke_state",
 					"kube_config_yaml",
@@ -443,7 +449,7 @@ func removeTempDir(tempDir string) {
 	}
 }
 
-func getChangedKeys(d *schema.ResourceDiff) (int, map[string]bool) {
+func getChangedKeys(d *schema.ResourceDiff) map[string]bool {
 	targetKeys := []string{
 		"addon_job_timeout",
 		"addons",
@@ -471,20 +477,61 @@ func getChangedKeys(d *schema.ResourceDiff) (int, map[string]bool) {
 		"system_images",
 	}
 	changedKeys := map[string]bool{}
-	changed := 0
 	for _, key := range targetKeys {
-		changedKeys[key] = d.HasChange(key)
-		if key == "services" {
+		if v := d.HasChange(key); v {
+			changedKeys[key] = v
+		}
+		if key == "services" && changedKeys[key] {
 			old, new := d.GetChange("services")
 			oldstr, _ := expandRKEClusterServices(old.([]interface{}))
 			newstr, _ := expandRKEClusterServices(new.([]interface{}))
-			changedKeys[key] = !reflect.DeepEqual(oldstr, newstr)
+			if reflect.DeepEqual(oldstr, newstr) {
+				delete(changedKeys, key)
+			}
 		}
-		if changedKeys[key] {
-			changed++
+		if key == "nodes" && changedKeys[key] {
+			old, new := d.GetChange("nodes")
+			oldInput := old.([]interface{})
+			oldInputLen := len(oldInput)
+			newInput := new.([]interface{})
+			newInputLen := len(newInput)
+			// Indexing old and new input by Address
+			oldInputIndexAddress := map[string]int{}
+			for i := range oldInput {
+				if row, ok := oldInput[i].(map[string]interface{}); ok {
+					if v, ok := row["address"].(string); ok {
+						oldInputIndexAddress[v] = i
+					}
+				}
+			}
+			// Sorting new input
+			sortedNewInput := make([]interface{}, len(newInput))
+			newRows := []interface{}{}
+			lastIndex := 0
+			for i := range newInput {
+				if row, ok := newInput[i].(map[string]interface{}); ok {
+					if address, ok := row["address"].(string); ok {
+						if v, ok := oldInputIndexAddress[address]; ok {
+							if v > i && oldInputLen > newInputLen {
+								v = v - (v - i)
+							}
+							sortedNewInput[v] = row
+							lastIndex++
+							continue
+						}
+					}
+					newRows = append(newRows, row)
+				}
+			}
+			for i := range newRows {
+				sortedNewInput[lastIndex+i] = newRows[i]
+			}
+			if reflect.DeepEqual(oldInput, sortedNewInput) {
+				delete(changedKeys, key)
+			}
 		}
 	}
-	return changed, changedKeys
+	return changedKeys
 }
 
 type stateNotFoundError struct {

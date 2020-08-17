@@ -222,6 +222,7 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MinItems:    1,
 			Optional:    true,
+			Computed:    true,
 			Description: "RKE k8s cluster nodes",
 			Elem: &schema.Resource{
 				Schema: rkeClusterNodeFields(),
