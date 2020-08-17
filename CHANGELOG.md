@@ -15,6 +15,7 @@ BUG FIXES:
 * Fixed missing `nodelocal` system image custom registration
 * Updated `expandRKECluster` function to fix `rancher2_cluster` import when audit log policy is defined
 * Fixed provider crash if `rke_cluster.dind` is not defined
+* Fixed `nodes` argument at `rke_cluster` resource to properly get updated
 
 ## 1.0.1 (June 30, 2020)
 
