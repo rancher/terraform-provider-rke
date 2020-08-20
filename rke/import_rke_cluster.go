@@ -36,6 +36,10 @@ func resourceRKEClusterImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return []*schema.ResourceData{}, fmt.Errorf("Unmarshaling RKE state yaml: %v", err)
 	}
 
+	if len(files) == 3 && files[2] == "dind" {
+		d.Set("dind", true)
+	}
+
 	d.Set("cluster_yaml", string(clusterYamlBytes))
 	d.Set("rke_state", string(clusterStateBytes))
 	d.SetId("")

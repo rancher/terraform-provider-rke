@@ -77,7 +77,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"addon_job_timeout": {
 			Type:         schema.TypeInt,
 			Optional:     true,
-			Computed:     true,
 			ValidateFunc: validation.IntBetween(1, 65535),
 			Description:  "RKE k8s cluster addon deployment timeout in seconds for status check",
 		},
@@ -98,7 +97,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster authentication configuration",
 			Elem: &schema.Resource{
 				Schema: rkeClusterAuthenticationFields(),
@@ -108,7 +106,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster authorization mode configuration",
 			Elem: &schema.Resource{
 				Schema: rkeClusterAuthorizationFields(),
@@ -135,14 +132,12 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"cluster_name": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster name used in the kube config",
 		},
 		"dns": {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster DNS Config",
 			Elem: &schema.Resource{
 				Schema: rkeClusterDNSFields(),
@@ -151,14 +146,12 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"ignore_docker_version": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Computed:    true,
 			Description: "Enable/Disable RKE k8s cluster strict docker version checking",
 		},
 		"ingress": {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster ingress controller configuration",
 			Elem: &schema.Resource{
 				Schema: rkeClusterIngressFields(),
@@ -191,7 +184,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster monitoring Config",
 			Elem: &schema.Resource{
 				Schema: rkeClusterMonitoringFields(),
@@ -201,7 +193,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster network configuration",
 			Elem: &schema.Resource{
 				Schema: rkeClusterNetworkFields(),
@@ -222,7 +213,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MinItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster nodes",
 			Elem: &schema.Resource{
 				Schema: rkeClusterNodeFields(),
@@ -232,7 +222,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"prefix_path": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s directory path",
 		},
 		"private_registries": {
@@ -247,7 +236,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster restore configuration",
 			Elem: &schema.Resource{
 				Schema: rkeClusterRestoreFields(),
@@ -266,7 +254,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Description: "RKE k8s cluster services",
 			Elem: &schema.Resource{
 				Schema: rkeClusterServicesFields(),
@@ -335,13 +322,11 @@ func rkeClusterFields() map[string]*schema.Schema {
 		"ssh_cert_path": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "SSH Certificate Path",
 		},
 		"ssh_key_path": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "SSH Private Key Path",
 		},
 		"system_images": {
@@ -358,7 +343,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 			Description: "RKE k8s cluster upgrade strategy",
 			MaxItems:    1,
 			Optional:    true,
-			Computed:    true,
 			Elem: &schema.Resource{
 				Schema: rkeClusterNodeUpgradeStrategyFields(),
 			},
