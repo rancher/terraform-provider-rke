@@ -288,6 +288,7 @@ resource rke_cluster "cluster" {
     max_unavailable_worker = "20%%"
     drain_input {
       ignore_daemon_sets = true
+      timeout = 120
     }
   }
 }
@@ -340,6 +341,7 @@ resource rke_cluster "cluster" {
     max_unavailable_worker = "20%%"
     drain_input {
       ignore_daemon_sets = true
+      timeout = 120
     }
   }
 }

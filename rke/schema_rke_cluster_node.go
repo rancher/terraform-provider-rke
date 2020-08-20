@@ -43,19 +43,16 @@ func rkeClusterNodeFields() map[string]*schema.Schema {
 		"docker_socket": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "Docker socket on the node that will be used in tunneling",
 		},
 		"hostname_override": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "Hostname override",
 		},
 		"internal_address": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "Internal address that will be used for components communication",
 		},
 		"labels": {
@@ -71,7 +68,6 @@ func rkeClusterNodeFields() map[string]*schema.Schema {
 		"port": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Default:     "22",
 			Description: "Port used for SSH communication",
 		},
 		"ssh_agent_auth": {
@@ -94,14 +90,12 @@ func rkeClusterNodeFields() map[string]*schema.Schema {
 		"ssh_key": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Sensitive:   true,
 			Description: "SSH Private Key",
 		},
 		"ssh_key_path": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
 			Description: "SSH Private Key path",
 		},
 		"taints": {
@@ -135,27 +129,27 @@ func rkeClusterNodeDrainInputFields() map[string]*schema.Schema {
 		"delete_local_data": {
 			Type:     schema.TypeBool,
 			Optional: true,
-			Default:  false,
+			Computed: true,
 		},
 		"force": {
 			Type:     schema.TypeBool,
 			Optional: true,
-			Default:  false,
+			Computed: true,
 		},
 		"grace_period": {
 			Type:     schema.TypeInt,
 			Optional: true,
-			Default:  -1,
+			Computed: true,
 		},
 		"ignore_daemon_sets": {
 			Type:     schema.TypeBool,
 			Optional: true,
-			Default:  true,
+			Computed: true,
 		},
 		"timeout": {
 			Type:         schema.TypeInt,
 			Optional:     true,
-			Default:      60,
+			Computed:     true,
 			ValidateFunc: validation.IntBetween(1, 10800),
 		},
 	}
@@ -167,7 +161,7 @@ func rkeClusterNodeUpgradeStrategyFields() map[string]*schema.Schema {
 		"drain": {
 			Type:     schema.TypeBool,
 			Optional: true,
-			Default:  false,
+			Computed: true,
 		},
 		"drain_input": {
 			Type:     schema.TypeList,
@@ -181,12 +175,12 @@ func rkeClusterNodeUpgradeStrategyFields() map[string]*schema.Schema {
 		"max_unavailable_controlplane": {
 			Type:     schema.TypeString,
 			Optional: true,
-			Default:  "1",
+			Computed: true,
 		},
 		"max_unavailable_worker": {
 			Type:     schema.TypeString,
 			Optional: true,
-			Default:  "10%",
+			Computed: true,
 		},
 	}
 	return s

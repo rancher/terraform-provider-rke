@@ -5,10 +5,7 @@ import (
 )
 
 const (
-	rkeClusterCloudProviderOpenstackLBMonitorDelay      = "60s"
-	rkeClusterCloudProviderOpenstackLBMonitorMaxRetries = 5
-	rkeClusterCloudProviderOpenstackLBMonitorTimeout    = "30s"
-	rkeClusterCloudProviderOpenstackName                = "openstack"
+	rkeClusterCloudProviderOpenstackName = "openstack"
 )
 
 //Schemas
@@ -116,17 +113,14 @@ func rkeClusterCloudProviderOpenstackLoadBalancerFields() map[string]*schema.Sch
 		"monitor_delay": {
 			Type:     schema.TypeString,
 			Optional: true,
-			Default:  rkeClusterCloudProviderOpenstackLBMonitorDelay,
 		},
 		"monitor_max_retries": {
 			Type:     schema.TypeInt,
 			Optional: true,
-			Default:  rkeClusterCloudProviderOpenstackLBMonitorMaxRetries,
 		},
 		"monitor_timeout": {
 			Type:     schema.TypeString,
 			Optional: true,
-			Default:  rkeClusterCloudProviderOpenstackLBMonitorTimeout,
 		},
 		"subnet_id": {
 			Type:     schema.TypeString,

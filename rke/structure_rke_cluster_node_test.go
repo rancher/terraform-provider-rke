@@ -164,7 +164,7 @@ func TestFlattenRKEClusterNodes(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterNodes(tc.Input)
+		output := flattenRKEClusterNodes(tc.Input, tc.ExpectedOutput)
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)

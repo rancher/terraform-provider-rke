@@ -100,7 +100,8 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 	}
 
 	if v, ok := d.Get("nodes").([]interface{}); in.Nodes != nil && !in.DinD && ok && len(v) > 0 {
-		err := d.Set("nodes", flattenRKEClusterNodes(in.Nodes))
+		nodes := flattenRKEClusterNodes(in.Nodes, v)
+		err := d.Set("nodes", nodes)
 		if err != nil {
 			return err
 		}
