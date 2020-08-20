@@ -7,6 +7,7 @@ import (
 	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
+	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
 )
 
 var (
@@ -44,8 +45,8 @@ func init() {
 		},
 	}
 	testRKEClusterServicesKubeAPIAuditLogConfigConf.Policy.TypeMeta = metav1.TypeMeta{
-		Kind:       "Policy",
-		APIVersion: "audit.k8s.io/v1",
+		Kind:       clusterServicesKubeAPIAuditLogConfigPolicyKindDefault,
+		APIVersion: clusterServicesKubeAPIAuditLogConfigPolicyAPIDefault,
 	}
 	testRKEClusterServicesKubeAPIAuditLogConfigInterface = []interface{}{
 		map[string]interface{}{
@@ -54,7 +55,7 @@ func init() {
 			"max_backup": 10,
 			"max_size":   100,
 			"path":       "path",
-			"policy":     `{"apiVersion":"audit.k8s.io/v1","kind":"Policy","metadata":{"creationTimestamp":null},"rules":[{"level":"RequestResponse","resources":[{"group":"*","resources":["pods"]}]}]}`,
+			"policy":     `{"apiVersion":"` + clusterServicesKubeAPIAuditLogConfigPolicyAPIDefault + `","kind":"` + clusterServicesKubeAPIAuditLogConfigPolicyKindDefault + `","metadata":{"creationTimestamp":null},"rules":[{"level":"RequestResponse","resources":[{"group":"*","resources":["pods"]}]}]}`,
 		},
 	}
 	testRKEClusterServicesKubeAPIAuditLogConf = &rancher.AuditLog{
@@ -69,18 +70,57 @@ func init() {
 	}
 	testRKEClusterServicesKubeAPIEventRateLimitConf = &rancher.EventRateLimit{
 		Enabled: true,
+		Configuration: &rancher.Configuration{
+			Limits: []rancher.Limit{
+				{
+					Type:  "Server",
+					Burst: 30000,
+					QPS:   6000,
+				},
+			},
+		},
+	}
+	testRKEClusterServicesKubeAPIEventRateLimitConf.Configuration.TypeMeta = metav1.TypeMeta{
+		Kind:       clusterServicesKubeAPIEventRateLimitConfigKindDefault,
+		APIVersion: clusterServicesKubeAPIEventRateLimitConfigAPIDefault,
 	}
 	testRKEClusterServicesKubeAPIEventRateLimitInterface = []interface{}{
 		map[string]interface{}{
-			"enabled": true,
+			"enabled":       true,
+			"configuration": "apiVersion: " + clusterServicesKubeAPIEventRateLimitConfigAPIDefault + "\nkind: " + clusterServicesKubeAPIEventRateLimitConfigKindDefault + "\nlimits:\n- type: Server\n  burst: 30000\n  qps: 6000\n",
 		},
 	}
 	testRKEClusterServicesKubeAPISecretsEncryptionConfigConf = &rancher.SecretsEncryptionConfig{
 		Enabled: true,
+		CustomConfig: &apiserverconfig.EncryptionConfiguration{
+			Resources: []apiserverconfig.ResourceConfiguration{
+				{
+					Resources: []string{"secrets"},
+					Providers: []apiserverconfig.ProviderConfiguration{
+						{
+							AESCBC: &apiserverconfig.AESConfiguration{
+								Keys: []apiserverconfig.Key{
+									{
+										Name:   "k-fw5hn",
+										Secret: "RTczRjFDODMwQzAyMDVBREU4NDJBMUZFNDhCNzM5N0I=",
+									},
+								},
+							},
+							Identity: &apiserverconfig.IdentityConfiguration{},
+						},
+					},
+				},
+			},
+		},
+	}
+	testRKEClusterServicesKubeAPISecretsEncryptionConfigConf.CustomConfig.TypeMeta = metav1.TypeMeta{
+		Kind:       clusterServicesKubeAPISecretsEncryptionConfigKindDefault,
+		APIVersion: clusterServicesKubeAPISecretsEncryptionConfigAPIDefault,
 	}
 	testRKEClusterServicesKubeAPISecretsEncryptionConfigInterface = []interface{}{
 		map[string]interface{}{
-			"enabled": true,
+			"enabled":       true,
+			"custom_config": "apiVersion: " + clusterServicesKubeAPISecretsEncryptionConfigAPIDefault + "\nkind: " + clusterServicesKubeAPISecretsEncryptionConfigKindDefault + "\nresources:\n- resources:\n  - secrets\n  providers:\n  - aescbc:\n      keys:\n      - name: k-fw5hn\n        secret: RTczRjFDODMwQzAyMDVBREU4NDJBMUZFNDhCNzM5N0I=\n    identity: {}\n",
 		},
 	}
 	testRKEClusterServicesKubeAPIConf = rancher.KubeAPIService{
@@ -180,8 +220,17 @@ func TestFlattenRKEClusterServicesKubeAPIEventRateLimit(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterServicesKubeAPIEventRateLimit(tc.Input)
-		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
+		output, err := flattenRKEClusterServicesKubeAPIEventRateLimit(tc.Input)
+		if err != nil {
+			t.Fatalf("Error on flattenRKEClusterServicesKubeAPIEventRateLimit: %#v", err)
+		}
+		outputObject := &rancher.Configuration{}
+		expectedObject := &rancher.Configuration{}
+		outputStr, _ := mapInterfaceToJSON(output[0].(map[string]interface{}))
+		expectedStr, _ := mapInterfaceToJSON(tc.ExpectedOutput[0].(map[string]interface{}))
+		jsonToInterface(outputStr, outputObject)
+		jsonToInterface(expectedStr, expectedObject)
+		if !reflect.DeepEqual(outputObject, expectedObject) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
 		}
@@ -201,8 +250,17 @@ func TestFlattenRKEClusterServicesKubeAPISecretsEncryptionConfig(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(tc.Input)
-		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
+		output, err := flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(tc.Input)
+		if err != nil {
+			t.Fatalf("Error on flattenRKEClusterServicesKubeAPISecretsEncryptionConfig: %#v", err)
+		}
+		outputObject := &apiserverconfig.EncryptionConfiguration{}
+		expectedObject := &apiserverconfig.EncryptionConfiguration{}
+		outputStr, _ := mapInterfaceToJSON(output[0].(map[string]interface{}))
+		expectedStr, _ := mapInterfaceToJSON(tc.ExpectedOutput[0].(map[string]interface{}))
+		jsonToInterface(outputStr, outputObject)
+		jsonToInterface(expectedStr, expectedObject)
+		if !reflect.DeepEqual(outputObject, expectedObject) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
 		}
@@ -226,7 +284,13 @@ func TestFlattenRKEClusterServicesKubeAPI(t *testing.T) {
 		if err != nil {
 			t.Fatalf("[ERROR] on flattener: %#v", err)
 		}
-		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
+		outputObject := &rancher.KubeAPIService{}
+		expectedObject := &rancher.KubeAPIService{}
+		outputStr, _ := mapInterfaceToJSON(output[0].(map[string]interface{}))
+		expectedStr, _ := mapInterfaceToJSON(tc.ExpectedOutput[0].(map[string]interface{}))
+		jsonToInterface(outputStr, outputObject)
+		jsonToInterface(expectedStr, expectedObject)
+		if !reflect.DeepEqual(outputObject, expectedObject) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
 		}
@@ -294,7 +358,11 @@ func TestExpandRKEClusterServicesKubeAPIEventRateLimit(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := expandRKEClusterServicesKubeAPIEventRateLimit(tc.Input)
+		output, err := expandRKEClusterServicesKubeAPIEventRateLimit(tc.Input)
+		if err != nil {
+			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
+				tc.ExpectedOutput, output)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
@@ -315,10 +383,13 @@ func TestExpandRKEClusterServicesKubeAPISecretsEncryptionConfig(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := expandRKEClusterServicesKubeAPISecretsEncryptionConfig(tc.Input)
+		output, err := expandRKEClusterServicesKubeAPISecretsEncryptionConfig(tc.Input)
+		if err != nil {
+			t.Fatalf("[ERROR] on expander: %#v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
-				tc.ExpectedOutput, output)
+				tc.ExpectedOutput.CustomConfig, output.CustomConfig)
 		}
 	}
 }

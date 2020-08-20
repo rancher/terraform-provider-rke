@@ -260,9 +260,35 @@ resource rke_cluster "cluster" {
       bar = "bar"
     }
   }
+  services {
+    kube_api {
+      audit_log {
+        enabled = true
+        configuration {
+          max_age = 5
+          max_backup = 5
+          max_size = 100
+          path = "-"
+          format = "json"
+          policy = "{\"apiVersion\":\"audit.k8s.io/v1\",\"kind\":\"Policy\",\"metadata\":{\"creationTimestamp\":null},\"rules\":[{\"level\":\"RequestResponse\",\"resources\":[{\"group\":\"\",\"resources\":[\"pods\"]}]}]}"
+        }
+      }
+      event_rate_limit {
+        configuration = "apiVersion: eventratelimit.admission.k8s.io/v1alpha1\nkind: Configuration\nlimits:\n- type: Server\n  burst: 35000\n  qps: 6000\n"
+        enabled = true
+      }
+      secrets_encryption_config {
+        custom_config = "apiVersion: apiserver.config.k8s.io/v1\nkind: EncryptionConfiguration\nresources:\n- providers:\n  - aescbc:\n      keys:\n      - name: k-gt6hv\n        secret: RTczRjFDODMwQzAyMDVBREU4NDJBMUZFNDhCNzM5N0I=\n  - identity: {}\n  resources:\n  - secrets\n"
+        enabled = true
+      }
+    }
+  }
   upgrade_strategy {
     drain = true
     max_unavailable_worker = "20%%"
+    drain_input {
+      ignore_daemon_sets = true
+    }
   }
 }
 `, testAccRKEClusterNodes[0])
@@ -286,9 +312,35 @@ resource rke_cluster "cluster" {
     user    = "docker"
     role    = ["worker"]
   }
+  services {
+    kube_api {
+      audit_log {
+        enabled = true
+        configuration {
+          max_age = 5
+          max_backup = 5
+          max_size = 100
+          path = "-"
+          format = "json"
+          policy = "{\"apiVersion\":\"audit.k8s.io/v1\",\"kind\":\"Policy\",\"metadata\":{\"creationTimestamp\":null},\"rules\":[{\"level\":\"RequestResponse\",\"resources\":[{\"group\":\"\",\"resources\":[\"pods\"]}]}]}"
+        }
+      }
+      event_rate_limit {
+        configuration = "apiVersion: eventratelimit.admission.k8s.io/v1alpha1\nkind: Configuration\nlimits:\n- type: Server\n  burst: 35000\n  qps: 6000\n"
+        enabled = true
+      }
+      secrets_encryption_config {
+        custom_config = "apiVersion: apiserver.config.k8s.io/v1\nkind: EncryptionConfiguration\nresources:\n- providers:\n  - aescbc:\n      keys:\n      - name: k-gt6hv\n        secret: RTczRjFDODMwQzAyMDVBREU4NDJBMUZFNDhCNzM5N0I=\n  - identity: {}\n  resources:\n  - secrets\n"
+        enabled = true
+      }
+    }
+  }
   upgrade_strategy {
     drain = true
     max_unavailable_worker = "20%%"
+    drain_input {
+      ignore_daemon_sets = true
+    }
   }
 }
 `, testAccRKEClusterNodes[0], testAccRKEClusterNodes[1])

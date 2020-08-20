@@ -1,4 +1,4 @@
-## 1.0.2 (Unreleased)
+## 1.1.0 (Unreleased)
 
 FEATURES:
 
@@ -6,12 +6,15 @@ FEATURES:
 
 ENHANCEMENTS:
 
-
+* Updated RKE to v1.1.4
+* Added support to `rke_cluster.services.kube_api.event_rate_limit.configuration`
+* Added support to `rke_cluster.services.kube_api.secrets_encryption_config.custom_config`
 
 BUG FIXES:
 
 * Fixed missing `nodelocal` system image custom registration
 * Updated `expandRKECluster` function to fix `rancher2_cluster` import when audit log policy is defined
+* Fixed provider crash if `rke_cluster.dind` is not defined
 
 ## 1.0.1 (June 30, 2020)
 

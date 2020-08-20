@@ -5,9 +5,12 @@ import (
 	"fmt"
 
 	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
+	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
+	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 )
 
 // Flatteners
@@ -57,26 +60,71 @@ func flattenRKEClusterServicesKubeAPIAuditLog(in *rancher.AuditLog) ([]interface
 	return []interface{}{obj}, nil
 }
 
-func flattenRKEClusterServicesKubeAPIEventRateLimit(in *rancher.EventRateLimit) []interface{} {
+func flattenRKEClusterServicesKubeAPIEventRateLimit(in *rancher.EventRateLimit) ([]interface{}, error) {
 	obj := make(map[string]interface{})
 	if in == nil {
-		return []interface{}{}
+		return []interface{}{}, nil
 	}
 
 	obj["enabled"] = in.Enabled
 
-	return []interface{}{obj}
+	if in.Configuration != nil {
+		if len(in.Configuration.TypeMeta.Kind) == 0 {
+			in.Configuration.TypeMeta.Kind = clusterServicesKubeAPIEventRateLimitConfigKindDefault
+
+		}
+		if len(in.Configuration.TypeMeta.APIVersion) == 0 {
+			in.Configuration.TypeMeta.APIVersion = clusterServicesKubeAPIEventRateLimitConfigAPIDefault
+		}
+		configMap, err := interfaceToMap(in.Configuration)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("Mashalling configuration map: %v", err)
+		}
+		configStr, err := interfaceToGhodssyaml(configMap)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("Mashalling configuration yaml: %v", err)
+		}
+		obj["configuration"] = configStr
+	}
+
+	return []interface{}{obj}, nil
 }
 
-func flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in *rancher.SecretsEncryptionConfig) []interface{} {
+func flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in *rancher.SecretsEncryptionConfig) ([]interface{}, error) {
 	obj := make(map[string]interface{})
 	if in == nil {
-		return []interface{}{}
+		return []interface{}{}, nil
 	}
 
 	obj["enabled"] = in.Enabled
 
-	return []interface{}{obj}
+	if in.CustomConfig != nil {
+		customConfigV1Str, err := interfaceToGhodssyaml(in.CustomConfig)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("Mashalling custom_config yaml: %v", err)
+		}
+		customConfigV1 := &apiserverconfigv1.EncryptionConfiguration{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       clusterServicesKubeAPISecretsEncryptionConfigKindDefault,
+				APIVersion: clusterServicesKubeAPISecretsEncryptionConfigAPIDefault,
+			},
+		}
+		err = ghodssyamlToInterface(customConfigV1Str, customConfigV1)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("Unmashalling custom_config yaml: %v", err)
+		}
+		configMap, _ := interfaceToMap(customConfigV1)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("Mashalling custom_config map: %v", err)
+		}
+		configStr, err := interfaceToGhodssyaml(configMap)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("Mashalling custom_config yaml: %v", err)
+		}
+		obj["custom_config"] = configStr
+	}
+
+	return []interface{}{obj}, nil
 }
 
 func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{}, error) {
@@ -93,7 +141,11 @@ func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{},
 	}
 
 	if in.EventRateLimit != nil {
-		obj["event_rate_limit"] = flattenRKEClusterServicesKubeAPIEventRateLimit(in.EventRateLimit)
+		eventRate, err := flattenRKEClusterServicesKubeAPIEventRateLimit(in.EventRateLimit)
+		if err != nil {
+			return []interface{}{}, err
+		}
+		obj["event_rate_limit"] = eventRate
 	}
 
 	if len(in.ExtraArgs) > 0 {
@@ -115,7 +167,11 @@ func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{},
 	obj["pod_security_policy"] = in.PodSecurityPolicy
 
 	if in.SecretsEncryptionConfig != nil {
-		obj["secrets_encryption_config"] = flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in.SecretsEncryptionConfig)
+		secretEnc, err := flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in.SecretsEncryptionConfig)
+		if err != nil {
+			return []interface{}{}, err
+		}
+		obj["secrets_encryption_config"] = secretEnc
 	}
 
 	if len(in.ServiceClusterIPRange) > 0 {
@@ -208,10 +264,10 @@ func expandRKEClusterServicesKubeAPIAuditLog(p []interface{}) (*rancher.AuditLog
 	return obj, nil
 }
 
-func expandRKEClusterServicesKubeAPIEventRateLimit(p []interface{}) *rancher.EventRateLimit {
+func expandRKEClusterServicesKubeAPIEventRateLimit(p []interface{}) (*rancher.EventRateLimit, error) {
 	obj := &rancher.EventRateLimit{}
 	if p == nil || len(p) == 0 || p[0] == nil {
-		return nil
+		return nil, nil
 	}
 	in := p[0].(map[string]interface{})
 
@@ -219,13 +275,30 @@ func expandRKEClusterServicesKubeAPIEventRateLimit(p []interface{}) *rancher.Eve
 		obj.Enabled = v
 	}
 
-	return obj
+	if v, ok := in["configuration"].(string); ok && len(v) > 0 {
+		configMap, err := ghodssyamlToMapInterface(v)
+		if err != nil {
+			return obj, fmt.Errorf("Unmashalling configuration yaml: %v", err)
+		}
+		configStr, err := mapInterfaceToJSON(configMap)
+		if err != nil {
+			return obj, fmt.Errorf("Mashalling custom_config json: %v", err)
+		}
+		newConfig := &rancher.Configuration{}
+		err = jsonToInterface(configStr, newConfig)
+		if err != nil {
+			return obj, fmt.Errorf("Unmashsalling EncryptionConfiguration json:\n%s", v)
+		}
+		obj.Configuration = newConfig
+	}
+
+	return obj, nil
 }
 
-func expandRKEClusterServicesKubeAPISecretsEncryptionConfig(p []interface{}) *rancher.SecretsEncryptionConfig {
+func expandRKEClusterServicesKubeAPISecretsEncryptionConfig(p []interface{}) (*rancher.SecretsEncryptionConfig, error) {
 	obj := &rancher.SecretsEncryptionConfig{}
 	if p == nil || len(p) == 0 || p[0] == nil {
-		return nil
+		return nil, nil
 	}
 	in := p[0].(map[string]interface{})
 
@@ -233,7 +306,33 @@ func expandRKEClusterServicesKubeAPISecretsEncryptionConfig(p []interface{}) *ra
 		obj.Enabled = v
 	}
 
-	return obj
+	if v, ok := in["custom_config"].(string); ok && len(v) > 0 {
+		configMap, err := ghodssyamlToMapInterface(v)
+		if err != nil {
+			return obj, fmt.Errorf("Unmashalling custom_config yaml: %v", err)
+		}
+		configStr, err := mapInterfaceToJSON(configMap)
+		if err != nil {
+			return obj, fmt.Errorf("Mashalling custom_config json: %v", err)
+		}
+		newConfigV1 := &apiserverconfigv1.EncryptionConfiguration{}
+		err = jsonToInterface(configStr, newConfigV1)
+		if err != nil {
+			return obj, fmt.Errorf("Unmashalling EncryptionConfiguration json: %v", err)
+		}
+		customConfigV1Str, err := interfaceToGhodssyaml(newConfigV1)
+		if err != nil {
+			return obj, fmt.Errorf("Mashalling custom_config yaml: %v", err)
+		}
+		newConfig := &apiserverconfig.EncryptionConfiguration{}
+		err = ghodssyamlToInterface(customConfigV1Str, newConfig)
+		if err != nil {
+			return obj, fmt.Errorf("Unmashalling custom_config yaml: %v", err)
+		}
+		obj.CustomConfig = newConfig
+	}
+
+	return obj, nil
 }
 
 func expandRKEClusterServicesKubeAPI(p []interface{}) (rancher.KubeAPIService, error) {
@@ -256,7 +355,11 @@ func expandRKEClusterServicesKubeAPI(p []interface{}) (rancher.KubeAPIService, e
 	}
 
 	if v, ok := in["event_rate_limit"].([]interface{}); ok && len(v) > 0 {
-		obj.EventRateLimit = expandRKEClusterServicesKubeAPIEventRateLimit(v)
+		eventRate, err := expandRKEClusterServicesKubeAPIEventRateLimit(v)
+		if err != nil {
+			return obj, err
+		}
+		obj.EventRateLimit = eventRate
 	}
 
 	if v, ok := in["extra_args"].(map[string]interface{}); ok && len(v) > 0 {
@@ -280,7 +383,11 @@ func expandRKEClusterServicesKubeAPI(p []interface{}) (rancher.KubeAPIService, e
 	}
 
 	if v, ok := in["secrets_encryption_config"].([]interface{}); ok && len(v) > 0 {
-		obj.SecretsEncryptionConfig = expandRKEClusterServicesKubeAPISecretsEncryptionConfig(v)
+		secretEnc, err := expandRKEClusterServicesKubeAPISecretsEncryptionConfig(v)
+		if err != nil {
+			return obj, err
+		}
+		obj.SecretsEncryptionConfig = secretEnc
 	}
 
 	if v, ok := in["service_cluster_ip_range"].(string); ok && len(v) > 0 {

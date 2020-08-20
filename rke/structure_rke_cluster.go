@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/rancher/rke/cluster"
 	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
+	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 )
 
 // Flatteners
@@ -201,9 +202,9 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 
 // Expanders
 
-func expandRKECluster(in *schema.ResourceData) (string, error) {
+func expandRKECluster(in *schema.ResourceData) (string, *rancher.RancherKubernetesEngineConfig, error) {
 	if in == nil {
-		return "", nil
+		return "", nil, nil
 	}
 
 	obj := &rancher.RancherKubernetesEngineConfig{}
@@ -212,7 +213,7 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 		var err error
 		obj, err = cluster.ParseConfig(v)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 	}
 
@@ -315,17 +316,9 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 	if v, ok := in.Get("services").([]interface{}); ok && len(v) > 0 {
 		services, err := expandRKEClusterServices(v)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		obj.Services = services
-	}
-	policyJSON := ""
-	if obj.Services.KubeAPI.AuditLog != nil && obj.Services.KubeAPI.AuditLog.Configuration != nil {
-		var err error
-		policyJSON, err = interfaceToJSON(obj.Services.KubeAPI.AuditLog.Configuration.Policy)
-		if err != nil {
-			return "", err
-		}
 	}
 
 	if v, ok := in.Get("dind").(bool); ok && v {
@@ -335,43 +328,96 @@ func expandRKECluster(in *schema.ResourceData) (string, error) {
 		obj.Services.Kubeproxy.ExtraArgs["conntrack-max-per-core"] = "0"
 	}
 
-	objYml, err := interfaceToYaml(obj)
+	objYml, err := patchRKEClusterYaml(in, obj)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed to patch RKE cluster yaml: %v", err)
+	}
+
+	return objYml, obj, nil
+}
+
+// patchRKEClusterYaml is needed due to auditv1.Policy{} doesn't provide yaml tags
+func patchRKEClusterYaml(d *schema.ResourceData, in *rancher.RancherKubernetesEngineConfig) (string, error) {
+	outFixed := make(map[string]interface{})
+	if in.Services.KubeAPI.AuditLog != nil && in.Services.KubeAPI.AuditLog.Configuration != nil {
+		inJSON, err := interfaceToJSON(in.Services.KubeAPI.AuditLog.Configuration.Policy)
+		if err != nil {
+			return "", err
+		}
+		if len(inJSON) > 0 {
+			outFixed["audit_log"], err = jsonToMapInterface(inJSON)
+			if err != nil {
+				return "", fmt.Errorf("ummarshalling auditlog json: %s", err)
+			}
+		}
+	}
+	if in.Services.KubeAPI.EventRateLimit != nil && in.Services.KubeAPI.EventRateLimit.Configuration != nil {
+		inJSON, err := interfaceToJSON(in.Services.KubeAPI.EventRateLimit.Configuration)
+		if err != nil {
+			return "", err
+		}
+		if len(inJSON) > 0 {
+			outFixed["event_rate_limit"], err = jsonToMapInterface(inJSON)
+			if err != nil {
+				return "", fmt.Errorf("ummarshalling event_rate_limit json: %s", err)
+			}
+		}
+	}
+	if in.Services.KubeAPI.SecretsEncryptionConfig != nil && in.Services.KubeAPI.SecretsEncryptionConfig.CustomConfig != nil {
+		customConfigV1Str, err := interfaceToGhodssyaml(in.Services.KubeAPI.SecretsEncryptionConfig.CustomConfig)
+		if err != nil {
+			return "", fmt.Errorf("Mashalling custom_config yaml: %v", err)
+		}
+		customConfigV1 := &apiserverconfigv1.EncryptionConfiguration{}
+		err = ghodssyamlToInterface(customConfigV1Str, customConfigV1)
+		if err != nil {
+			return "", fmt.Errorf("Unmashalling custom_config yaml: %v", err)
+		}
+		inJSON, err := interfaceToJSON(customConfigV1)
+		if err != nil {
+			return "", err
+		}
+		if len(inJSON) > 0 {
+			outFixed["secrets_encryption_config"], err = jsonToMapInterface(inJSON)
+			if err != nil {
+				return "", fmt.Errorf("ummarshalling eventrate json: %s", err)
+			}
+		}
+	}
+
+	outYml, err := interfaceToYaml(in)
 	if err != nil {
 		return "", fmt.Errorf("Failed to marshal yaml RKE cluster: %v", err)
 	}
 
-	objFixed, err := patchRKEClusterYaml(objYml, policyJSON)
-	if err != nil {
-		return "", fmt.Errorf("Failed to patch RKE cluster yaml: %v", err)
-	}
-
-	return objFixed, nil
-}
-
-// patchRKEClusterYaml is needed due to auditv1.Policy{} doesn't provide yaml tags
-func patchRKEClusterYaml(str, policyJSON string) (string, error) {
-	if len(policyJSON) == 0 {
-		return str, nil
-	}
-
-	fixedPolicy := make(map[string]interface{})
-	err := jsonToInterface(policyJSON, &fixedPolicy)
-	if err != nil {
-		return "", fmt.Errorf("ummarshalling policy json: %s", err)
+	if len(outFixed) == 0 {
+		return outYml, nil
 	}
 
 	out := make(map[string]interface{})
-	err = ghodssyamlToInterface(str, &out)
+	err = ghodssyamlToInterface(outYml, &out)
 	if err != nil {
 		return "", fmt.Errorf("ummarshalling RKE cluster yaml: %s", err)
 	}
 
 	if services, ok := out["services"].(map[string]interface{}); ok {
 		if kubeapi, ok := services["kube-api"].(map[string]interface{}); ok {
-			if auditlog, ok := kubeapi["audit_log"].(map[string]interface{}); ok {
+			if auditlog, ok := kubeapi["audit_log"].(map[string]interface{}); ok && outFixed["audit_log"] != nil {
 				if _, ok := auditlog["configuration"].(map[string]interface{}); ok {
-					out["services"].(map[string]interface{})["kube-api"].(map[string]interface{})["audit_log"].(map[string]interface{})["configuration"].(map[string]interface{})["policy"] = fixedPolicy
+					out["services"].(map[string]interface{})["kube-api"].(map[string]interface{})["audit_log"].(map[string]interface{})["configuration"].(map[string]interface{})["policy"] = outFixed["audit_log"]
 				}
+			}
+			if _, ok := kubeapi["event_rate_limit"].(map[string]interface{}); ok && outFixed["event_rate_limit"] != nil {
+				out["services"].(map[string]interface{})["kube-api"].(map[string]interface{})["event_rate_limit"].(map[string]interface{})["configuration"] = outFixed["event_rate_limit"]
+			}
+			if _, ok := kubeapi["secrets_encryption_config"].(map[string]interface{}); ok && outFixed["secrets_encryption_config"] != nil {
+				secretEncryption := map[string]interface{}{}
+				if dataServices, ok := d.Get("services").([]interface{}); ok && len(dataServices) > 0 {
+					if secretEncryptionStr, ok := dataServices[0].(map[string]interface{})["kube_api"].([]interface{})[0].(map[string]interface{})["secrets_encryption_config"].([]interface{})[0].(map[string]interface{})["custom_config"].(string); ok {
+						secretEncryption, _ = ghodssyamlToMapInterface(secretEncryptionStr)
+					}
+				}
+				out["services"].(map[string]interface{})["kube-api"].(map[string]interface{})["secrets_encryption_config"].(map[string]interface{})["custom_config"] = secretEncryption
 			}
 		}
 	}

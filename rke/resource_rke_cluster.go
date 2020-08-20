@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -109,6 +110,7 @@ func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return meta.(*Config).saveRKEOutput(err)
 	}
+
 	return meta.(*Config).saveRKEOutput(flattenRKECluster(d, currentCluster))
 }
 
@@ -245,7 +247,7 @@ func clusterDelete(d *schema.ResourceData) error {
 }
 
 func getRKEClusterConfig(d *schema.ResourceData) (*v3.RancherKubernetesEngineConfig, string, string, string, error) {
-	rkeClusterYaml, err := expandRKECluster(d)
+	rkeClusterYaml, _, err := expandRKECluster(d)
 	if err != nil {
 		return nil, "", "", "", err
 	}
@@ -253,6 +255,15 @@ func getRKEClusterConfig(d *schema.ResourceData) (*v3.RancherKubernetesEngineCon
 	rkeConfig, err := cluster.ParseConfig(rkeClusterYaml)
 	if err != nil {
 		return nil, "", "", "", fmt.Errorf("Failed to parse cluster config: %v\n%s", err, rkeClusterYaml)
+	}
+
+	if rkeConfig.Services.KubeAPI.EventRateLimit != nil && rkeConfig.Services.KubeAPI.EventRateLimit.Configuration != nil {
+		if len(rkeConfig.Services.KubeAPI.EventRateLimit.Configuration.TypeMeta.Kind) == 0 {
+			rkeConfig.Services.KubeAPI.EventRateLimit.Configuration.TypeMeta.Kind = clusterServicesKubeAPIEventRateLimitConfigKindDefault
+		}
+		if len(rkeConfig.Services.KubeAPI.EventRateLimit.Configuration.TypeMeta.APIVersion) == 0 {
+			rkeConfig.Services.KubeAPI.EventRateLimit.Configuration.TypeMeta.APIVersion = clusterServicesKubeAPIEventRateLimitConfigAPIDefault
+		}
 	}
 
 	d.Set("rke_cluster_yaml", rkeClusterYaml)
@@ -307,7 +318,10 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 		}
 	}
 
-	readedCluster.DinD = d.Get("dind").(bool)
+	readedCluster.DinD = false
+	if v, ok := d.Get("dind").(bool); ok && v {
+		readedCluster.DinD = v
+	}
 
 	return readedCluster, err
 }
@@ -460,6 +474,12 @@ func getChangedKeys(d *schema.ResourceDiff) (int, map[string]bool) {
 	changed := 0
 	for _, key := range targetKeys {
 		changedKeys[key] = d.HasChange(key)
+		if key == "services" {
+			old, new := d.GetChange("services")
+			oldstr, _ := expandRKEClusterServices(old.([]interface{}))
+			newstr, _ := expandRKEClusterServices(new.([]interface{}))
+			changedKeys[key] = !reflect.DeepEqual(oldstr, newstr)
+		}
 		if changedKeys[key] {
 			changed++
 		}

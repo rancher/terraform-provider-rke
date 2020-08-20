@@ -171,6 +171,15 @@ func yamlToInterface(in string, out interface{}) error {
 	return err
 }
 
+func ghodssyamlToMapInterface(in string) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	err := ghodssyaml.Unmarshal([]byte(in), &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, err
+}
+
 func ghodssyamlToInterface(in string, out interface{}) error {
 	if out == nil {
 		return nil
