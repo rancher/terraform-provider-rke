@@ -1,21 +1,25 @@
-## 1.1.0 (Unreleased)
+## 1.1.0 (August 24, 2020)
 
 FEATURES:
 
-* **New Feature:** Added restore feature on `rancher2_cluster` resource
+* **New Feature:** Added restore feature on `rke_cluster` resource
+* **Updated Arguments:** `addon_job_timeout`, `authentication`, `authorization`, `cluster_name`, `dns`, `ignore_docker_version`, `ingress`, `monitoring`, `network`, `private_registries`, `services`, `ssh_cert_path`, `ssh_key_path`, `upgrade_strategy` arguments has been defined as `computed: false`
 
 ENHANCEMENTS:
 
 * Updated RKE to v1.1.4
 * Added support to `rke_cluster.services.kube_api.event_rate_limit.configuration`
 * Added support to `rke_cluster.services.kube_api.secrets_encryption_config.custom_config`
+* Updated provider docs to new registry format
+* Added doc guide `Upgrade to terraform 0.13`
 
 BUG FIXES:
 
 * Fixed missing `nodelocal` system image custom registration
-* Updated `expandRKECluster` function to fix `rancher2_cluster` import when audit log policy is defined
+* Updated `expandRKECluster` function to fix `rke_cluster` import when audit log policy is defined
 * Fixed provider crash if `rke_cluster.dind` is not defined
 * Fixed `nodes` argument at `rke_cluster` resource to properly get updated
+* Fixed `rke_cluster` import. Updated `rke_cluster` arguments 
 
 ## 1.0.1 (June 30, 2020)
 
@@ -31,8 +35,8 @@ ENHANCEMENTS:
 
 BUG FIXES:
 
-* Updated `cloud_provider` and `bastion_host` arguments on `rancher2_cluster` resource to fix false diff 
-* Updated `ignore_docker_version` argument on `rancher2_cluster` resource to fix provider crash 
+* Updated `cloud_provider` and `bastion_host` arguments on `rke_cluster` resource to fix false diff 
+* Updated `ignore_docker_version` argument on `rke_cluster` resource to fix provider crash 
 
 ## 1.0.0 (May 7, 2020)
 
