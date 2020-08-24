@@ -25,7 +25,7 @@ func splitImportID(s string) ([]string, error) {
 	}
 
 	result := strings.Split(s, sep)
-	if len(result) != 2 {
+	if len(result) != 2 && len(result) != 3 {
 		return nil, fmt.Errorf("Import ID bad format")
 	}
 	return result, nil

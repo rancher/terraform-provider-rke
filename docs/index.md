@@ -1,9 +1,5 @@
 ---
-layout: "rke"
-page_title: "Provider: RKE"
-sidebar_current: "docs-rke-index"
-description: |-
-  The RKE provider is used to interact with Rancher Kubernetes Engine kubernetes clusters.
+page_title: "RKE Provider"
 ---
 
 # RKE Provider

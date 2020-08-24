@@ -1,9 +1,5 @@
 ---
-layout: "rke"
-page_title: "RKE: rke_cluster"
-sidebar_current: "docs-rke-resource-cluster"
-description: |-
-  Provides RKE cluster resource. This can be used to create RKE clusters and retrieve their information.
+page_title: "rke_cluster Resource"
 ---
 
 # rke\_cluster
@@ -84,44 +80,44 @@ The following arguments are supported:
 
 * `delay_on_creation` - (Optional) RKE k8s cluster delay on creation (int)
 * `disable_port_check` - (Optional) Enable/Disable RKE k8s cluster port checking. Default `false` (bool)
-* `addon_job_timeout` - (Optional/Computed) RKE k8s cluster addon deployment timeout in seconds for status check (int)
+* `addon_job_timeout` - (Optional) RKE k8s cluster addon deployment timeout in seconds for status check (int)
 * `addons` - (Optional) RKE k8s cluster user addons YAML manifest to be deployed (string)
 * `addons_include` - (Optional) RKE k8s cluster user addons YAML manifest urls or paths to be deployed (list)
-* `authentication` - (Optional/Computed) RKE k8s cluster authentication configuration (list maxitems:1)
-* `authorization` - (Optional/Computed) RKE k8s cluster authorization mode configuration (list maxitems:1)
+* `authentication` - (Optional) RKE k8s cluster authentication configuration (list maxitems:1)
+* `authorization` - (Optional) RKE k8s cluster authorization mode configuration (list maxitems:1)
 * `bastion_host` - (Optional) RKE k8s cluster bastion Host configuration (list maxitems:1)
 * `cert_dir` - (Optional) Specify a certificate dir path (string)
 * `cloud_provider` - (Optional) RKE k8s cluster cloud provider configuration [rke-cloud-providers](https://rancher.com/docs/rke/latest/en/config-options/cloud-providers/) (list maxitems:1)
-* `cluster_name` - (Optional/Computed) RKE k8s cluster name used in the kube config (string)
+* `cluster_name` - (Optional) RKE k8s cluster name used in the kube config (string)
 * `cluster_yaml` - (Optional) RKE k8s cluster config yaml encoded. Provider arguments take precedence over this one (string)
 * `custom_certs` - (Optional) Use custom certificates from a cert dir (string)
 * `dind` - (Optional/Experimental) Deploy RKE cluster on a dind environment. Default: `false` (bool)
 * `dind_storage_driver` - (Optional/Experimental) DinD RKE cluster storage driver (string)
 * `dind_dns_server` - (Optional/Experimental) DinD RKE cluster dns (string)
-* `dns` - (Optional/Computed) RKE k8s cluster DNS Config (list maxitems:1)
-* `ignore_docker_version` - (Optional/Computed) Enable/Disable RKE k8s cluster strict docker version checking. Default `false` (bool)
-* `ingress` - (Optional/Computed) RKE k8s cluster ingress controller configuration (list maxitems:1)
+* `dns` - (Optional) RKE k8s cluster DNS Config (list maxitems:1)
+* `ignore_docker_version` - (Optional) Enable/Disable RKE k8s cluster strict docker version checking. Default `false` (bool)
+* `ingress` - (Optional) RKE k8s cluster ingress controller configuration (list maxitems:1)
 * `kubernetes_version` - (Optional) K8s version to deploy. If kubernetes image is specified, image version takes precedence. Default: `rke default` (string)
-* `monitoring` - (Optional/Computed) RKE k8s cluster monitoring Config (list maxitems:1)
-* `network` - (Optional/Computed) RKE k8s cluster network configuration (list maxitems:1)
+* `monitoring` - (Optional) RKE k8s cluster monitoring Config (list maxitems:1)
+* `network` - (Optional) RKE k8s cluster network configuration (list maxitems:1)
 * `nodes` - (Optional) RKE k8s cluster nodes (list)
 * `prefix_path` - (Optional/Computed) RKE k8s directory path (string)
-* `private_registries` - (Optional) RKE k8s cluster private docker registries (list)
+* `private_registries` - (Optional/Computed) RKE k8s cluster private docker registries (list)
 * `restore` - (Optional/Computed) RKE k8s cluster restore configuration (list maxitems:1)
 * `rotate_certificates` - (Optional) RKE k8s cluster rotate certificates configuration (list maxitems:1)
-* `services` - (Optional/Computed) RKE k8s cluster services (list maxitems:1)
+* `services` - (Optional) RKE k8s cluster services (list maxitems:1)
 * `services_etcd` - (DEPRECATED) Use services.etcd instead (list maxitems:1)
 * `services_kube_api` - (DEPRECATED) Use services.kube_api instead (list maxitems:1)
 * `services_kube_controller` - (DEPRECATED) Use services.kube_controller instead (list maxitems:1)
 * `services_kubelet` - (DEPRECATED) Use services.kubelet instead (list maxitems:1)
 * `services_kubeproxy` - (DEPRECATED) Use services.kubeproxy instead (list maxitems:1)
 * `services_scheduler` - (DEPRECATED) Use services.scheduler instead (list maxitems:1)
-* `ssh_agent_auth` - (Optional/Computed) SSH Agent Auth enable. Default `false` (bool)
-* `ssh_cert_path` - (Optional/Computed) SSH Certificate Path (string)
-* `ssh_key_path` - (Optional/Computed) SSH Private Key Path (string)
+* `ssh_agent_auth` - (Optional/Computed) SSH Agent Auth enable (bool)
+* `ssh_cert_path` - (Optional) SSH Certificate Path (string)
+* `ssh_key_path` - (Optional) SSH Private Key Path (string)
 * `system_images` - (Optional) RKE k8s cluster system images list (list maxitems:1)
 * `update_only` - (Optional) Skip idempotent deployment of control and etcd plane. Default `false` (bool)
-* `upgrade_strategy` - (Optional/Computed) RKE k8s cluster upgrade strategy (list maxitems:1)
+* `upgrade_strategy` - (Optional) RKE k8s cluster upgrade strategy (list maxitems:1)
 
 ## Attributes Reference
 
@@ -311,9 +307,9 @@ The following attributes are exported:
 * `lb_provider` - (Optional) (string)
 * `lb_version` - (Optional) (string)
 * `manage_security_groups` - (Optional) (bool)
-* `monitor_delay` - (Optional) Default `60s` (string)
-* `monitor_max_retries` - (Optional) Default 5 (int)
-* `monitor_timeout` - (Optional) Default `30s` (string)
+* `monitor_delay` - (Optional) (string)
+* `monitor_max_retries` - (Optional) (int)
+* `monitor_timeout` - (Optional) (string)
 * `subnet_id` - (Optional) (string)
 * `use_octavia` - (Optional) (bool)
 
@@ -722,7 +718,13 @@ The following attributes are exported:
 
 rke_cluster can be imported using the RKE cluster config and state files as ID in the format `<cluster_config_file>:<rke_state_file>`
 
-
 ```
 $ terraform import rke_cluster.foo  &lt;cluster_config_file&gt;:&lt;rke_state_file&gt;
+```
+
+As experimental feature, dind rke_cluster can be also imported adding `dind` as 3rd import parameter `<cluster_config_file>:<rke_state_file>:dind`
+
+
+```
+$ terraform import rke_cluster.foo  &lt;cluster_config_file&gt;:&lt;rke_state_file&gt;:dind
 ```

@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/rancher/rke/cluster"
 	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 )
 
@@ -31,31 +32,40 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 	}
 
 	var err error
-	if in.AddonJobTimeout > 0 {
-		d.Set("addon_job_timeout", int(in.AddonJobTimeout))
+	if v, ok := d.Get("addon_job_timeout").(int); ok && v > 0 && in.AddonJobTimeout > 0 {
+		d.Set("addon_job_timeout", in.AddonJobTimeout)
 	}
 
-	if v, ok := d.Get("addons").(string); len(in.Addons) > 0 && ok && len(v) > 0 {
+	if v, ok := d.Get("addons").(string); ok && len(v) > 0 && len(in.Addons) > 0 {
 		d.Set("addons", in.Addons)
 	}
 
-	if v, ok := d.Get("addons_include").(string); len(in.AddonsInclude) > 0 && ok && len(v) > 0 {
-		d.Set("addons_include", in.AddonsInclude)
+	if v, ok := d.Get("addons_include").([]interface{}); ok && len(v) > 0 && len(in.AddonsInclude) > 0 {
+		err = d.Set("addons_include", toArrayInterface(in.AddonsInclude))
+		if err != nil {
+			return err
+		}
 	}
 
-	err = d.Set("authentication", flattenRKEClusterAuthentication(in.Authentication))
-	if err != nil {
-		return err
+	if v, ok := d.Get("authentication").([]interface{}); ok && len(v) > 0 {
+		err = d.Set("authentication", flattenRKEClusterAuthentication(in.Authentication))
+		if err != nil {
+			return err
+		}
 	}
 
-	err = d.Set("authorization", flattenRKEClusterAuthorization(in.Authorization))
-	if err != nil {
-		return err
+	if v, ok := d.Get("authorization").([]interface{}); ok && len(v) > 0 {
+		err = d.Set("authorization", flattenRKEClusterAuthorization(in.Authorization))
+		if err != nil {
+			return err
+		}
 	}
 
-	err = d.Set("bastion_host", flattenRKEClusterBastionHost(in.BastionHost))
-	if err != nil {
-		return err
+	if v, ok := d.Get("bastion_host").([]interface{}); ok && len(v) > 0 {
+		err = d.Set("bastion_host", flattenRKEClusterBastionHost(in.BastionHost))
+		if err != nil {
+			return err
+		}
 	}
 
 	if v, ok := d.Get("cloud_provider").([]interface{}); ok && len(v) > 0 {
@@ -65,11 +75,11 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		}
 	}
 
-	if len(in.ClusterName) > 0 {
+	if v, ok := d.Get("cluster_name").(string); ok && len(v) > 0 && len(in.ClusterName) > 0 {
 		d.Set("cluster_name", in.ClusterName)
 	}
 
-	if in.DNS != nil {
+	if v, ok := d.Get("dns").([]interface{}); ok && len(v) > 0 && in.DNS != nil {
 		err := d.Set("dns", flattenRKEClusterDNS(in.DNS))
 		if err != nil {
 			return err
@@ -78,28 +88,36 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 
 	d.Set("dind", in.DinD)
 
-	d.Set("ignore_docker_version", *in.IgnoreDockerVersion)
+	if _, ok := d.Get("ignore_docker_version").(bool); ok && in.IgnoreDockerVersion != nil {
+		d.Set("ignore_docker_version", *in.IgnoreDockerVersion)
+	}
 
-	err = d.Set("ingress", flattenRKEClusterIngress(in.Ingress))
-	if err != nil {
-		return err
+	if v, ok := d.Get("ingress").([]interface{}); ok && len(v) > 0 {
+		err = d.Set("ingress", flattenRKEClusterIngress(in.Ingress))
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(in.Version) > 0 {
 		d.Set("kubernetes_version", in.Version)
 	}
 
-	err = d.Set("monitoring", flattenRKEClusterMonitoring(in.Monitoring))
-	if err != nil {
-		return err
+	if v, ok := d.Get("monitoring").([]interface{}); ok && len(v) > 0 {
+		err = d.Set("monitoring", flattenRKEClusterMonitoring(in.Monitoring))
+		if err != nil {
+			return err
+		}
 	}
 
-	err = d.Set("network", flattenRKEClusterNetwork(in.Network))
-	if err != nil {
-		return err
+	if v, ok := d.Get("network").([]interface{}); ok && len(v) > 0 {
+		err = d.Set("network", flattenRKEClusterNetwork(in.Network))
+		if err != nil {
+			return err
+		}
 	}
 
-	if v, ok := d.Get("nodes").([]interface{}); in.Nodes != nil && !in.DinD && ok && len(v) > 0 {
+	if v, ok := d.Get("nodes").([]interface{}); ok && len(v) > 0 && in.Nodes != nil && !in.DinD {
 		nodes := flattenRKEClusterNodes(in.Nodes, v)
 		err := d.Set("nodes", nodes)
 		if err != nil {
@@ -107,20 +125,22 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		}
 	}
 
-	if len(in.PrefixPath) > 0 {
+	if v, ok := d.Get("prefix_path").(string); ok && len(v) > 0 && len(in.PrefixPath) > 0 {
 		d.Set("prefix_path", in.PrefixPath)
 	}
 
-	if v, ok := d.Get("private_registries").([]interface{}); in.PrivateRegistries != nil && ok && len(v) > 0 {
+	if v, ok := d.Get("private_registries").([]interface{}); ok && len(v) > 0 && in.PrivateRegistries != nil {
 		err := d.Set("private_registries", flattenRKEClusterPrivateRegistries(in.PrivateRegistries))
 		if err != nil {
 			return err
 		}
 	}
 
-	err = d.Set("restore", flattenRKEClusterRestore(in.Restore))
-	if err != nil {
-		return err
+	if v, ok := d.Get("restore").([]interface{}); ok && len(v) > 0 {
+		err = d.Set("restore", flattenRKEClusterRestore(in.Restore))
+		if err != nil {
+			return err
+		}
 	}
 
 	if v, ok := d.Get("rotate_certificates").([]interface{}); in.RotateCertificates != nil && ok && len(v) > 0 {
@@ -130,7 +150,7 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		}
 	}
 
-	if v, ok := d.Get("services").([]interface{}); ok {
+	if v, ok := d.Get("services").([]interface{}); ok && len(v) > 0 {
 		services, err := flattenRKEClusterServices(in.Services, v)
 		if err != nil {
 			return err
@@ -141,14 +161,27 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		}
 	}
 
-	d.Set("ssh_agent_auth", in.SSHAgentAuth)
+	if _, ok := d.Get("ssh_agent_auth").(bool); ok {
+		d.Set("ssh_agent_auth", in.SSHAgentAuth)
+	}
 
-	if len(in.SSHCertPath) > 0 {
+	if v, ok := d.Get("ssh_cert_path").(string); ok && len(v) > 0 && len(in.SSHCertPath) > 0 {
 		d.Set("ssh_cert_path", in.SSHCertPath)
 	}
 
-	if len(in.SSHKeyPath) > 0 {
+	if v, ok := d.Get("ssh_key_path").(string); ok && len(v) > 0 && len(in.SSHKeyPath) > 0 {
 		d.Set("ssh_key_path", in.SSHKeyPath)
+	}
+
+	if v, ok := d.Get("system_images").([]interface{}); ok && len(v) > 0 {
+		d.Set("system_images", in.SystemImages)
+	}
+
+	if v, ok := d.Get("upgrade_strategy").([]interface{}); ok && len(v) > 0 && in.UpgradeStrategy != nil {
+		err = d.Set("upgrade_strategy", flattenRKEClusterNodeUpgradeStrategy(in.UpgradeStrategy))
+		if err != nil {
+			return err
+		}
 	}
 
 	// computed values
@@ -189,11 +222,6 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 	}
 
 	err = d.Set("running_system_images", flattenRKEClusterSystemImages(in.SystemImages))
-	if err != nil {
-		return err
-	}
-
-	err = d.Set("upgrade_strategy", flattenRKEClusterNodeUpgradeStrategy(in.UpgradeStrategy))
 	if err != nil {
 		return err
 	}
@@ -329,7 +357,7 @@ func expandRKECluster(in *schema.ResourceData) (string, *rancher.RancherKubernet
 		obj.Services.Kubeproxy.ExtraArgs["conntrack-max-per-core"] = "0"
 	}
 
-	objYml, err := patchRKEClusterYaml(in, obj)
+	objYml, err := patchRKEClusterYaml(obj)
 	if err != nil {
 		return "", nil, fmt.Errorf("Failed to patch RKE cluster yaml: %v", err)
 	}
@@ -338,7 +366,7 @@ func expandRKECluster(in *schema.ResourceData) (string, *rancher.RancherKubernet
 }
 
 // patchRKEClusterYaml is needed due to auditv1.Policy{} doesn't provide yaml tags
-func patchRKEClusterYaml(d *schema.ResourceData, in *rancher.RancherKubernetesEngineConfig) (string, error) {
+func patchRKEClusterYaml(in *rancher.RancherKubernetesEngineConfig) (string, error) {
 	outFixed := make(map[string]interface{})
 	if in.Services.KubeAPI.AuditLog != nil && in.Services.KubeAPI.AuditLog.Configuration != nil {
 		inJSON, err := interfaceToJSON(in.Services.KubeAPI.AuditLog.Configuration.Policy)
@@ -353,6 +381,13 @@ func patchRKEClusterYaml(d *schema.ResourceData, in *rancher.RancherKubernetesEn
 		}
 	}
 	if in.Services.KubeAPI.EventRateLimit != nil && in.Services.KubeAPI.EventRateLimit.Configuration != nil {
+		if len(in.Services.KubeAPI.EventRateLimit.Configuration.TypeMeta.Kind) == 0 {
+			in.Services.KubeAPI.EventRateLimit.Configuration.TypeMeta.Kind = clusterServicesKubeAPIEventRateLimitConfigKindDefault
+
+		}
+		if len(in.Services.KubeAPI.EventRateLimit.Configuration.TypeMeta.APIVersion) == 0 {
+			in.Services.KubeAPI.EventRateLimit.Configuration.TypeMeta.APIVersion = clusterServicesKubeAPIEventRateLimitConfigAPIDefault
+		}
 		inJSON, err := interfaceToJSON(in.Services.KubeAPI.EventRateLimit.Configuration)
 		if err != nil {
 			return "", err
@@ -369,7 +404,12 @@ func patchRKEClusterYaml(d *schema.ResourceData, in *rancher.RancherKubernetesEn
 		if err != nil {
 			return "", fmt.Errorf("Mashalling custom_config yaml: %v", err)
 		}
-		customConfigV1 := &apiserverconfigv1.EncryptionConfiguration{}
+		customConfigV1 := &apiserverconfigv1.EncryptionConfiguration{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       clusterServicesKubeAPISecretsEncryptionConfigKindDefault,
+				APIVersion: clusterServicesKubeAPISecretsEncryptionConfigAPIDefault,
+			},
+		}
 		err = ghodssyamlToInterface(customConfigV1Str, customConfigV1)
 		if err != nil {
 			return "", fmt.Errorf("Unmashalling custom_config yaml: %v", err)
@@ -412,13 +452,7 @@ func patchRKEClusterYaml(d *schema.ResourceData, in *rancher.RancherKubernetesEn
 				out["services"].(map[string]interface{})["kube-api"].(map[string]interface{})["event_rate_limit"].(map[string]interface{})["configuration"] = outFixed["event_rate_limit"]
 			}
 			if _, ok := kubeapi["secrets_encryption_config"].(map[string]interface{}); ok && outFixed["secrets_encryption_config"] != nil {
-				secretEncryption := map[string]interface{}{}
-				if dataServices, ok := d.Get("services").([]interface{}); ok && len(dataServices) > 0 {
-					if secretEncryptionStr, ok := dataServices[0].(map[string]interface{})["kube_api"].([]interface{})[0].(map[string]interface{})["secrets_encryption_config"].([]interface{})[0].(map[string]interface{})["custom_config"].(string); ok {
-						secretEncryption, _ = ghodssyamlToMapInterface(secretEncryptionStr)
-					}
-				}
-				out["services"].(map[string]interface{})["kube-api"].(map[string]interface{})["secrets_encryption_config"].(map[string]interface{})["custom_config"] = secretEncryption
+				out["services"].(map[string]interface{})["kube-api"].(map[string]interface{})["secrets_encryption_config"].(map[string]interface{})["custom_config"] = outFixed["secrets_encryption_config"]
 			}
 		}
 	}
