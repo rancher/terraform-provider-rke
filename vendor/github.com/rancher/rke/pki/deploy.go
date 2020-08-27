@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/rancher/rke/docker"
 	"github.com/rancher/rke/hosts"
 	"github.com/rancher/rke/log"
@@ -23,9 +24,16 @@ const (
 	StateDeployerContainerName = "cluster-state-deployer"
 )
 
-func DeployCertificatesOnPlaneHost(ctx context.Context, host *hosts.Host, rkeConfig v3.RancherKubernetesEngineConfig, crtMap map[string]CertificatePKI, certDownloaderImage string, prsMap map[string]v3.PrivateRegistry, forceDeploy bool) error {
+func DeployCertificatesOnPlaneHost(
+	ctx context.Context,
+	host *hosts.Host,
+	rkeConfig v3.RancherKubernetesEngineConfig,
+	crtMap map[string]CertificatePKI,
+	certDownloaderImage string,
+	prsMap map[string]v3.PrivateRegistry,
+	forceDeploy bool,
+	env []string) error {
 	crtBundle := GenerateRKENodeCerts(ctx, rkeConfig, host.Address, crtMap)
-	env := []string{}
 
 	// Strip CA key as its sensitive and unneeded on nodes without controlplane role
 	if !host.IsControl {
@@ -53,21 +61,28 @@ func DeployCertificatesOnPlaneHost(ctx context.Context, host *hosts.Host, rkeCon
 	return doRunDeployer(ctx, host, env, certDownloaderImage, prsMap)
 }
 
-func DeployStateOnPlaneHost(ctx context.Context, host *hosts.Host, stateDownloaderImage string, prsMap map[string]v3.PrivateRegistry, clusterState string) error {
+func DeployStateOnPlaneHost(ctx context.Context, host *hosts.Host, stateDownloaderImage string, prsMap map[string]v3.PrivateRegistry, stateFilePath, snapshotName string) error {
 	// remove existing container. Only way it's still here is if previous deployment failed
 	if err := docker.DoRemoveContainer(ctx, host.DClient, StateDeployerContainerName, host.Address); err != nil {
 		return err
 	}
-	containerEnv := []string{ClusterStateEnv + "=" + clusterState}
-	ClusterStateFilePath := path.Join(host.PrefixPath, TempCertPath, ClusterStateFile)
+	// This is the location it needs to end up for rke-tools to pick it up and include it in the snapshot
+	// Example: /etc/kubernetes/snapshotname.rkestate
+	DestinationClusterStateFilePath := path.Join(K8sBaseDir, "/", fmt.Sprintf("%s%s", snapshotName, ClusterStateExt))
+	// This is the location where the 1-on-1 copy from local will be placed in the container, this is later moved to DestinationClusterStateFilePath
+	// Example: /etc/kubernetes/cluster.rkestate
+	// Example: /etc/kubernetes/rancher-cluster.rkestate
+	baseStateFile := path.Base(stateFilePath)
+	SourceClusterStateFilePath := path.Join(K8sBaseDir, baseStateFile)
+	logrus.Infof("[state] Deploying state file to [%v] on host [%s]", DestinationClusterStateFilePath, host.Address)
+
 	imageCfg := &container.Config{
 		Image: stateDownloaderImage,
 		Cmd: []string{
 			"sh",
 			"-c",
-			fmt.Sprintf("t=$(mktemp); echo -e \"$%s\" > $t && mv $t %s && chmod 644 %s", ClusterStateEnv, ClusterStateFilePath, ClusterStateFilePath),
+			fmt.Sprintf("for i in $(seq 1 12); do if [ -f \"%[1]s\" ]; then echo \"File [%[1]s] present in this container\"; echo \"Moving [%[1]s] to [%[2]s]\"; mv %[1]s %[2]s; echo \"State file successfully moved to [%[2]s]\"; echo \"Changing permissions to 0400\"; chmod 400 %[2]s; break; else echo \"Waiting for file [%[1]s] to be successfully copied to this container, retry count $i\"; sleep 5; fi; done", SourceClusterStateFilePath, DestinationClusterStateFilePath),
 		},
-		Env: containerEnv,
 	}
 	hostCfg := &container.HostConfig{
 		Binds: []string{
@@ -78,10 +93,23 @@ func DeployStateOnPlaneHost(ctx context.Context, host *hosts.Host, stateDownload
 	if err := docker.DoRunContainer(ctx, host.DClient, imageCfg, hostCfg, StateDeployerContainerName, host.Address, "state", prsMap); err != nil {
 		return err
 	}
+	tarFile, err := archive.Tar(stateFilePath, archive.Uncompressed)
+	if err != nil {
+		// Snapshot is still valid without containing the state file
+		logrus.Warnf("[state] Error during creating archive tar to copy for local cluster state file [%s] on host [%s]: %v", stateFilePath, host.Address, err)
+	}
+	if err := docker.DoCopyToContainer(ctx, host.DClient, "state", StateDeployerContainerName, host.Address, K8sBaseDir, tarFile); err != nil {
+		// Snapshot is still valid without containing the state file
+		logrus.Warnf("[state] Error during copying state file [%s] to node [%s]: %v", stateFilePath, host.Address, err)
+	}
+
+	if _, err := docker.WaitForContainer(ctx, host.DClient, host.Address, StateDeployerContainerName); err != nil {
+		return err
+	}
+
 	if err := docker.DoRemoveContainer(ctx, host.DClient, StateDeployerContainerName, host.Address); err != nil {
 		return err
 	}
-	logrus.Debugf("[state] Successfully started state deployer container on node [%s]", host.Address)
 	return nil
 }
 
@@ -100,12 +128,13 @@ func doRunDeployer(ctx context.Context, host *hosts.Host, containerEnv []string,
 	if err := docker.UseLocalOrPull(ctx, host.DClient, host.Address, certDownloaderImage, CertificatesServiceName, prsMap); err != nil {
 		return err
 	}
+
 	imageCfg := &container.Config{
 		Image: certDownloaderImage,
 		Cmd:   []string{"cert-deployer"},
 		Env:   containerEnv,
 	}
-	if host.DockerInfo.OSType == "windows" { // compatible with Windows
+	if host.IsWindows() { // compatible with Windows
 		imageCfg = &container.Config{
 			Image: certDownloaderImage,
 			Cmd: []string{
@@ -120,7 +149,7 @@ func doRunDeployer(ctx context.Context, host *hosts.Host, containerEnv []string,
 		},
 		Privileged: true,
 	}
-	if host.DockerInfo.OSType == "windows" { // compatible with Windows
+	if host.IsWindows() { // compatible with Windows
 		hostCfg = &container.HostConfig{
 			Binds: []string{
 				fmt.Sprintf("%s:c:/etc/kubernetes", path.Join(host.PrefixPath, "/etc/kubernetes")),

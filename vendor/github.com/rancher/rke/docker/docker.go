@@ -135,6 +135,23 @@ func DoRunOnetimeContainer(ctx context.Context, dClient *client.Client, imageCfg
 	return err
 }
 
+func DoCopyToContainer(ctx context.Context, dClient *client.Client, plane, containerName, hostname, destinationDir string, tarFile io.Reader) error {
+	if dClient == nil {
+		return fmt.Errorf("[%s] Failed to run container: docker client is nil for container [%s] on host [%s]", plane, containerName, hostname)
+	}
+	// Need container.ID for CopyToContainer function
+	container, err := InspectContainer(ctx, dClient, hostname, containerName)
+	if err != nil {
+		return fmt.Errorf("Could not inspect container [%s] on host [%s]: %s", containerName, hostname, err)
+	}
+
+	err = dClient.CopyToContainer(ctx, container.ID, destinationDir, tarFile, types.CopyToContainerOptions{})
+	if err != nil {
+		return fmt.Errorf("Error while copying file to container [%s] on host [%s]: %v", containerName, hostname, err)
+	}
+	return nil
+}
+
 func DoRollingUpdateContainer(ctx context.Context, dClient *client.Client, imageCfg *container.Config, hostCfg *container.HostConfig, containerName, hostname, plane string, prsMap map[string]v3.PrivateRegistry) error {
 	if dClient == nil {
 		return fmt.Errorf("[%s] Failed rolling update of container: docker client is nil for container [%s] on host [%s]", plane, containerName, hostname)
@@ -483,14 +500,24 @@ func WaitForContainer(ctx context.Context, dClient *client.Client, hostname stri
 			return 1, fmt.Errorf("Could not inspect container [%s] on host [%s]: %s", containerName, hostname, err)
 		}
 		if container.State.Running {
-			log.Infof(ctx, "Container [%s] is still running on host [%s]", containerName, hostname)
+			stderr, stdout, err := GetContainerLogsStdoutStderr(ctx, dClient, containerName, "1", false)
+			if err != nil {
+				logrus.Warnf("Failed to get container logs from container [%s] on host [%s]: %v", containerName, hostname, err)
+			}
+
+			log.Infof(ctx, "Container [%s] is still running on host [%s]: stderr: [%s], stdout: [%s]", containerName, hostname, stderr, stdout)
 			time.Sleep(1 * time.Second)
 			continue
 		}
 		logrus.Debugf("Exit code for [%s] container on host [%s] is [%d]", containerName, hostname, int64(container.State.ExitCode))
 		return int64(container.State.ExitCode), nil
 	}
-	return 1, fmt.Errorf("Container [%s] did not exit in time on host [%s]", containerName, hostname)
+	stderr, stdout, err := GetContainerLogsStdoutStderr(ctx, dClient, containerName, "1", false)
+	if err != nil {
+		logrus.Warnf("Failed to get container logs from container [%s] on host [%s]", containerName, hostname)
+	}
+
+	return 1, fmt.Errorf("Container [%s] did not exit in time on host [%s]: stderr: [%s], stdout: [%s]", containerName, hostname, stderr, stdout)
 }
 
 func IsContainerUpgradable(ctx context.Context, dClient *client.Client, imageCfg *container.Config, hostCfg *container.HostConfig, containerName string, hostname string, plane string) (bool, error) {
