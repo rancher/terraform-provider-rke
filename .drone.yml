@@ -23,8 +23,8 @@ steps:
   - mkdir -p /go/src/github.com/rancher
   - ln -s /drone/src /go/src/github.com/rancher/terraform-provider-rke
   - cd /go/src/github.com/rancher/terraform-provider-rke
-  - make build-rancher
-  - make package-rancher
+  - make build
+  - make package
   when:
     event: tag
 

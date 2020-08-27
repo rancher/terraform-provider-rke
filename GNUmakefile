@@ -7,9 +7,6 @@ PROVIDER_NAME=terraform-provider-rke
 
 default: build
 
-build: fmtcheck
-	go install
-
 dapper-build: .dapper
 	./.dapper build
 
@@ -19,12 +16,12 @@ dapper-ci: .dapper
 dapper-testacc: .dapper
 	./.dapper gotestacc.sh
 
-build-rancher: validate-rancher
+build: validate
 	@sh -c "'$(CURDIR)/scripts/gobuild.sh'"
 
-validate-rancher: vet lint fmtcheck
+validate: vet lint fmtcheck
 
-package-rancher:
+package:
 	@sh -c "'$(CURDIR)/scripts/gopackage.sh'"
 
 test: fmtcheck
@@ -53,7 +50,7 @@ vet:
 
 lint:
 	@echo "==> Checking that code complies with golint requirements..."
-	@GO111MODULE=${GO111MODULE} go get -u golang.org/x/lint/golint
+	@GO111MODULE=off go get -u golang.org/x/lint/golint
 	@if [ -n "$$(golint $$(go list ./...) | grep -v 'should have comment.*or be unexported' | tee /dev/stderr)" ]; then \
 		echo ""; \
 		echo "golint found style issues. Please check the reported issues"; \
