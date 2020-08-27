@@ -479,7 +479,7 @@ func expandRKEClusterFlag(in *schema.ResourceData, clusterFilePath string) clust
 	}
 
 	// setting up the flags
-	obj := cluster.GetExternalFlags(false, updateOnly, disablePortCheck, "", clusterFilePath)
+	obj := cluster.GetExternalFlags(false, updateOnly, disablePortCheck, false, "", clusterFilePath)
 	obj.DinD = dind
 	if !dind {
 		// Custom certificates and certificate dir flags

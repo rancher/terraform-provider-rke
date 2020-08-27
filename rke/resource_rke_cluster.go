@@ -244,7 +244,7 @@ func clusterDelete(d *schema.ResourceData) error {
 	}
 
 	// setting up the flags
-	flags := cluster.GetExternalFlags(false, false, false, "", clusterFilePath)
+	flags := cluster.GetExternalFlags(false, false, false, false, "", clusterFilePath)
 
 	// Omiting ClusterRemove  errors
 	cmd.ClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)

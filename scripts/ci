@@ -3,5 +3,5 @@ set -e
 
 cd $(dirname $0)/..
 
-make build-rancher
+make build
 make testacc

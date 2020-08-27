@@ -1,3 +1,17 @@
+## 1.1.1 (August 27, 2020)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Updated RKE to v1.1.6
+
+BUG FIXES:
+
+
+
 ## 1.1.0 (August 24, 2020)
 
 FEATURES:
