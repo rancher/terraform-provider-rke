@@ -18,4 +18,7 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 )
 
-replace k8s.io/client-go => k8s.io/client-go v0.18.0
+replace (
+	golang.org/x/sys => golang.org/x/sys v0.0.0-20190916202348-b4ddaad3f8a3
+	k8s.io/client-go => k8s.io/client-go v0.18.0
+)
