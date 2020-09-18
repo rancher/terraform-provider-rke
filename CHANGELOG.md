@@ -1,3 +1,17 @@
+## 1.1.2 (Unreleased)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+
+
+BUG FIXES:
+
+* Ordering `rancher2_cluster.certificates` to avoid output diff on tf 0.13
+
 ## 1.1.1 (August 28, 2020)
 
 FEATURES:
