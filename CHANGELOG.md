@@ -1,4 +1,4 @@
-## 1.1.2 (Unreleased)
+## 1.1.2 (September 18, 2020)
 
 FEATURES:
 
@@ -6,11 +6,12 @@ FEATURES:
 
 ENHANCEMENTS:
 
-
+* Updated RKE to v1.1.7
 
 BUG FIXES:
 
 * Ordering `rancher2_cluster.certificates` to avoid output diff on tf 0.13
+* Fix provider crash if `rke_state` and `rke_cluster_yaml` are not consistent about nodes count
 
 ## 1.1.1 (August 28, 2020)
 
