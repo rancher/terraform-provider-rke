@@ -61,11 +61,16 @@ func flattenRKEClusterNodes(input []rancher.RKEConfigNode, p []interface{}) []in
 			}
 		}
 	}
-	sortedInput := make([]rancher.RKEConfigNode, len(input))
+	pLen := len(p)
+	inputLen := len(input)
+	sortedInput := make([]rancher.RKEConfigNode, inputLen)
 	newNodes := []rancher.RKEConfigNode{}
 	lastIndex := 0
 	for i := range sortedInput {
 		if v, ok := pIndexAddress[input[i].Address]; ok {
+			if v > i && pLen > inputLen {
+				v = v - (v - i)
+			}
 			sortedInput[v] = input[i]
 			lastIndex++
 			continue
