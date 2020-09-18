@@ -1,4 +1,4 @@
-## 1.1.2 (August 28, 2020)
+## 1.1.2 (September 18, 2020)
 
 FEATURES:
 

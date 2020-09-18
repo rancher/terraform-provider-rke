@@ -1,6 +1,8 @@
 package rke
 
 import (
+	"sort"
+
 	"github.com/rancher/rke/pki"
 )
 
@@ -11,19 +13,19 @@ const (
 // Flatteners
 
 func flattenRKEClusterCertificates(in map[string]pki.CertificatePKI) (string, string, string, []interface{}) {
-	out := []interface{}{}
-
 	var caCrt, clientCrt, clientKey string
-
-	for k, v := range in {
-		/*certPEM := ""
-		if v.Certificate != nil {
-			certPEM = certificateToPEM(v.Certificate)
-		}
-		privateKeyPEM := ""
-		if v.Key != nil {
-			privateKeyPEM = privateKeyToPEM(v.Key)
-		}*/
+	outLen := len(in)
+	if in == nil || outLen == 0 {
+		return caCrt, clientCrt, clientKey, []interface{}{}
+	}
+	sortedKeys := make([]string, 0, outLen)
+	for k := range in {
+		sortedKeys = append(sortedKeys, k)
+	}
+	sort.Strings(sortedKeys)
+	out := make([]interface{}, outLen)
+	for i, k := range sortedKeys {
+		v := in[k]
 
 		if k == pki.CACertName {
 			caCrt = v.CertificatePEM
@@ -49,9 +51,7 @@ func flattenRKEClusterCertificates(in map[string]pki.CertificatePKI) (string, st
 			"config_env_name": v.ConfigEnvName,
 			"config_path":     v.ConfigPath,
 		}
-
-		out = append(out, obj)
+		out[i] = obj
 	}
-
 	return caCrt, clientCrt, clientKey, out
 }
