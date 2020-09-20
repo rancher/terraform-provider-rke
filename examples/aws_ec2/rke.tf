@@ -5,6 +5,15 @@ module "nodes" {
   # cluster_id    = "rke"
 }
 
+terraform {
+  required_providers {
+    rke = {
+      source = "rancher/rke"
+      version = "1.1.2"
+    }
+  }
+}
+
 resource "rke_cluster" "cluster" {
   cloud_provider {
     name = "aws"
