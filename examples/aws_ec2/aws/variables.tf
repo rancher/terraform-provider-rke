@@ -3,7 +3,7 @@ variable "region" {
 }
 
 variable "instance_type" {
-  default = "t2.micro"
+  default = "t3.large"
 }
 
 variable "cluster_id" {
@@ -11,5 +11,5 @@ variable "cluster_id" {
 }
 
 variable "docker_install_url" {
-  default = "https://releases.rancher.com/install-docker/18.09.sh"
+  default = "https://releases.rancher.com/install-docker/19.03.sh"
 }
