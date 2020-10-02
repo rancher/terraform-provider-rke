@@ -3,7 +3,7 @@ variable "region" {
 }
 
 variable "instance_type" {
-  default = "t3.large"
+  default = "t2.large"
 }
 
 variable "cluster_id" {
