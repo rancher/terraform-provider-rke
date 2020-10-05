@@ -1,3 +1,19 @@
+## 1.1.3 (October 6, 2020)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Updated RKE to v1.2.0
+* Updated Golang to 1.14.9, removing vendor folder
+* Updated install/update section on README.md file
+
+BUG FIXES:
+
+
+
 ## 1.1.2 (September 18, 2020)
 
 FEATURES:
