@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
+	rancher "github.com/rancher/rke/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	apiserverconfig "k8s.io/apiserver/pkg/apis/config"

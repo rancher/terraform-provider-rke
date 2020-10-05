@@ -1,7 +1,7 @@
 package rke
 
 import (
-	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
+	rancher "github.com/rancher/rke/types"
 )
 
 // Flatteners
