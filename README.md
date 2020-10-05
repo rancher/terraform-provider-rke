@@ -16,17 +16,19 @@ Requirements
 ------------
 
 - [Terraform](https://www.terraform.io/downloads.html) >= 0.12.x
-- [Go](https://golang.org/doc/install) 1.13 to build the provider plugin
+- [Go](https://golang.org/doc/install) 1.14 to build the provider plugin
 - [Docker](https://docs.docker.com/install/) 17.03.x to run acceptance tests
 
 Installing The Provider
 -----------------------
 
-**Note:** If you are testing [terraform 0.13-beta](https://www.hashicorp.com/blog/announcing-the-terraform-0-13-beta/), manual installation is not required. Provider will be downloaded by `terraform init` from [terraform rke registry](https://registry.terraform.io/providers/rancher/rke).
+For terraform 0.13 or above users, manual installation is not required anymore. Provider will be downloaded by `terraform init` from [terraform rke registry](https://registry.terraform.io/providers/rancher/rke). 
 
-By the moment, the provider should be installed manually. Downloadable packages are available at [rke provider releases](https://github.com/rancher/terraform-provider-rke/releases)
+For upgrade terraform to 0.13, please follow [upgrade_to_0.13 guide](https://registry.terraform.io/providers/rancher/rke/latest/docs/guides/upgrade_to_0.13)
 
-How to install:
+**Note:** If you are using terraform 0.12 or lower, the provider should be installed manually. Downloadable packages are available at [rke provider releases](https://github.com/rancher/terraform-provider-rke/releases)
+
+How to install manually:
 * Get binary for your platform: `curl -L https://github.com/rancher/terraform-provider-rke/releases/download/vX.Y.Z/terraform-provider-rke_X.Y.Z_<OS>_<ARCH>.zip | unzip -`
 * Grant execution permission: `chmod 755 terraform-provider-rke_vX.Y.Z`
 * Place provider binary on your terraform plugin directory: `mv terraform-provider-rke_vX.Y.Z <TERRAFORM_PLUGIN_DIRECTORY>`
@@ -40,7 +42,7 @@ How to install:
 | .terraform/plugins/<OS>_<ARCH> | Automatically downloaded providers. |
 | ~/.terraform.d/plugins | The user plugins directory. |
 | ~/.terraform.d/plugins/<OS>_<ARCH> | The user plugins directory, with explicit OS and architecture. |
-| /my/custom/path | Custom plugin directory. Use the `-plug-in=/my/custom/path` when running `terraform init` |
+| /my/custom/path | Custom plugin directory. Use the `-plug-dir=/my/custom/path` when running `terraform init` |
 
 Building The Provider
 ---------------------
