@@ -14,8 +14,8 @@ import (
 	"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
 	"github.com/rancher/rke/templates"
+	v3 "github.com/rancher/rke/types"
 	"github.com/rancher/rke/util"
-	"github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	appsv1 "k8s.io/api/apps/v1"
@@ -230,18 +230,19 @@ func (c *Cluster) doCanalDeploy(ctx context.Context, data map[string]interface{}
 
 	clientConfig := pki.GetConfigPath(pki.KubeNodeCertName)
 	canalConfig := map[string]interface{}{
-		ClientCertPath:  pki.GetCertPath(pki.KubeNodeCertName),
-		APIRoot:         "https://127.0.0.1:6443",
-		ClientKeyPath:   pki.GetKeyPath(pki.KubeNodeCertName),
-		ClientCAPath:    pki.GetCertPath(pki.CACertName),
-		KubeCfg:         clientConfig,
-		ClusterCIDR:     c.ClusterCIDR,
-		NodeImage:       c.SystemImages.CanalNode,
-		CNIImage:        c.SystemImages.CanalCNI,
-		CanalFlannelImg: c.SystemImages.CanalFlannel,
-		RBACConfig:      c.Authorization.Mode,
-		CanalInterface:  c.Network.Options[CanalIface],
-		FlexVolImg:      c.SystemImages.CanalFlexVol,
+		ClientCertPath:   pki.GetCertPath(pki.KubeNodeCertName),
+		APIRoot:          "https://127.0.0.1:6443",
+		ClientKeyPath:    pki.GetKeyPath(pki.KubeNodeCertName),
+		ClientCAPath:     pki.GetCertPath(pki.CACertName),
+		KubeCfg:          clientConfig,
+		ClusterCIDR:      c.ClusterCIDR,
+		NodeImage:        c.SystemImages.CanalNode,
+		CNIImage:         c.SystemImages.CanalCNI,
+		ControllersImage: c.SystemImages.CanalControllers,
+		CanalFlannelImg:  c.SystemImages.CanalFlannel,
+		RBACConfig:       c.Authorization.Mode,
+		CanalInterface:   c.Network.Options[CanalIface],
+		FlexVolImg:       c.SystemImages.CanalFlexVol,
 		FlannelBackend: map[string]interface{}{
 			"Type": c.Network.Options[CanalFlannelBackendType],
 			"VNI":  flannelVni,

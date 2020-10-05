@@ -10,8 +10,8 @@ import (
 	"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
 	"github.com/rancher/rke/services"
+	v3 "github.com/rancher/rke/types"
 	"github.com/rancher/rke/util"
-	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/apiserver/pkg/apis/apiserver/v1alpha1"
@@ -81,7 +81,9 @@ func (c *Cluster) InvertIndexHosts() error {
 		for k, v := range host.Labels {
 			newHost.ToAddLabels[k] = v
 		}
-		newHost.IgnoreDockerVersion = *c.IgnoreDockerVersion
+		if c.IgnoreDockerVersion != nil {
+			newHost.IgnoreDockerVersion = *c.IgnoreDockerVersion
+		}
 		if c.BastionHost.Address != "" {
 			// Add the bastion host information to each host object
 			newHost.BastionHost = c.BastionHost

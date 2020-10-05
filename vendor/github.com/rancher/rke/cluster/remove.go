@@ -8,8 +8,8 @@ import (
 	"github.com/rancher/rke/log"
 	"github.com/rancher/rke/pki"
 	"github.com/rancher/rke/services"
+	v3 "github.com/rancher/rke/types"
 	"github.com/rancher/rke/util"
-	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -70,7 +70,7 @@ func (c *Cluster) CleanupNodes(ctx context.Context) error {
 
 func (c *Cluster) CleanupFiles(ctx context.Context) error {
 	pki.RemoveAdminConfig(ctx, c.LocalKubeConfigPath)
-	removeStateFile(ctx, c.StateFilePath)
+	RemoveStateFile(ctx, c.StateFilePath)
 	return nil
 }
 

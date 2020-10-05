@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	DINDImage           = "docker:17.03-dind"
+	DINDImage           = "docker:19.03.12-dind"
 	DINDContainerPrefix = "rke-dind"
 	DINDPlane           = "dind"
 	DINDNetwork         = "dind-network"
@@ -63,10 +63,12 @@ func StartUpDindContainer(ctx context.Context, dindAddress, dindNetwork, dindSto
 				"sh",
 				"-c",
 				"mount --make-shared / && " +
+					"mount --make-shared /sys && " +
 					"mount --make-shared /var/lib/docker && " +
 					"dockerd-entrypoint.sh --storage-driver=" + storageDriver,
 			},
 			Hostname: dindAddress,
+			Env:      []string{"DOCKER_TLS_CERTDIR="},
 		}
 		hostCfg := &container.HostConfig{
 			Privileged: true,
@@ -120,6 +122,10 @@ func RmoveDindContainer(ctx context.Context, dindAddress string) error {
 	if err := cli.ContainerRemove(ctx, containerName, types.ContainerRemoveOptions{
 		Force:         true,
 		RemoveVolumes: true}); err != nil {
+		if client.IsErrNotFound(err) {
+			logrus.Debugf("[remove/%s] Container doesn't exist on host [%s]", containerName, cli.DaemonHost())
+			return nil
+		}
 		return fmt.Errorf("Failed to remove dind container [%s] on host [%s]: %v", containerName, cli.DaemonHost(), err)
 	}
 	logrus.Infof("[%s] Successfully Removed dind container [%s] on host [%s]", DINDPlane, containerName, cli.DaemonHost())

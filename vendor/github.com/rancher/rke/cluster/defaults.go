@@ -15,8 +15,8 @@ import (
 	"github.com/rancher/rke/metadata"
 	"github.com/rancher/rke/services"
 	"github.com/rancher/rke/templates"
+	v3 "github.com/rancher/rke/types"
 	"github.com/rancher/rke/util"
-	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
 	"github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -465,6 +465,7 @@ func (c *Cluster) setClusterImageDefaults() error {
 		&c.SystemImages.CalicoFlexVol:             d(imageDefaults.CalicoFlexVol, privRegURL),
 		&c.SystemImages.CanalNode:                 d(imageDefaults.CanalNode, privRegURL),
 		&c.SystemImages.CanalCNI:                  d(imageDefaults.CanalCNI, privRegURL),
+		&c.SystemImages.CanalControllers:          d(imageDefaults.CanalControllers, privRegURL),
 		&c.SystemImages.CanalFlannel:              d(imageDefaults.CanalFlannel, privRegURL),
 		&c.SystemImages.CanalFlexVol:              d(imageDefaults.CanalFlexVol, privRegURL),
 		&c.SystemImages.WeaveNode:                 d(imageDefaults.WeaveNode, privRegURL),
