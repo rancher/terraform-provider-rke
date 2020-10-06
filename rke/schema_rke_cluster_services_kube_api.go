@@ -5,7 +5,7 @@ import (
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	rancher "github.com/rancher/types/apis/management.cattle.io/v3"
+	rancher "github.com/rancher/rke/types"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
 )

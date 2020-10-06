@@ -1,14 +1,13 @@
 module github.com/rancher/terraform-provider-rke
 
-go 1.13
+go 1.14
 
 require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/hashicorp/go-version v1.2.0
 	github.com/hashicorp/terraform-plugin-sdk v1.14.0
-	github.com/rancher/rke v1.1.7
-	github.com/rancher/types v0.0.0-20200812201428-42b3abe8e39e
+	github.com/rancher/rke v1.2.0
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/sirupsen/logrus v1.4.2
 	gopkg.in/yaml.v2 v2.2.8

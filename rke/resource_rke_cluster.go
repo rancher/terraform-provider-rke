@@ -15,7 +15,7 @@ import (
 	"github.com/rancher/rke/dind"
 	"github.com/rancher/rke/hosts"
 	"github.com/rancher/rke/pki"
-	v3 "github.com/rancher/types/apis/management.cattle.io/v3"
+	v3 "github.com/rancher/rke/types"
 	log "github.com/sirupsen/logrus"
 )
 
