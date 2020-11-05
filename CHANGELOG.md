@@ -1,4 +1,4 @@
-## 1.1.4 (Unreleased)
+## 1.1.4 (November 5, 2020)
 
 FEATURES:
 
@@ -12,6 +12,8 @@ ENHANCEMENTS:
   * [CVE-2020-8566](https://github.com/kubernetes/kubernetes/issues/95624) - Mask Ceph RBD adminSecrets in logs when logLevel >= 4
 
 BUG FIXES:
+
+
 
 ## 1.1.3 (October 6, 2020)
 
