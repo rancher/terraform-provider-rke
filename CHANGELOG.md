@@ -1,3 +1,18 @@
+## 1.1.4 (Unreleased)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Updated RKE to v1.2.1 including k8s CVE:
+  * [CVE-2020-8563](https://github.com/kubernetes/kubernetes/issues/95621) - Secret leaks in kube-controller-manager when using vSphere provider
+  * [CVE-2020-8564](https://github.com/kubernetes/kubernetes/issues/95622) - Docker config secrets leaked when file is malformed and log level >= 4
+  * [CVE-2020-8566](https://github.com/kubernetes/kubernetes/issues/95624) - Mask Ceph RBD adminSecrets in logs when logLevel >= 4
+
+BUG FIXES:
+
 ## 1.1.3 (October 6, 2020)
 
 FEATURES:
