@@ -36,7 +36,7 @@ func init() {
 		},
 	}
 	testRKEClusterNodeUpgradeStrategyConf = &rancher.NodeUpgradeStrategy{
-		Drain:                      false,
+		Drain:                      newFalse(),
 		DrainInput:                 testRKEClusterNodeDrainInputConf,
 		MaxUnavailableControlplane: "2",
 		MaxUnavailableWorker:       "20%",
