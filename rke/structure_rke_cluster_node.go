@@ -30,7 +30,7 @@ func flattenRKEClusterNodeUpgradeStrategy(in *rancher.NodeUpgradeStrategy) []int
 		return []interface{}{}
 	}
 
-	obj["drain"] = in.Drain
+	obj["drain"] = *in.Drain
 
 	if in.DrainInput != nil {
 		obj["drain_input"] = flattenRKEClusterNodeDrainInput(in.DrainInput)
@@ -208,7 +208,7 @@ func expandRKEClusterNodeUpgradeStrategy(p []interface{}) *rancher.NodeUpgradeSt
 	in := p[0].(map[string]interface{})
 
 	if v, ok := in["drain"].(bool); ok {
-		obj.Drain = v
+		obj.Drain = &v
 	}
 
 	if v, ok := in["drain_input"].([]interface{}); ok {
