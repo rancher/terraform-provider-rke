@@ -1,3 +1,17 @@
+## 1.1.6 (December 9, 2020)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Updated RKE to v1.2.3
+
+BUG FIXES:
+
+* Fix upgrade crash if upgrade_strategy.drain is set
+
 ## 1.1.5 (November 5, 2020)
 
 FEATURES:
