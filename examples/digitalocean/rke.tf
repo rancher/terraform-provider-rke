@@ -61,7 +61,7 @@ resource "rke_cluster" "cluster" {
   }
   
   addon_job_timeout = 60
-  addons = "${data.template_file.addons.rendered}"
+  addons = data.template_file.addons.rendered
 
   addons_include = [
     # Cloud Controller Manager for DigitalOcean
