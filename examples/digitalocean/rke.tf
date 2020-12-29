@@ -45,13 +45,13 @@ resource "rke_cluster" "cluster" {
     kube_api {
       extra_args = {
         kubelet-preferred-address-types = "InternalIP,ExternalIP,Hostname"
-        feature-gates = "VolumeSnapshotDataSource=true,KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true"
+        feature-gates = "KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true"
       }
     }
     kubelet {
       extra_args = {
         cloud-provider = "external"
-        feature-gates = "VolumeSnapshotDataSource=true,KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true"
+        feature-gates = "KubeletPluginsWatcher=true,CSINodeInfo=true,CSIDriverRegistry=true"
       }
     }
   }
