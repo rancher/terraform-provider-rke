@@ -66,8 +66,10 @@ resource "rke_cluster" "cluster" {
   addons_include = [
     # Cloud Controller Manager for DigitalOcean
     "${path.module}/files/ccm-digitalocean-v0.1.15.yaml",
-    # CSI driver for DO, only v1.0.1 version works with rke v1.13.5-rancher1-2
-    "${path.module}/files/csi-digitalocean-v1.0.1.yaml",
+    # CSI driver for DigitalOcean
+    "${path.module}/files/csi-digitalocean-v2.1.1/crds.yaml",
+    "${path.module}/files/csi-digitalocean-v2.1.1/driver.yaml",
+    "${path.module}/files/csi-digitalocean-v2.1.1/snapshot-controller.yaml",
     # Ingess-nginx for generic cloud (with LoadBalancer type service)
     "${path.module}/files/ingress-mandatory.yaml",
     "${path.module}/files/ingress-cloud-generic.yaml"
