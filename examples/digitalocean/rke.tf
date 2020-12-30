@@ -65,7 +65,7 @@ resource "rke_cluster" "cluster" {
 
   addons_include = [
     # Cloud Controller Manager for DigitalOcean
-    "${path.module}/files/ccm-digitalocean-v0.1.15.yaml",
+    "${path.module}/files/ccm-digitalocean-v0.1.30.yaml",
     # CSI driver for DigitalOcean
     "${path.module}/files/csi-digitalocean-v2.1.1/crds.yaml",
     "${path.module}/files/csi-digitalocean-v2.1.1/driver.yaml",
