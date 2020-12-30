@@ -70,9 +70,8 @@ resource "rke_cluster" "cluster" {
     "${path.module}/files/csi-digitalocean-v2.1.1/crds.yaml",
     "${path.module}/files/csi-digitalocean-v2.1.1/driver.yaml",
     "${path.module}/files/csi-digitalocean-v2.1.1/snapshot-controller.yaml",
-    # Ingess-nginx for generic cloud (with LoadBalancer type service)
-    "${path.module}/files/ingress-mandatory.yaml",
-    "${path.module}/files/ingress-cloud-generic.yaml"
+    # Ingess-nginx for DigitalOcean v0.42.0
+    "${path.module}/files/ingress-nginx-deploy-v0.42.0.yaml"
 
   ]
 }
