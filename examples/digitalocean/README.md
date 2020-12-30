@@ -53,7 +53,7 @@ Most of the cluster configuration is defined in `./rke.tf`.  The file has been m
 
 When `terraform apply` is completed, the kubeconfig file should be created in the current directory.
 
-1.  Set KUBECONFIG environment variable for kubectl 
+1.  Set KUBECONFIG environment variable for `kubectl`
     ```console
     $ export KUBECONFIG=${PWD}/kube_config_cluster.yml
     ```
