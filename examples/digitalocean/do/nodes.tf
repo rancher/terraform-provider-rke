@@ -1,6 +1,6 @@
 # Droplet(ノード)の定義
 resource "digitalocean_droplet" "rke-node" {
-  image    = "ubuntu-18-04-x64"
+  image    = "rancheros"
   name     = "rke-nodes-${count.index + 1}"
   region   = var.region
   size     = var.droplet_size
@@ -12,13 +12,13 @@ resource "digitalocean_droplet" "rke-node" {
   provisioner "remote-exec" {
     connection {
       type        = "ssh"
-      user        = "root"
+      user        = "rancher"
       host        = self.ipv4_address
       private_key = tls_private_key.node-key.private_key_pem
     }
 
     inline = [
-      "curl releases.rancher.com/install-docker/18.09.4.sh | bash",
+      "while ! docker ps > /dev/null ; do sleep 2 ; done",
     ]
   }
 }

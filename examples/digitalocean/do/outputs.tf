@@ -3,7 +3,7 @@ output "private_key" {
 }
 
 output "ssh_username" {
-  value = "root"
+  value = "rancher"
 }
 
 output "addresses" {
