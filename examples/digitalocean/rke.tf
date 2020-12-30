@@ -1,17 +1,19 @@
-### Example works for RKE v1.13.5-rancher1-2
+### Example works for RKE v1.18.12-rancher1-1
 
 variable "do_token" {
   default = ""
 }
 
 module "nodes" {
-  source = "./do"
-  do_token = var.do_token
-  # region       = "nyc1"
-  # droplet_size = "t2.micro"
+  source       = "./do"
+  do_token     = var.do_token
+#  region       = "nyc1"
+#  droplet_size = "s-2vcpu-4gb"
 }
 
 resource "rke_cluster" "cluster" {
+  kubernetes_version = "v1.18.12-rancher1-1"
+
   nodes {
     internal_address = module.nodes.internal_addresses[0]
     address          = module.nodes.addresses[0]
@@ -44,6 +46,7 @@ resource "rke_cluster" "cluster" {
   services {
     kube_api {
       extra_args = {
+        allow-privileged = "true"
         kubelet-preferred-address-types = "InternalIP,ExternalIP,Hostname"
         feature-gates = "VolumeSnapshotDataSource=true,CSINodeInfo=true,CSIDriverRegistry=true"
       }
