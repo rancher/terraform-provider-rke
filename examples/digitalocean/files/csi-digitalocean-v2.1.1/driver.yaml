@@ -16,6 +16,16 @@
 # Install the CSI Driver. This simplifies driver discovery and enables us to
 # customize Kubernetes behavior
 # https://kubernetes-csi.github.io/docs/csi-driver-object.html
+
+
+#######
+# Revised December 30, 2020 by J. Adam Craig <adam@jadamcraig.com> for
+# compatibility with RKE v1.19.4-rancher1-1.
+# 
+# Specific changes are indicated by 'MODIFIED FOR RKE' comments below.
+#######
+
+
 apiVersion: storage.k8s.io/v1beta1
 kind: CSIDriver
 metadata:
@@ -370,7 +380,9 @@ spec:
             - name: ADDRESS
               value: /csi/csi.sock
             - name: DRIVER_REG_SOCK_PATH
-              value: /var/lib/kubelet/plugins/dobs.csi.digitalocean.com/csi.sock
+            # MODIFIED FOR RKE by J. Adam Craig <adam@jadamcraig.com>, was:
+            # value: /var/lib/kubelet/plugins/dobs.csi.digitalocean.com/csi.sock
+              value: /opt/rke/var/lib/kubelet/plugins/dobs.csi.digitalocean.com/csi.sock
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -400,7 +412,9 @@ spec:
             - name: plugin-dir
               mountPath: /csi
             - name: pods-mount-dir
-              mountPath: /var/lib/kubelet
+            # MODIFIED FOR RKE by J. Adam Craig <adam@jadamcraig.com>, was:
+            # mountPath: /var/lib/kubelet
+              mountPath: /opt/rke/var/lib/kubelet
               # needed so that any mounts setup inside this container are
               # propagated back to the host machine.
               mountPropagation: "Bidirectional"
@@ -409,15 +423,21 @@ spec:
       volumes:
         - name: registration-dir
           hostPath:
-            path: /var/lib/kubelet/plugins_registry/
+          # MODIFIED FOR RKE by J. Adam Craig <adam@jadamcraig.com>, was:
+          # path: /var/lib/kubelet/plugins_registry/
+            path: /opt/rke/var/lib/kubelet/plugins_registry/
             type: DirectoryOrCreate
         - name: plugin-dir
           hostPath:
-            path: /var/lib/kubelet/plugins/dobs.csi.digitalocean.com
+          # MODIFIED FOR RKE by J. Adam Craig <adam@jadamcraig.com>, was:
+          # path: /var/lib/kubelet/plugins/dobs.csi.digitalocean.com
+            path: /opt/rke/var/lib/kubelet/plugins/dobs.csi.digitalocean.com
             type: DirectoryOrCreate
         - name: pods-mount-dir
           hostPath:
-            path: /var/lib/kubelet
+          # MODIFIED FOR RKE by J. Adam Craig <adam@jadamcraig.com>, was:
+          # path: /var/lib/kubelet
+            path: /opt/rke/var/lib/kubelet
             type: Directory
         - name: device-dir
           hostPath:
