@@ -2,11 +2,11 @@
 
 FEATURES:
 
-
+* **New Argument:** `rke_cluster.services.etcd.backup_config.timeout` - (Optional/Computed) Set timeout in seconds for etcd backup. Just for RKE v1.2.6 and above
 
 ENHANCEMENTS:
 
-
+* Updated RKE to v1.2.6
 
 BUG FIXES:
 
