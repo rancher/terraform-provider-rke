@@ -576,6 +576,7 @@ The following attributes are exported:
 * `retention` - (Optional) Retention for etcd backup. Default `6` (int)
 * `s3_backup_config` - (Optional) S3 config options for etcd backup (list maxitems:1)
 * `safe_timestamp` - (Optional) Safe timestamp for etcd backup. Default: `false` (bool)
+* `timeout` - (Optional/Computed) Timeout in seconds for etcd backup. Default: `300`. Just for RKE v1.2.6 and above (int)
 
 ###### `s3_backup_config`
 

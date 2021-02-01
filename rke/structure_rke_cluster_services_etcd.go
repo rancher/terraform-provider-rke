@@ -78,6 +78,10 @@ func flattenRKEClusterServicesEtcdBackupConfig(in *rancher.BackupConfig, p []int
 
 	obj["safe_timestamp"] = in.SafeTimestamp
 
+	if in.Timeout > 0 {
+		obj["timeout"] = int(in.Timeout)
+	}
+
 	return []interface{}{obj}
 }
 
@@ -227,6 +231,10 @@ func expandRKEClusterServicesEtcdBackupConfig(p []interface{}) (*rancher.BackupC
 
 	if v, ok := in["safe_timestamp"].(bool); ok {
 		obj.SafeTimestamp = v
+	}
+
+	if v, ok := in["timeout"].(int); ok && v > 0 {
+		obj.Timeout = v
 	}
 
 	return obj, nil
