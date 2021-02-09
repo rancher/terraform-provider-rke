@@ -53,7 +53,7 @@ resource "rke_cluster" "foo2" {
 Restore RKE cluster. RKE cluster must be already managed by terraform and etcd snapshot must exist
 
 ```hcl
-resource rke_cluster "cluster" {
+resource "rke_cluster" "cluster" {
   cluster_name = "foo"
   nodes {
     address = "1.2.3.4"
