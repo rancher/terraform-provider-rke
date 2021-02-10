@@ -16,6 +16,8 @@ var (
 	testRKEClusterNetworkFlannelInterface []interface{}
 	testRKEClusterNetworkWeaveConf        *rancher.WeaveNetworkProvider
 	testRKEClusterNetworkWeaveInterface   []interface{}
+	testRKEClusterNetworkAciConf          *rancher.AciNetworkProvider
+	testRKEClusterNetworkAciInterface     []interface{}
 	testRKEClusterNetworkConfCalico       rancher.NetworkConfig
 	testRKEClusterNetworkInterfaceCalico  []interface{}
 	testRKEClusterNetworkConfCanal        rancher.NetworkConfig
@@ -24,12 +26,15 @@ var (
 	testRKEClusterNetworkInterfaceFlannel []interface{}
 	testRKEClusterNetworkConfWeave        rancher.NetworkConfig
 	testRKEClusterNetworkInterfaceWeave   []interface{}
+	testRKEClusterNetworkConfAci          rancher.NetworkConfig
+	testRKEClusterNetworkInterfaceAci     []interface{}
 )
 
 func init() {
 	testRKEClusterNetworkCalicoConf = &rancher.CalicoNetworkProvider{
 		CloudProvider: "aws",
 	}
+
 	testRKEClusterNetworkCalicoInterface = []interface{}{
 		map[string]interface{}{
 			"cloud_provider": "aws",
@@ -59,6 +64,60 @@ func init() {
 	testRKEClusterNetworkWeaveInterface = []interface{}{
 		map[string]interface{}{
 			"password": "password",
+		},
+	}
+	testRKEClusterNetworkAciConf = &rancher.AciNetworkProvider{
+		SystemIdentifier:      "demo",
+		ApicHosts:             []string{"10.80.20.180"},
+		Token:                 "a819d237-25f1-41da-91a4-985e87cef864",
+		ApicUserName:          "admin",
+		ApicUserKey:           "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1J",
+		ApicUserCrt:           "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JS",
+		EncapType:             "vxlan",
+		McastRangeStart:       "225.39.1.1",
+		McastRangeEnd:         "225.22.255.255",
+		AEP:                   "hypf-aep",
+		VRFName:               "k8s12_vrf",
+		VRFTenant:             "common",
+		L3Out:                 "k8s12",
+		L3OutExternalNetworks: []string{"10.80.20.180"},
+		NodeSubnet:            "192.168.12.1/24",
+		DynamicExternalSubnet: "10.3.0.1/24",
+		StaticExternalSubnet:  "10.4.0.1/24",
+		ServiceGraphSubnet:    "10.5.0.1/24",
+		KubeAPIVlan:           "23",
+		ServiceVlan:           "24",
+		InfraVlan:             "3901",
+		SnatPortRangeStart:    "5000",
+		SnatPortRangeEnd:      "65000",
+		SnatPortsPerNode:      "3000",
+	}
+	testRKEClusterNetworkAciInterface = []interface{}{
+		map[string]interface{}{
+			"system_id":               "demo",
+			"apic_hosts":              []interface{}{"10.80.20.180"},
+			"token":                   "a819d237-25f1-41da-91a4-985e87cef864",
+			"apic_user_name":          "admin",
+			"apic_user_key":           "LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1J",
+			"apic_user_crt":           "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JS",
+			"encap_type":              "vxlan",
+			"mcast_range_start":       "225.39.1.1",
+			"mcast_range_end":         "225.22.255.255",
+			"aep":                     "hypf-aep",
+			"vrf_name":                "k8s12_vrf",
+			"vrf_tenant":              "common",
+			"l3out":                   "k8s12",
+			"l3out_external_networks": []interface{}{"10.80.20.180"},
+			"node_subnet":             "192.168.12.1/24",
+			"extern_dynamic":          "10.3.0.1/24",
+			"extern_static":           "10.4.0.1/24",
+			"node_svc_subnet":         "10.5.0.1/24",
+			"kube_api_vlan":           "23",
+			"service_vlan":            "24",
+			"infra_vlan":              "3901",
+			"snat_port_range_start":   "5000",
+			"snat_port_range_end":     "65000",
+			"snat_ports_per_node":     "3000",
 		},
 	}
 	testRKEClusterNetworkConfCalico = rancher.NetworkConfig{
@@ -133,6 +192,26 @@ func init() {
 				"option2": "value2",
 			},
 			"plugin": rkeClusterNetworkPluginWeaveName,
+		},
+	}
+	testRKEClusterNetworkConfAci = rancher.NetworkConfig{
+		AciNetworkProvider: testRKEClusterNetworkAciConf,
+		Options: map[string]string{
+			"option1": "value1",
+			"option2": "value2",
+			"option3": "value3",
+		},
+		Plugin: rkeClusterNetworkPluginAciName,
+	}
+	testRKEClusterNetworkInterfaceAci = []interface{}{
+		map[string]interface{}{
+			"aci_network_provider": testRKEClusterNetworkAciInterface,
+			"options": map[string]interface{}{
+				"option1": "value1",
+				"option2": "value2",
+				"option3": "value3",
+			},
+			"plugin": rkeClusterNetworkPluginAciName,
 		},
 	}
 }
@@ -221,6 +300,27 @@ func TestFlattenRKEClusterNetworkWeave(t *testing.T) {
 	}
 }
 
+func TestFlattenRKEClusterNetworkAci(t *testing.T) {
+
+	cases := []struct {
+		Input          *rancher.AciNetworkProvider
+		ExpectedOutput []interface{}
+	}{
+		{
+			testRKEClusterNetworkAciConf,
+			testRKEClusterNetworkAciInterface,
+		},
+	}
+
+	for _, tc := range cases {
+		output := flattenRKEClusterNetworkAci(tc.Input)
+		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
+			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
+				tc.ExpectedOutput, output)
+		}
+	}
+}
+
 func TestFlattenRKEClusterNetwork(t *testing.T) {
 
 	cases := []struct {
@@ -242,6 +342,10 @@ func TestFlattenRKEClusterNetwork(t *testing.T) {
 		{
 			testRKEClusterNetworkConfWeave,
 			testRKEClusterNetworkInterfaceWeave,
+		},
+		{
+			testRKEClusterNetworkConfAci,
+			testRKEClusterNetworkInterfaceAci,
 		},
 	}
 
@@ -338,6 +442,27 @@ func TestExpandRKEClusterNetworkWeave(t *testing.T) {
 	}
 }
 
+func TestExpandRKEClusterNetworkAci(t *testing.T) {
+
+	cases := []struct {
+		Input          []interface{}
+		ExpectedOutput *rancher.AciNetworkProvider
+	}{
+		{
+			testRKEClusterNetworkAciInterface,
+			testRKEClusterNetworkAciConf,
+		},
+	}
+
+	for _, tc := range cases {
+		output := expandRKEClusterNetworkAci(tc.Input)
+		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
+			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
+				tc.ExpectedOutput, output)
+		}
+	}
+}
+
 func TestExpandRKEClusterNetwork(t *testing.T) {
 
 	cases := []struct {
@@ -359,6 +484,10 @@ func TestExpandRKEClusterNetwork(t *testing.T) {
 		{
 			testRKEClusterNetworkInterfaceWeave,
 			testRKEClusterNetworkConfWeave,
+		},
+		{
+			testRKEClusterNetworkInterfaceAci,
+			testRKEClusterNetworkConfAci,
 		},
 	}
 

@@ -132,6 +132,30 @@ func rkeClusterSystemImagesFields() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Optional: true,
 		},
+		"aci_cni_deploy_container": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"aci_host_container": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"aci_opflex_container": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"aci_mcast_container": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"aci_ovs_container": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"aci_controller_container": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
 	}
 	return s
 }
