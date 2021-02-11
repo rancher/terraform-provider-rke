@@ -97,21 +97,21 @@ EOL
   # Versions
   ################################################
   # The kubernetes version used.
-  # For now, this should match the version defined in rancher/types defaults map:
-  #    https://github.com/rancher/types/blob/master/apis/management.cattle.io/v3/k8s_defaults.go#L14
+  # For now, this should match the version defined in rancher/kontainer-driver-metadata defaults map:
+  #    https://github.com/rancher/kontainer-driver-metadata/blob/release-v2.5/rke/k8s_rke_system_images.go#L6
   #
   # In case the kubernetes_version and kubernetes image in system_images are defined,
   # the system_images configuration will take precedence over kubernetes_version.
   #
-  # Allowed values: [v1.12.10-rancher1-2, v1.13.10-rancher1-2, v1.14.6-rancher1-1(default), v1.15.3-rancher1-1]
-  kubernetes_version = "v1.14.6-rancher1-1"
+  # Allowed values: Any key defined at `loadK8sRKESystemImages()`
+  kubernetes_version = "v1.19.7-rancher1-1"
 
   ################################################
   # System Images
   ################################################
   # System Image Tags are defaulted to a tag tied with specific kubernetes Versions
   # Default Tags:
-  #    https://github.com/rancher/types/blob/master/apis/management.cattle.io/v3/k8s_defaults.go)
+  #    https://github.com/rancher/kontainer-driver-metadata/blob/release-v2.5/rke/k8s_rke_system_images.go)
   #
   system_images {
     kubernetes                  = "rancher/hyperkube:v1.10.3-rancher2"
