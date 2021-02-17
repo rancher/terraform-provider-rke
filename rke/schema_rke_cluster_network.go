@@ -85,20 +85,23 @@ func rkeClusterNetworkAciFields() map[string]*schema.Schema {
 			},
 		},
 		"token": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:      schema.TypeString,
+			Required:  true,
+			Sensitive: true,
 		},
 		"apic_user_name": {
 			Type:     schema.TypeString,
 			Required: true,
 		},
 		"apic_user_key": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:      schema.TypeString,
+			Required:  true,
+			Sensitive: true,
 		},
 		"apic_user_crt": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:      schema.TypeString,
+			Required:  true,
+			Sensitive: true,
 		},
 		"encap_type": {
 			Type:     schema.TypeString,
