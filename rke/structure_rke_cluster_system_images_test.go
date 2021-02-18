@@ -45,6 +45,12 @@ func init() {
 		MetricsServer:             "metrics_server",
 		WindowsPodInfraContainer:  "windows_pod_infra_container",
 		Nodelocal:                 "nodelocal",
+		AciCniDeployContainer:     "aci_cni_deploy_container",
+		AciHostContainer:          "aci_host_container",
+		AciOpflexContainer:        "aci_opflex_container",
+		AciMcastContainer:         "aci_mcast_container",
+		AciOpenvSwitchContainer:   "aci_ovs_container",
+		AciControllerContainer:    "aci_controller_container",
 	}
 	testRKEClusterSystemImagesInterface = []interface{}{
 		map[string]interface{}{
@@ -79,6 +85,12 @@ func init() {
 			"metrics_server":              "metrics_server",
 			"windows_pod_infra_container": "windows_pod_infra_container",
 			"nodelocal":                   "nodelocal",
+			"aci_cni_deploy_container":    "aci_cni_deploy_container",
+			"aci_host_container":          "aci_host_container",
+			"aci_opflex_container":        "aci_opflex_container",
+			"aci_mcast_container":         "aci_mcast_container",
+			"aci_ovs_container":           "aci_ovs_container",
+			"aci_controller_container":    "aci_controller_container",
 		},
 	}
 }

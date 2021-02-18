@@ -427,6 +427,7 @@ The following attributes are exported:
 * `canal_network_provider` - (Optional) Canal network provider config (list maxitems:1)
 * `flannel_network_provider` - (Optional) Flannel network provider config (list maxitems:1)
 * `weave_network_provider` - (Optional) Weave network provider config (list maxitems:1)
+* `aci_network_provider` - (Optional) Aci network provider config (list maxitems:1)
 * `mtu` - (Optional) Network provider MTU. Default `0` (int)
 * `options` - (Optional/Computed) Network provider options (map)
 * `plugin` - (Optional) Network provider plugin. `calico`, `canal` (default), `flannel`, `none` and `weave` are supported. (string)
@@ -454,6 +455,35 @@ The following attributes are exported:
 ##### Arguments
 
 * `password` - (Optional/Computed) Weave password (string)
+
+#### `aci_network_provider`
+
+##### Arguments
+
+* `system_id` - (Required) Unique suffix for all cluster related objects in aci (string)
+* `apic_hosts` - (Required) Ip address for apic hosts (list)
+* `token` - (Required/Sensitive) UUID for this version of the input configuration (string)
+* `apic_user_name` - (Required) User name for aci apic (string)
+* `apic_user_key` - (Required/Sensitive) Base64 encoded private key for aci apic user (string)
+* `apic_user_crt` - (Required/Sensitive) Base64 encoded certificate for aci apic user (string)
+* `encap_type` - (Required) One of the supported encap types for aci(vlan/vxlan) (string)
+* `mcast_range_start` - (Required) Mcast range start address for endpoint groups on aci (string)
+* `mcast_range_end` - (Required) Mcast range end address for endpoint groups on aci (string)
+* `aep` - (Required) Attachment entity profile name on aci (string)
+* `vrf_name` - (Required) VRF Name on aci (string)
+* `vrf_tenant` - (Required) Tenant for VRF on aci (string)
+* `l3out` - (Required) L3Out on aci (string)
+* `node_subnet` - (Required) Kubernetes node address subnet (string)
+* `l3out_external_networks` - (Required) L3out external networks on aci (list)
+* `extern_dynamic` - (Required) Subnet to use for dynamic external IPs on aci (string)
+* `extern_static"` - (Required) Subnet to use for static external IPs on aci (string)
+* `node_svc_subnet` - (Required) Subnet to use for service graph endpoints on aci (string)
+* `kube_api_vlan` - (Required) Vlan for node network on aci (string)
+* `service_vlan` - (Required) Vlan for service graph nodes on aci (string)
+* `infra_vlan` - (Required) Vlan for infra network on aci (string)
+* `snat_port_range_start` - (Optional) Port start range for Source Network Address Translation on aci (string)
+* `snat_port_range_end` - (Optional) Port end range for Source Network Address Translation on aci (string)
+* `snat_ports_per_node` - (Optional) Ports per node for Source Network Address Translation on aci (string)
 
 ### `nodes`
 
@@ -685,6 +715,12 @@ The following attributes are exported:
 * `ingress_backend` - (Optional) Docker image for ingress_backend (string)
 * `metrics_server` - (Optional) Docker image for metrics_server (string)
 * `windows_pod_infra_container` - (Optional) Docker image for windows_pod_infra_container (string)
+* `aci_cni_deploy_container` - (Optional) Docker image for aci_cni_deploy_container (string)
+* `aci_host_container` - (Optional) Docker image for aci_host_container (string)
+* `aci_opflex_container` - (Optional) Docker image for aci_opflex_container (string)
+* `aci_mcast_container` - (Optional) Docker image for aci_mcast_container (string)
+* `aci_ovs_container` - (Optional) Docker image for aci_ovs_container (string)
+* `aci_controller_container` - (Optional) Docker image for aci_controller_container (string)
 
 ### `upgrade_strategy`
 
