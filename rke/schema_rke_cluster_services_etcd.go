@@ -72,6 +72,11 @@ func rkeClusterServicesEtcdBackupConfigFields() map[string]*schema.Schema {
 			Optional: true,
 			Default:  false,
 		},
+		"timeout": {
+			Type:     schema.TypeInt,
+			Optional: true,
+			Default:  300,
+		},
 	}
 	return s
 }
