@@ -1,3 +1,17 @@
+## 1.2.1 (March 3, 2021)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+
+
+BUG FIXES:
+
+* Fix `rke_cluster.services.etcd.backup_config.timeout` argument at tf schema
+
 ## 1.2.0 (March 3, 2021)
 
 FEATURES:
