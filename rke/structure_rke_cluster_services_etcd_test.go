@@ -41,6 +41,7 @@ func init() {
 		Retention:      10,
 		S3BackupConfig: testRKEClusterServicesETCDBackupS3Conf,
 		SafeTimestamp:  true,
+		Timeout:        500,
 	}
 	testRKEClusterServicesETCDBackupInterface = []interface{}{
 		map[string]interface{}{
@@ -49,6 +50,7 @@ func init() {
 			"retention":        10,
 			"s3_backup_config": testRKEClusterServicesETCDBackupS3Interface,
 			"safe_timestamp":   true,
+			"timeout":          500,
 		},
 	}
 	testRKEClusterServicesETCDConf = rancher.ETCDService{

@@ -289,6 +289,7 @@ resource rke_cluster "cluster" {
     drain_input {
       ignore_daemon_sets = true
       timeout = 120
+      delete_local_data = true
     }
   }
 }
@@ -342,6 +343,7 @@ resource rke_cluster "cluster" {
     drain_input {
       ignore_daemon_sets = true
       timeout = 120
+      delete_local_data = true
     }
   }
 }
