@@ -436,7 +436,7 @@ func createTempDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	tempDir, err := ioutil.TempDir(workDir, "terraform-provider-rke-tmp-")
+	tempDir, err := ioutil.TempDir(workDir, "rke-provider-tmp-")
 	if err != nil {
 		return "", err
 	}
