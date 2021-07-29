@@ -11,7 +11,7 @@ declare -A OS_ARCH_ARG
 OS_PLATFORM_ARG=(linux windows darwin freebsd openbsd)
 OS_ARCH_ARG[linux]="amd64 arm arm64"
 OS_ARCH_ARG[windows]="386 amd64"
-OS_ARCH_ARG[darwin]="amd64"
+OS_ARCH_ARG[darwin]="amd64 arm64"
 
 BIN_NAME="terraform-provider-rke"
 BUILD_DIR=$(dirname $0)"/../build/bin"
