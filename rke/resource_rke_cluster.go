@@ -321,6 +321,8 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 		case *stateNotFoundError:
 			d.SetId("")
 			return nil, nil
+		default:
+			return nil, err
 		}
 	}
 
@@ -329,7 +331,7 @@ func readClusterState(d *schema.ResourceData) (*cluster.Cluster, error) {
 		readedCluster.DinD = v
 	}
 
-	return readedCluster, err
+	return readedCluster, nil
 }
 
 func getClusterState(ctx context.Context, dialersOptions hosts.DialersOptions, flags cluster.ExternalFlags) (*cluster.FullState, *cluster.Cluster, error) {

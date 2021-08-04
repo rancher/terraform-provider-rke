@@ -1,3 +1,17 @@
+## 1.2.4 (Unreleased)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+
+
+BUG FIXES:
+
+* Fix provider crash if getClusterState returns err 
+
 ## 1.2.3 (Jun 24, 2021)
 
 FEATURES:
