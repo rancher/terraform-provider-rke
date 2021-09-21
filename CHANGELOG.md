@@ -1,3 +1,18 @@
+## 1.3.0 (Dec 20, 2021)
+
+FEATURES:
+
+* **New Argument:** `rke_cluster.bastion_host.ignore_proxy_env_vars` - (Optional) Ignore proxy env vars at Bastion Host? Default: `false` (bool)
+
+ENHANCEMENTS:
+
+* Updated RKE to v1.3.3
+* Updated `rke_cluster.services.kube_api.secrets_encryption_config.custom_config` go struct to proper marshal/unmarshal at RKE v1.3.3
+
+BUG FIXES:
+
+
+
 ## 1.2.5 (Dec 10, 2021)
 
 FEATURES:
