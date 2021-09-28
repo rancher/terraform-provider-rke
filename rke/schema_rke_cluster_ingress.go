@@ -58,10 +58,10 @@ func rkeClusterIngressFields() map[string]*schema.Schema {
 			Description:  "Ingress controller provider",
 		},
 		"default_backend": {
-		    Type: schema.TypeBool,
-		    Optional: true,
-		    Default: true,
-		    Description:"Ingress Default Backend",
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			Description: "Ingress Default Backend",
 		},
 	}
 	return s

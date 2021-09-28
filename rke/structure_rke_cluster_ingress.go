@@ -29,6 +29,8 @@ func flattenRKEClusterIngress(in rancher.IngressConfig) []interface{} {
 		obj["provider"] = in.Provider
 	}
 
+	obj["default_backend"] = *in.DefaultBackend
+
 	return []interface{}{obj}
 }
 
@@ -59,6 +61,10 @@ func expandRKEClusterIngress(p []interface{}) rancher.IngressConfig {
 
 	if v, ok := in["provider"].(string); ok && len(v) > 0 {
 		obj.Provider = v
+	}
+
+	if v, ok := in["default_backend"].(bool); ok {
+		obj.DefaultBackend = &v
 	}
 
 	return obj
