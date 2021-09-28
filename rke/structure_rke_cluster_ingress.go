@@ -29,7 +29,9 @@ func flattenRKEClusterIngress(in rancher.IngressConfig) []interface{} {
 		obj["provider"] = in.Provider
 	}
 
-	obj["default_backend"] = *in.DefaultBackend
+	if in.DefaultBackend != nil {
+		obj["default_backend"] = *in.DefaultBackend
+	}
 
 	return []interface{}{obj}
 }
