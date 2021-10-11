@@ -57,6 +57,12 @@ func rkeClusterIngressFields() map[string]*schema.Schema {
 			ValidateFunc: validation.StringInSlice(rkeClusterIngressProviderList, true),
 			Description:  "Ingress controller provider",
 		},
+		"default_backend": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			Description: "Ingress Default Backend",
+		},
 	}
 	return s
 }

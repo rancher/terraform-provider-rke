@@ -27,7 +27,8 @@ func init() {
 			"option1": "value1",
 			"option2": "value2",
 		},
-		Provider: "test",
+		Provider:       "test",
+		DefaultBackend: newTrue(),
 	}
 	testRKEClusterIngressInterface = []interface{}{
 		map[string]interface{}{
@@ -44,7 +45,8 @@ func init() {
 				"option1": "value1",
 				"option2": "value2",
 			},
-			"provider": "test",
+			"provider":        "test",
+			"default_backend": true,
 		},
 	}
 }
