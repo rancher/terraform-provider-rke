@@ -22,6 +22,14 @@ func flattenRKEClusterBastionHost(in rancher.BastionHost) []interface{} {
 
 	obj["ssh_agent_auth"] = in.SSHAgentAuth
 
+	if len(in.SSHCert) > 0 {
+		obj["ssh_cert"] = in.SSHCert
+	}
+
+	if len(in.SSHCertPath) > 0 {
+		obj["ssh_cert_path"] = in.SSHCertPath
+	}
+
 	if len(in.SSHKey) > 0 {
 		obj["ssh_key"] = in.SSHKey
 	}
@@ -52,6 +60,14 @@ func expandRKEClusterBastionHost(p []interface{}) rancher.BastionHost {
 
 	if v, ok := in["ssh_agent_auth"].(bool); ok {
 		obj.SSHAgentAuth = v
+	}
+
+	if v, ok := in["ssh_cert"].(string); ok && len(v) > 0 {
+		obj.SSHCert = v
+	}
+
+	if v, ok := in["ssh_cert_path"].(string); ok && len(v) > 0 {
+		obj.SSHCertPath = v
 	}
 
 	if v, ok := in["ssh_key"].(string); ok && len(v) > 0 {
