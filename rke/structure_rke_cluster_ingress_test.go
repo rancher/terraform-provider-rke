@@ -19,6 +19,9 @@ func init() {
 			"arg_one": "one",
 			"arg_two": "two",
 		},
+		HTTPPort:    8080,
+		HTTPSPort:   8443,
+		NetworkMode: "network_mode",
 		NodeSelector: map[string]string{
 			"node_one": "one",
 			"node_two": "two",
@@ -37,6 +40,9 @@ func init() {
 				"arg_one": "one",
 				"arg_two": "two",
 			},
+			"http_port":    8080,
+			"https_port":   8443,
+			"network_mode": "network_mode",
 			"node_selector": map[string]interface{}{
 				"node_one": "one",
 				"node_two": "two",
