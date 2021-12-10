@@ -17,6 +17,18 @@ func flattenRKEClusterIngress(in rancher.IngressConfig) []interface{} {
 		obj["extra_args"] = toMapInterface(in.ExtraArgs)
 	}
 
+	if in.HTTPPort > 0 {
+		obj["http_port"] = in.HTTPPort
+	}
+
+	if in.HTTPSPort > 0 {
+		obj["https_port"] = in.HTTPSPort
+	}
+
+	if len(in.NetworkMode) > 0 {
+		obj["network_mode"] = in.NetworkMode
+	}
+
 	if len(in.NodeSelector) > 0 {
 		obj["node_selector"] = toMapInterface(in.NodeSelector)
 	}
@@ -51,6 +63,18 @@ func expandRKEClusterIngress(p []interface{}) rancher.IngressConfig {
 
 	if v, ok := in["extra_args"].(map[string]interface{}); ok && len(v) > 0 {
 		obj.ExtraArgs = toMapString(v)
+	}
+
+	if v, ok := in["http_port"].(int); ok && v > 0 {
+		obj.HTTPPort = v
+	}
+
+	if v, ok := in["https_port"].(int); ok && v > 0 {
+		obj.HTTPSPort = v
+	}
+
+	if v, ok := in["network_mode"].(string); ok && len(v) > 0 {
+		obj.NetworkMode = v
 	}
 
 	if v, ok := in["node_selector"].(map[string]interface{}); ok && len(v) > 0 {

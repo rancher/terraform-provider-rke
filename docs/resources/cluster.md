@@ -407,6 +407,9 @@ The following attributes are exported:
 
 * `dns_policy` - (Optional) Ingress controller DNS policy. `ClusterFirstWithHostNet`, `ClusterFirst`, `Default`, and `None` are supported. [K8S dns Policy](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy) (string)
 * `extra_args` - (Optional) Extra arguments for the ingress controller (map)
+* `http_port` - (Optional) Ingress controller http port (int)
+* `https_port` - (Optional) Ingress controller https port (int)
+* `network_mode` - (Optional) Networt mode for the ingress controller. `hostNetwork`, `hostPort` and `none` are supported (string)
 * `node_selector` - (Optional) Node selector key pair (map)
 * `options` - (Optional) Ingress controller options (map)
 * `provider` - (Optional) Ingress controller provider. `nginx` (default), and `none` are supported (string)

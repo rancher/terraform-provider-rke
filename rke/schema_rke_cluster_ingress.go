@@ -7,8 +7,11 @@ import (
 )
 
 const (
-	rkeClusterIngressNginx = "nginx"
-	rkeClusterIngressNone  = "none"
+	rkeClusterIngressNginx                  = "nginx"
+	rkeClusterIngressNone                   = "none"
+	rkeClusterIngressNetworkModeHostNetwork = "hostNetwork"
+	rkeClusterIngressNetworkModeHostPort    = "hostPort"
+	rkeClusterIngressNetworkModeNone        = "none"
 )
 
 var (
@@ -22,6 +25,11 @@ var (
 		rkeClusterIngressDNSPolicyClusterFirstWithHostNet,
 		rkeClusterIngressDNSPolicyDefault,
 		rkeClusterIngressDNSPolicyNone,
+	}
+	rkeClusterIngressNetworkModeList = []string{
+		rkeClusterIngressNetworkModeHostNetwork,
+		rkeClusterIngressNetworkModeHostPort,
+		rkeClusterIngressNetworkModeNone,
 	}
 )
 
@@ -39,6 +47,22 @@ func rkeClusterIngressFields() map[string]*schema.Schema {
 			Type:        schema.TypeMap,
 			Optional:    true,
 			Description: "Extra arguments for the ingress controller",
+		},
+		"http_port": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "Ingress controller http port",
+		},
+		"https_port": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "Ingress controller https port",
+		},
+		"network_mode": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.StringInSlice(rkeClusterIngressNetworkModeList, true),
+			Description:  "Ingress controller network mode",
 		},
 		"node_selector": {
 			Type:        schema.TypeMap,
