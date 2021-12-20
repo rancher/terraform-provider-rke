@@ -14,25 +14,27 @@ var (
 
 func init() {
 	testRKEClusterBastionHostConf = rancher.BastionHost{
-		Address:      "bastion.terraform.test",
-		Port:         "22",
-		SSHAgentAuth: true,
-		SSHCert:      "XXXXXXXX",
-		SSHCertPath:  "/home/user/.ssh",
-		SSHKey:       "XXXXXXXX",
-		SSHKeyPath:   "/home/user/.ssh",
-		User:         "test",
+		Address:            "bastion.terraform.test",
+		IgnoreProxyEnvVars: true,
+		SSHCert:            "XXXXXXXX",
+		SSHCertPath:        "/home/user/.ssh",
+		Port:               "22",
+		SSHAgentAuth:       true,
+		SSHKey:             "XXXXXXXX",
+		SSHKeyPath:         "/home/user/.ssh",
+		User:               "test",
 	}
 	testRKEClusterBastionHostInterface = []interface{}{
 		map[string]interface{}{
-			"address":        "bastion.terraform.test",
-			"port":           "22",
-			"ssh_agent_auth": true,
-			"ssh_cert":       "XXXXXXXX",
-			"ssh_cert_path":  "/home/user/.ssh",
-			"ssh_key":        "XXXXXXXX",
-			"ssh_key_path":   "/home/user/.ssh",
-			"user":           "test",
+			"address":               "bastion.terraform.test",
+			"ignore_proxy_env_vars": true,
+			"port":                  "22",
+			"ssh_agent_auth":        true,
+			"ssh_cert":              "XXXXXXXX",
+			"ssh_cert_path":         "/home/user/.ssh",
+			"ssh_key":               "XXXXXXXX",
+			"ssh_key_path":          "/home/user/.ssh",
+			"user":                  "test",
 		},
 	}
 }

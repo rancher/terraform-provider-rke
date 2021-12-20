@@ -7,7 +7,7 @@ import (
 	rancher "github.com/rancher/rke/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
-	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
+	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 )
 
 var (
@@ -92,21 +92,21 @@ func init() {
 	}
 	testRKEClusterServicesKubeAPISecretsEncryptionConfigConf = &rancher.SecretsEncryptionConfig{
 		Enabled: true,
-		CustomConfig: &apiserverconfig.EncryptionConfiguration{
-			Resources: []apiserverconfig.ResourceConfiguration{
+		CustomConfig: &apiserverconfigv1.EncryptionConfiguration{
+			Resources: []apiserverconfigv1.ResourceConfiguration{
 				{
 					Resources: []string{"secrets"},
-					Providers: []apiserverconfig.ProviderConfiguration{
+					Providers: []apiserverconfigv1.ProviderConfiguration{
 						{
-							AESCBC: &apiserverconfig.AESConfiguration{
-								Keys: []apiserverconfig.Key{
+							AESCBC: &apiserverconfigv1.AESConfiguration{
+								Keys: []apiserverconfigv1.Key{
 									{
 										Name:   "k-fw5hn",
 										Secret: "RTczRjFDODMwQzAyMDVBREU4NDJBMUZFNDhCNzM5N0I=",
 									},
 								},
 							},
-							Identity: &apiserverconfig.IdentityConfiguration{},
+							Identity: &apiserverconfigv1.IdentityConfiguration{},
 						},
 					},
 				},
@@ -254,8 +254,8 @@ func TestFlattenRKEClusterServicesKubeAPISecretsEncryptionConfig(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error on flattenRKEClusterServicesKubeAPISecretsEncryptionConfig: %#v", err)
 		}
-		outputObject := &apiserverconfig.EncryptionConfiguration{}
-		expectedObject := &apiserverconfig.EncryptionConfiguration{}
+		outputObject := &apiserverconfigv1.EncryptionConfiguration{}
+		expectedObject := &apiserverconfigv1.EncryptionConfiguration{}
 		outputStr, _ := mapInterfaceToJSON(output[0].(map[string]interface{}))
 		expectedStr, _ := mapInterfaceToJSON(tc.ExpectedOutput[0].(map[string]interface{}))
 		jsonToInterface(outputStr, outputObject)
@@ -385,7 +385,7 @@ func TestExpandRKEClusterServicesKubeAPISecretsEncryptionConfig(t *testing.T) {
 	for _, tc := range cases {
 		output, err := expandRKEClusterServicesKubeAPISecretsEncryptionConfig(tc.Input)
 		if err != nil {
-			t.Fatalf("[ERROR] on expander: %#v", err)
+			t.Fatalf("[ERROR] on expander: %#v", tc.Input)
 		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",

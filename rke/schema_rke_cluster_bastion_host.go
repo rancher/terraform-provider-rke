@@ -18,6 +18,12 @@ func rkeClusterBastionHostFields() map[string]*schema.Schema {
 			Required:    true,
 			Description: "SSH User to Bastion Host",
 		},
+		"ignore_proxy_env_vars": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Ignore proxy env vars at Bastion Host?",
+		},
 		"port": {
 			Type:        schema.TypeString,
 			Optional:    true,
