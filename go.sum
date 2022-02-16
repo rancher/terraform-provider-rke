@@ -658,6 +658,7 @@ github.com/rancher/norman v0.0.0-20200517050325-f53cae161640 h1:wZT4IWBeMfKewJ+Z
 github.com/rancher/norman v0.0.0-20200517050325-f53cae161640/go.mod h1:92rz/7QN7DOeLQZlJY/8aFBOmF085igIVguR0wpxLas=
 github.com/rancher/rke v1.3.3 h1:XZ3zQ1hhra4bO6a3Wep7hO+fUcDs7TBi1/FdBDEDqB4=
 github.com/rancher/rke v1.3.3/go.mod h1:4StVBXSN7EbrfoWE7nI2AAf/N1td8qSyQMDRyR6nGAg=
+github.com/rancher/rke v1.3.7/go.mod h1:4StVBXSN7EbrfoWE7nI2AAf/N1td8qSyQMDRyR6nGAg=
 github.com/rancher/wrangler v0.6.2-0.20200515155908-1923f3f8ec3f h1:QPOlhiY3YCPLsEtOmPam+ghtqip/f/zsfz4F4PF70D8=
 github.com/rancher/wrangler v0.6.2-0.20200515155908-1923f3f8ec3f/go.mod h1:NmtmlLkchboIksYJuBemwcP4RBfv8FpeyhVoWXB9Wdc=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
