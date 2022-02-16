@@ -16,8 +16,6 @@ func flattenRKEClusterBastionHost(in rancher.BastionHost) []interface{} {
 	obj["address"] = in.Address
 	obj["user"] = in.User
 
-	obj["ignore_proxy_env_vars"] = in.IgnoreProxyEnvVars
-
 	if len(in.Port) > 0 {
 		obj["port"] = in.Port
 	}
@@ -54,10 +52,6 @@ func expandRKEClusterBastionHost(p []interface{}) rancher.BastionHost {
 
 	if v, ok := in["address"].(string); ok && len(v) > 0 {
 		obj.Address = v
-	}
-
-	if v, ok := in["ignore_proxy_env_vars"].(bool); ok {
-		obj.IgnoreProxyEnvVars = v
 	}
 
 	if v, ok := in["port"].(string); ok && len(v) > 0 {

@@ -211,6 +211,7 @@ func clusterRestore(d *schema.ResourceData) (bool, error) {
 }
 
 func prepareDINDEnv(ctx context.Context, rkeConfig *v3.RancherKubernetesEngineConfig, dindStorageDriver, dindDNS string) error {
+	os.Setenv("DOCKER_API_VERSION", hosts.DockerAPIVersion)
 	for i := range rkeConfig.Nodes {
 		address, err := dind.StartUpDindContainer(ctx, rkeConfig.Nodes[i].Address, dind.DINDNetwork, dindStorageDriver, dindDNS)
 		if err != nil {
@@ -233,6 +234,7 @@ func clusterDelete(d *schema.ResourceData) error {
 	}
 
 	if d.Get("dind").(bool) {
+		os.Setenv("DOCKER_API_VERSION", hosts.DockerAPIVersion)
 		for _, node := range rkeConfig.Nodes {
 			if err = dind.RmoveDindContainer(context.Background(), node.Address); err != nil {
 				return nil

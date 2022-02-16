@@ -173,7 +173,6 @@ The following attributes are exported:
 
 * `address` - (Required) Address of Bastion Host (string)
 * `user` - (Required) SSH User to Bastion Host (string)
-* `ignore_proxy_env_vars` - (Optional) Ignore proxy env vars at Bastion Host? Default: `false` (bool)
 * `port` - (Optional) SSH Port of Bastion Host. Default `22` (string)
 * `ssh_agent_auth` - (Optional/Computed) SSH Agent Auth enable (bool)
 * `ssh_cert` - (Optional/Sensitive) SSH Certificate Key (string)

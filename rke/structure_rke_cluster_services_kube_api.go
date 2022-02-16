@@ -5,9 +5,11 @@ import (
 	"fmt"
 
 	rancher "github.com/rancher/rke/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
+	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
 	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 )
 
@@ -97,7 +99,25 @@ func flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in *rancher.Secrets
 	obj["enabled"] = in.Enabled
 
 	if in.CustomConfig != nil {
-		configStr, err := interfaceToGhodssyaml(in.CustomConfig)
+		customConfigV1Str, err := interfaceToGhodssyaml(in.CustomConfig)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("Mashalling custom_config yaml: %v", err)
+		}
+		customConfigV1 := &apiserverconfigv1.EncryptionConfiguration{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       clusterServicesKubeAPISecretsEncryptionConfigKindDefault,
+				APIVersion: clusterServicesKubeAPISecretsEncryptionConfigAPIDefault,
+			},
+		}
+		err = ghodssyamlToInterface(customConfigV1Str, customConfigV1)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("Unmashalling custom_config yaml: %v", err)
+		}
+		configMap, _ := interfaceToMap(customConfigV1)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("Mashalling custom_config map: %v", err)
+		}
+		configStr, err := interfaceToGhodssyaml(configMap)
 		if err != nil {
 			return []interface{}{}, fmt.Errorf("Mashalling custom_config yaml: %v", err)
 		}
@@ -300,7 +320,16 @@ func expandRKEClusterServicesKubeAPISecretsEncryptionConfig(p []interface{}) (*r
 		if err != nil {
 			return obj, fmt.Errorf("Unmashalling EncryptionConfiguration json: %v", err)
 		}
-		obj.CustomConfig = newConfigV1
+		customConfigV1Str, err := interfaceToGhodssyaml(newConfigV1)
+		if err != nil {
+			return obj, fmt.Errorf("Mashalling custom_config yaml: %v", err)
+		}
+		newConfig := &apiserverconfig.EncryptionConfiguration{}
+		err = ghodssyamlToInterface(customConfigV1Str, newConfig)
+		if err != nil {
+			return obj, fmt.Errorf("Unmashalling custom_config yaml: %v", err)
+		}
+		obj.CustomConfig = newConfig
 	}
 
 	return obj, nil
