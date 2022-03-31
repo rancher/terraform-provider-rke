@@ -143,6 +143,12 @@ func rkeClusterFields() map[string]*schema.Schema {
 				Schema: rkeClusterDNSFields(),
 			},
 		},
+		"enable_cri_dockerd": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Enable/Disable CRI dockerd for kubelet",
+		},
 		"ignore_docker_version": {
 			Type:        schema.TypeBool,
 			Optional:    true,
