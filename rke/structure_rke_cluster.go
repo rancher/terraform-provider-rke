@@ -226,6 +226,12 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 		return err
 	}
 
+	rkeClusterYaml, _, err := expandRKECluster(d)
+	err = d.Set("rke_cluster_yaml", rkeClusterYaml)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
