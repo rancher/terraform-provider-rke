@@ -191,6 +191,7 @@ require (
 	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
-replace k8s.io/client-go => k8s.io/client-go v0.23.6
-
-replace github.com/spf13/afero => github.com/spf13/afero v1.2.2
+replace (
+	github.com/spf13/afero => github.com/spf13/afero v1.2.2
+	k8s.io/client-go => k8s.io/client-go v0.23.6
+)
