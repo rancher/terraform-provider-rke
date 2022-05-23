@@ -226,6 +226,7 @@ func testAccCheckRKEClusterDestroy(s *terraform.State) error {
 func testAccCheckRKEConfigBasic() string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  enable_cri_dockerd = true
   ignore_docker_version = true
   addon_job_timeout = 60
   dind = true
@@ -247,6 +248,7 @@ resource rke_cluster "cluster" {
 func testAccCheckRKEConfigUpdate() string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  enable_cri_dockerd = true
   ignore_docker_version = true
   addon_job_timeout = 60
   dind = true
@@ -300,6 +302,7 @@ resource rke_cluster "cluster" {
 func testAccCheckRKEConfigBasic2Nodes() string {
 	return fmt.Sprintf(`	
 resource rke_cluster "cluster" {
+  enable_cri_dockerd = true
   ignore_docker_version = true
   addon_job_timeout = 60
   dind = true
