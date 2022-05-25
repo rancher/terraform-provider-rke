@@ -1,3 +1,9 @@
+## 1.3.1 (May 25, 2022)
+
+BUG FIXES:
+
+* Patch & re-assign `rke_cluster_yaml` post create. See [#327] (https://github.com/rancher/terraform-provider-rke/pull/327)
+
 ## 1.3.0 (Dec 20, 2021)
 
 FEATURES:
