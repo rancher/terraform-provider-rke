@@ -89,7 +89,7 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 	d.Set("dind", in.DinD)
 
 	if _, ok := d.Get("enable_cri_dockerd").(bool); ok && in.EnableCRIDockerd != nil {
-		d.Set("enable_cri_dockerd", in.EnableCRIDockerd)
+		d.Set("enable_cri_dockerd", *in.EnableCRIDockerd)
 	}
 
 	if _, ok := d.Get("ignore_docker_version").(bool); ok && in.IgnoreDockerVersion != nil {
