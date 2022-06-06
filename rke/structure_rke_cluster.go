@@ -88,6 +88,10 @@ func flattenRKECluster(d *schema.ResourceData, in *cluster.Cluster) error {
 
 	d.Set("dind", in.DinD)
 
+	if _, ok := d.Get("enable_cri_dockerd").(bool); ok && in.EnableCRIDockerd != nil {
+		d.Set("enable_cri_dockerd", *in.EnableCRIDockerd)
+	}
+
 	if _, ok := d.Get("ignore_docker_version").(bool); ok && in.IgnoreDockerVersion != nil {
 		d.Set("ignore_docker_version", *in.IgnoreDockerVersion)
 	}
@@ -286,6 +290,10 @@ func expandRKECluster(in *schema.ResourceData) (string, *rancher.RancherKubernet
 
 	if v, ok := in.Get("dns").([]interface{}); ok && len(v) > 0 {
 		obj.DNS = expandRKEClusterDNS(v)
+	}
+
+	if v, ok := in.Get("enable_cri_dockerd").(bool); ok {
+		obj.EnableCRIDockerd = &v
 	}
 
 	if v, ok := in.Get("ignore_docker_version").(bool); ok {

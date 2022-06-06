@@ -95,6 +95,7 @@ The following arguments are supported:
 * `dind_storage_driver` - (Optional/Experimental) DinD RKE cluster storage driver (string)
 * `dind_dns_server` - (Optional/Experimental) DinD RKE cluster dns (string)
 * `dns` - (Optional) RKE k8s cluster DNS Config (list maxitems:1)
+* `enable_cri_dockerd` - (Optional) Enable/Disable CRI dockerd for kubelet. Default `false` (bool)
 * `ignore_docker_version` - (Optional) Enable/Disable RKE k8s cluster strict docker version checking. Default `false` (bool)
 * `ingress` - (Optional) RKE k8s cluster ingress controller configuration (list maxitems:1)
 * `kubernetes_version` - (Optional) K8s version to deploy. If kubernetes image is specified, image version takes precedence. Default: `rke default` (string)
