@@ -13,7 +13,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: build-all-binaries
-  image: golang:1.16.5
+  image: golang:1.17.9
   environment:
     CROSS: 1
     VERSION: ${DRONE_TAG}
@@ -28,7 +28,7 @@ steps:
   when:
     event: tag
 
-- name: gpg_sign_release  
+- name: gpg_sign_release
   image: plugins/gpgsign
   settings:
     key:
@@ -48,7 +48,7 @@ steps:
     prerelease: true
     files:
     - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_*
-    api_key: 
+    api_key:
       from_secret: github_token
   when:
     event: tag
@@ -60,7 +60,7 @@ steps:
   settings:
     files:
     - dist/artifacts/${DRONE_TAG}/terraform-provider-rke_*
-    api_key: 
+    api_key:
       from_secret: github_token
   when:
     event: tag
