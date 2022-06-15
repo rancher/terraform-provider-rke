@@ -3,6 +3,18 @@ kind: pipeline
 name: default
 
 steps:
+- name: gpg-key-testing
+  image: lramagesuse/gpg-key-testing:latest
+  settings:
+    key:
+      from_secret: gpg_key
+    passphrase:
+      from_secret: gpg_passphrase
+  when:
+    instance:
+      - drone-publish.rancher.io
+    event: push
+
 - name: build
   image: rancher/dapper:1.11.2
   commands:
