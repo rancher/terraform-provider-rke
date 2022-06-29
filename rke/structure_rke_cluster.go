@@ -3,7 +3,7 @@ package rke
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rancher/rke/cluster"
 	rancher "github.com/rancher/rke/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
