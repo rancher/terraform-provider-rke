@@ -562,6 +562,9 @@ The following attributes are exported:
 * `creation` - (Optional/Computed) Creation option for etcd service (string)
 * `external_urls` - (Optional/Computed) External urls for etcd service (list)
 * `extra_args` - (Optional/Computed) Extra arguments for etcd service (map)
+* `win_extra_args` - (Optional) Extra arguments for the etcd service on Windows systems (map)
+* `extra_args_array` - (Optional) Extra arguments for the etcd service that can be specified multiple times (set maxitems:1)
+* `win_extra_args_array` - (Optional) Extra arguments for the etcd service that can be specified multiple times on Windows systems (set maxitems:1)
 * `extra_binds` - (Optional/Computed) Extra binds for etcd service (list)
 * `extra_env` - (Optional/Computed) Extra environment for etcd service (list)
 * `gid` - (Optional) Etcd service GID. Default: `0`. For Rancher v2.3.x or above (int)
@@ -571,6 +574,12 @@ The following attributes are exported:
 * `retention` - (Optional/Computed) Retention option for etcd service (string)
 * `snapshot` - (Optional) Snapshot option for etcd service. Default `true` (bool)
 * `uid` - (Optional) Etcd service UID. Default: `0`. For Rancher v2.3.x or above (int)
+
+
+##### `extra_args_array`
+###### Arguments
++ `argument` (Required) the argument to be passed to the service
++ `values` (Required) A list of values to be passed with the argument (list)
 
 ##### `backup_config`
 
@@ -603,6 +612,9 @@ The following attributes are exported:
 * `audit_log` - (Optional/Computed) K8s audit log configuration. (list maxitem: 1)
 * `event_rate_limit` - (Optional) K8s event rate limit configuration. (list maxitem: 1)
 * `extra_args` - (Optional/Computed) Extra arguments for kube API service (map)
+* `win_extra_args` - (Optional) Extra arguments for the kube API service on Windows systems (map)
+* `extra_args_array` - (Optional) Extra arguments for the kube API service that can be specified multiple times (set maxitems:1)
+* `win_extra_args_array` - (Optional) Extra arguments for the kube API service that can be specified multiple times on Windows systems (set maxitems:1)
 * `extra_binds` - (Optional/Computed) Extra binds for kube API service (list)
 * `extra_env` - (Optional/Computed) Extra environment for kube API service (list)
 * `image` - (Optional/Computed) Docker image for kube API service (string)
@@ -610,6 +622,12 @@ The following attributes are exported:
 * `secrets_encryption_config` - (Optional) [Encrypt k8s secret data configration](https://rancher.com/docs/rke/latest/en/config-options/secrets-encryption/). (list maxitem: 1)
 * `service_cluster_ip_range` - (Optional/Computed) Service Cluster IP Range option for kube API service (string)
 * `service_node_port_range` - (Optional/Computed) Service Node Port Range option for kube API service (string)
+
+
+##### `extra_args_array`
+###### Arguments
++ `argument` (Required) the argument to be passed to the service
++ `values` (Required) A list of values to be passed with the argument (list)
 
 ##### `audit_log`
 
@@ -649,10 +667,19 @@ The following attributes are exported:
 
 * `cluster_cidr` - (Optional/Computed) Cluster CIDR option for kube controller service (string)
 * `extra_args` - (Optional/Computed) Extra arguments for kube controller service (map)
+* `win_extra_args` - (Optional) Extra arguments for the kube controller service on Windows systems (map)
+* `extra_args_array` - (Optional) Extra arguments for the kube controller service that can be specified multiple times (set maxitems:1)
+* `win_extra_args_array` - (Optional) Extra arguments for the kube controller service that can be specified multiple times on Windows systems (set maxitems:1)
 * `extra_binds` - (Optional/Computed) Extra binds for kube controller service (list)
 * `extra_env` - (Optional/Computed) Extra environment for kube controller service (list)
 * `image` - (Optional/Computed) Docker image for kube controller service (string)
 * `service_cluster_ip_range` - (Optional/Computed) Service Cluster ip Range option for kube controller service (string)
+
+
+##### `extra_args_array`
+###### Arguments
++ `argument` (Required) the argument to be passed to the service
++ `values` (Required) A list of values to be passed with the argument (list)
 
 #### `kubelet`
 
@@ -661,6 +688,9 @@ The following attributes are exported:
 * `cluster_dns_server` - (Optional/Computed) Cluster DNS Server option for kubelet service (string)
 * `cluster_domain` - (Optional) Cluster Domain option for kubelet service. Default `cluster.local` (string)
 * `extra_args` - (Optional/Computed) Extra arguments for kubelet service (map)
+* `win_extra_args` - (Optional) Extra arguments for the kubelet service on Windows systems (map)
+* `extra_args_array` - (Optional) Extra arguments for the kubelet service that can be specified multiple times (set maxitems:1)
+* `win_extra_args_array` - (Optional) Extra arguments for the kubelet service that can be specified multiple times on Windows systems (set maxitems:1)
 * `extra_binds` - (Optional/Computed) Extra binds for kubelet service (list)
 * `extra_env` - (Optional/Computed) Extra environment for kubelet service (list)
 * `fail_swap_on` - (Optional/Computed) Enable or disable failing when swap on is not supported (bool)
@@ -668,23 +698,48 @@ The following attributes are exported:
 * `image` - (Optional/Computed) Docker image for kubelet service (string)
 * `infra_container_image` - (Optional/Computed) Infra container image for kubelet service (string)
 
+
+##### `extra_args_array`
+###### Arguments
++ `argument` (Required) the argument to be passed to the service
++ `values` (Required) A list of values to be passed with the argument (list)
+
 #### `kubeproxy`
 
 ##### Arguments
 
 * `extra_args` - (Optional/Computed) Extra arguments for kubeproxy service (map)
+* `win_extra_args` - (Optional) Extra arguments for the kubeproxy service on Windows systems (map)
+* `extra_args_array` - (Optional) Extra arguments for the kubeproxy service that can be specified multiple times (set maxitems:1)
+* `win_extra_args_array` - (Optional) Extra arguments for the kubeproxy service that can be specified multiple times on Windows systems (set maxitems:1)
 * `extra_binds` - (Optional/Computed) Extra binds for kubeproxy service (list)
 * `extra_env` - (Optional/Computed) Extra environment for kubeproxy service (list)
 * `image` - (Optional/Computed) Docker image for kubeproxy service (string)
+
+
+##### `extra_args_array`
+###### Arguments
++ `argument` (Required) the argument to be passed to the service
++ `values` (Required) A list of values to be passed with the argument (list)
+
 
 #### `scheduler`
 
 ##### Arguments
 
 * `extra_args` - (Optional/Computed) Extra arguments for scheduler service (map)
+* `win_extra_args` - (Optional) Extra arguments for the scheduler service on Windows systems (map)
+* `extra_args_array` - (Optional) Extra arguments for the scheduler service that can be specified multiple times (set maxitems:1)
+* `win_extra_args_array` - (Optional) Extra arguments for the scheduler service that can be specified multiple times on Windows systems (set maxitems:1)
 * `extra_binds` - (Optional/Computed) Extra binds for scheduler service (list)
 * `extra_env` - (Optional/Computed) Extra environment for scheduler service (list)
 * `image` - (Optional/Computed) Docker image for scheduler service (string)
+
+
+##### `extra_args_array`
+###### Arguments
++ `argument` (Required) the argument to be passed to the service
++ `values` (Required) A list of values to be passed with the argument (list)
 
 ### `system_images`
 

@@ -81,6 +81,30 @@ func rkeClusterServicesEtcdBackupConfigFields() map[string]*schema.Schema {
 	return s
 }
 
+func rkeClusterServicesEtcdExtraArgsArrayFields() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"extra_arg": {
+			Type:     schema.TypeList,
+			Required: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"argument": {
+						Required: true,
+						Type:     schema.TypeString,
+					},
+					"values": {
+						Type:     schema.TypeList,
+						Required: true,
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
 func rkeClusterServicesEtcdFields() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		"backup_config": {
@@ -118,9 +142,34 @@ func rkeClusterServicesEtcdFields() map[string]*schema.Schema {
 			},
 		},
 		"extra_args": {
-			Type:     schema.TypeMap,
-			Optional: true,
-			Computed: true,
+			Type:        schema.TypeMap,
+			Optional:    true,
+			Computed:    true,
+			Description: "Extra arguments that are added to the etcd services",
+		},
+		"win_extra_args": {
+			Type:        schema.TypeMap,
+			Optional:    true,
+			Computed:    true,
+			Description: "Extra arguments for Windows systems that are added to the scheduler services",
+		},
+		"extra_args_array": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Extra arguments that can be specified multiple times which are added to the etcd services",
+			Elem: &schema.Resource{
+				Schema: rkeClusterServicesEtcdExtraArgsArrayFields(),
+			},
+		},
+		"win_extra_args_array": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			MaxItems:    1,
+			Description: "Extra arguments for Windows systems that can be specified multiple times which are added to the etcd services",
+			Elem: &schema.Resource{
+				Schema: rkeClusterServicesEtcdExtraArgsArrayFields(),
+			},
 		},
 		"extra_binds": {
 			Type:     schema.TypeList,

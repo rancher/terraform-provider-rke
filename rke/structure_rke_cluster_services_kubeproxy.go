@@ -13,6 +13,18 @@ func flattenRKEClusterServicesKubeproxy(in rancher.KubeproxyService) []interface
 		obj["extra_args"] = toMapInterface(in.ExtraArgs)
 	}
 
+	if len(in.WindowsExtraArgs) > 0 {
+		obj["win_extra_args"] = toMapInterface(in.WindowsExtraArgs)
+	}
+
+	if len(in.ExtraArgsArray) > 0 {
+		obj["extra_args_array"] = flattenExtraArgsArray(in.ExtraArgsArray)
+	}
+
+	if len(in.WindowsExtraArgsArray) > 0 {
+		obj["win_extra_args_array"] = flattenExtraArgsArray(in.WindowsExtraArgsArray)
+	}
+
 	if len(in.ExtraBinds) > 0 {
 		obj["extra_binds"] = toArrayInterface(in.ExtraBinds)
 	}
@@ -39,6 +51,18 @@ func expandRKEClusterServicesKubeproxy(p []interface{}) rancher.KubeproxyService
 
 	if v, ok := in["extra_args"].(map[string]interface{}); ok && len(v) > 0 {
 		obj.ExtraArgs = toMapString(v)
+	}
+
+	if v, ok := in["win_extra_args"].(map[string]interface{}); ok && len(v) > 0 {
+		obj.WindowsExtraArgs = toMapString(v)
+	}
+
+	if v, ok := in["extra_args_array"].([]interface{}); ok && len(v) > 0 {
+		obj.ExtraArgsArray = expandExtraArgsArray(v)
+	}
+
+	if v, ok := in["win_extra_args_array"].([]interface{}); ok && len(v) > 0 {
+		obj.WindowsExtraArgsArray = expandExtraArgsArray(v)
 	}
 
 	if v, ok := in["extra_binds"].([]interface{}); ok && len(v) > 0 {

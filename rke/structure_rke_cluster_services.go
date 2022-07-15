@@ -75,3 +75,24 @@ func expandRKEClusterServices(p []interface{}) (rancher.RKEConfigServices, error
 
 	return obj, nil
 }
+
+func expandExtraArgsArray(v []interface{}) map[string][]string {
+	extraArgMap := make(map[string][]string)
+	if v == nil || len(v) == 0 || v[0] == nil {
+		return extraArgMap
+	}
+
+	// there should only be 1 extra_args_array block per service
+	extraArgs := v[0].(map[string]interface{})["extra_arg"]
+	for _, extraArg := range extraArgs.([]interface{}) {
+		arg := extraArg.(map[string]interface{})
+		interfaceValues := arg["values"].([]interface{})
+		stringValues := make([]string, 0, len(interfaceValues))
+		for _, e := range interfaceValues {
+			stringValues = append(stringValues, e.(string))
+		}
+		extraArgMap[arg["argument"].(string)] = stringValues
+	}
+
+	return extraArgMap
+}
