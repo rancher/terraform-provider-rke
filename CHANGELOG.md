@@ -1,8 +1,23 @@
+## 1.3.2 (June 22, 2022)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Update to [RKE 1.3.11](https://github.com/rancher/rke/releases/tag/v1.3.11). See [#340]
+* Add `enable_cri_dockerd` parameter. See [#337]
+
+BUG FIXES:
+
+
+
 ## 1.3.1 (May 25, 2022)
 
 BUG FIXES:
 
-* Patch & re-assign `rke_cluster_yaml` post create. See [#327] (https://github.com/rancher/terraform-provider-rke/pull/327)
+* Patch & re-assign `rke_cluster_yaml` post create. See [#327]
 
 ## 1.3.0 (Dec 20, 2021)
 
