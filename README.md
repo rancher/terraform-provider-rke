@@ -140,5 +140,11 @@ BUG FIXES:
 
 * Create a PR to update CHANGELOG
 * Copy the updated notes back to the draft release (DO NOT release with just the generated notes. Those are just a template to help you)
-* Publish the release (using the CL: git tag v0.0.0; git push -u origin v0.0.0)
+* Make sure the branch is up-to-date with the remote, in this example, the branch is master and the release tag is v1.24.0
+
+```
+git remote add upstream-release git@github.com:rancher/terraform-provider-rke.git
+git checkout upstream-release/master
+git push upstream-release v1.24.0
+```
 * Create an [EIO issue](https://github.com/rancherlabs/eio) for Hashicorp to publish the release
