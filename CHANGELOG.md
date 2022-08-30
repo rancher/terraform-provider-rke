@@ -1,3 +1,18 @@
+## 1.3.3 (August 30, 2022)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Add release checklist to README. See [#356](https://github.com/rancher/terraform-provider-rke/pull/356)
+* Update RKE to [v1.3.13](https://github.com/rancher/rke/releases/tag/v1.3.13) which supports kubernetes 1.24. See [#357](https://github.com/rancher/terraform-provider-rke/pull/357)
+
+BUG FIXES:
+
+
+
 ## 1.3.2 (June 22, 2022)
 
 FEATURES:
@@ -6,8 +21,8 @@ FEATURES:
 
 ENHANCEMENTS:
 
-* Update to [RKE 1.3.11](https://github.com/rancher/rke/releases/tag/v1.3.11). See [#340]
-* Add `enable_cri_dockerd` parameter. See [#337]
+* Update RKE to [v1.3.11](https://github.com/rancher/rke/releases/tag/v1.3.11). See [#340](https://github.com/rancher/terraform-provider-rke/pull/340)
+* Add `enable_cri_dockerd` parameter. See [#337](https://github.com/rancher/terraform-provider-rke/pull/337)
 
 BUG FIXES:
 
@@ -17,7 +32,7 @@ BUG FIXES:
 
 BUG FIXES:
 
-* Patch & re-assign `rke_cluster_yaml` post create. See [#327]
+* Patch & re-assign `rke_cluster_yaml` post create. See [#327](https://github.com/rancher/terraform-provider-rke/pull/327)
 
 ## 1.3.0 (Dec 20, 2021)
 
