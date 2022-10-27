@@ -1,3 +1,17 @@
+## 1.3.4 (October 27, 2022)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Update RKE to v1.3.15. See [#363](https://github.com/rancher/terraform-provider-rke/pull/363)
+
+BUG FIXES:
+
+
+
 ## 1.3.3 (August 30, 2022)
 
 FEATURES:
