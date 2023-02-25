@@ -1,3 +1,20 @@
+## 1.4.0 (February 24, 2023)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Update RKE to [v1.4.2](https://github.com/rancher/rke/releases/tag/v1.4.2) for new Rancher images with calico and canal and workarounds for known kubelet and kube-proxy issues. See [#377](https://github.com/rancher/terraform-provider-rke/pull/377)
+* Bump golang.org/x/text to 0.3.8. See [#376](https://github.com/rancher/terraform-provider-rke/pull/376)
+* Bump github.com/containerd/containerd to 1.5.18. See [#374](https://github.com/rancher/terraform-provider-rke/pull/374)
+* Bump github.com/hashicorp/go-getter to 1.7.0. See [#375](https://github.com/rancher/terraform-provider-rke/pull/375)
+
+BUG FIXES:
+
+
+
 ## 1.3.4 (October 27, 2022)
 
 FEATURES:
