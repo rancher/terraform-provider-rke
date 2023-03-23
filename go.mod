@@ -135,9 +135,9 @@ require (
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
-	github.com/rancher/lasso v0.0.0-20200820172840-0e4cc0ef5cb0 // indirect
+	github.com/rancher/lasso v0.0.0-20200905045615-7fcb07d6a20b // indirect
 	github.com/rancher/norman v0.0.0-20220406153559-82478fb169cb // indirect
-	github.com/rancher/wrangler v0.6.2-0.20200820173016-2068de651106 // indirect
+	github.com/rancher/wrangler v0.7.4-security1 // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
