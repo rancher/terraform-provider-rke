@@ -1,3 +1,18 @@
+## 1.3.5 (March 23, 2023)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Update RKE to [v1.3.19](https://github.com/rancher/rke/releases/tag/v1.3.19) for new 1.22-24 Rancher images, high CPU usage fix for v1.24 clusters, and AWS hostname-override fixes. See [#385](https://github.com/rancher/terraform-provider-rke/pull/385)
+* Bump golang to 1.19. See [#385](https://github.com/rancher/terraform-provider-rke/pull/385)
+
+BUG FIXES:
+
+* Backport CVE fixes. See [#385](https://github.com/rancher/terraform-provider-rke/pull/385)
+
 ## 1.3.4 (October 27, 2022)
 
 FEATURES:
