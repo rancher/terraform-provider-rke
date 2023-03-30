@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"github.com/hashicorp/go-version"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/rancher/rke/metadata"
 )
 
@@ -470,7 +470,6 @@ func rkeClusterFields() map[string]*schema.Schema {
 		},
 		"running_system_images": {
 			Type:        schema.TypeList,
-			MaxItems:    1,
 			Computed:    true,
 			Description: "RKE k8s cluster running system images list",
 			Elem: &schema.Resource{

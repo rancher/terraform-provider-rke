@@ -9,7 +9,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/cmd"
 	"github.com/rancher/rke/dind"
@@ -23,15 +24,15 @@ const rkeClusterDINDWaitTime = 3
 
 func resourceRKECluster() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRKEClusterCreate,
-		Read:   resourceRKEClusterRead,
-		Update: resourceRKEClusterUpdate,
-		Delete: resourceRKEClusterDelete,
+		CreateContext: resourceRKEClusterCreate,
+		ReadContext:   resourceRKEClusterRead,
+		UpdateContext: resourceRKEClusterUpdate,
+		DeleteContext: resourceRKEClusterDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceRKEClusterImport,
+			StateContext: resourceRKEClusterImport,
 		},
 		Schema: rkeClusterFields(),
-		CustomizeDiff: func(d *schema.ResourceDiff, i interface{}) error {
+		CustomizeDiff: func(ctx context.Context, d *schema.ResourceDiff, i interface{}) error {
 			if changedKeys := getChangedKeys(d); len(changedKeys) > 0 {
 				log.Infof("[rke_provider] rke cluster changed arguments: %v", changedKeys)
 				if log.IsLevelEnabled(log.DebugLevel) {
@@ -84,7 +85,7 @@ func resourceRKECluster() *schema.Resource {
 	}
 }
 
-func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceRKEClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Info("Creating RKE cluster...")
 	if delay, ok := d.Get("delay_on_creation").(int); ok && delay > 0 {
 		time.Sleep(time.Duration(delay) * time.Second)
@@ -92,10 +93,10 @@ func resourceRKEClusterCreate(d *schema.ResourceData, meta interface{}) error {
 	if err := clusterUp(d); err != nil {
 		return meta.(*Config).saveRKEOutput(err)
 	}
-	return resourceRKEClusterRead(d, meta)
+	return resourceRKEClusterRead(ctx, d, meta)
 }
 
-func resourceRKEClusterUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceRKEClusterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Info("Updating RKE cluster...")
 
 	restored, err := clusterRestore(d)
@@ -107,10 +108,10 @@ func resourceRKEClusterUpdate(d *schema.ResourceData, meta interface{}) error {
 			return meta.(*Config).saveRKEOutput(err)
 		}
 	}
-	return resourceRKEClusterRead(d, meta)
+	return resourceRKEClusterRead(ctx, d, meta)
 }
 
-func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
+func resourceRKEClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Infof("Reading RKE cluster %s ...", d.Id())
 	currentCluster, err := readClusterState(d)
 	if err != nil {
@@ -120,7 +121,7 @@ func resourceRKEClusterRead(d *schema.ResourceData, meta interface{}) error {
 	return meta.(*Config).saveRKEOutput(flattenRKECluster(d, currentCluster))
 }
 
-func resourceRKEClusterDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceRKEClusterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Info("Deleting RKE cluster...")
 	err := clusterDelete(d)
 	if err != nil {

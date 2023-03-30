@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,13 +51,13 @@ func (c *Config) initLogger() {
 	log.SetOutput(writer)
 }
 
-func (c *Config) saveRKEOutput(err error) error {
+func (c *Config) saveRKEOutput(err error) diag.Diagnostics {
 	if c.File != nil {
 		defer c.File.Close()
 		defer c.File.Sync()
 	}
 	if err != nil {
-		return fmt.Errorf(rkeErrorTemplate, c.LogBuffer.String(), err)
+		return diag.FromErr(fmt.Errorf(rkeErrorTemplate, c.LogBuffer.String(), err))
 	}
 
 	return nil
