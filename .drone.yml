@@ -13,7 +13,7 @@ steps:
     path: /var/run/docker.sock
 
 - name: build-all-binaries
-  image: golang:1.17.9
+  image: golang:1.19.7
   environment:
     CROSS: 1
     VERSION: ${DRONE_TAG}

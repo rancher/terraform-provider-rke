@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/rancher/rke/cluster"
 	"github.com/rancher/rke/pki"
 	v3 "github.com/rancher/rke/types"
@@ -21,7 +21,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -30,8 +30,8 @@ var (
 
 func TestAccResourceRKECluster(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckRKEClusterDestroy,
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckRKEClusterDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccCheckRKEConfigBasic(),
@@ -143,7 +143,7 @@ func testAccCheckRKENodeExists(n string, nodeIPs ...string) resource.TestCheckFu
 		}
 
 		// getNodes
-		nodes, err := client.CoreV1().Nodes().List(context.Background(), meta_v1.ListOptions{})
+		nodes, err := client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			return err
 		}
