@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
+	eventratelimitapi "k8s.io/kubernetes/plugin/pkg/admission/eventratelimit/apis/eventratelimit"
 )
 
 // Flatteners
@@ -264,7 +265,7 @@ func expandRKEClusterServicesKubeAPIEventRateLimit(p []interface{}) (*rancher.Ev
 		if err != nil {
 			return obj, fmt.Errorf("Mashalling custom_config json: %v", err)
 		}
-		newConfig := &rancher.Configuration{}
+		newConfig := &eventratelimitapi.Configuration{}
 		err = jsonToInterface(configStr, newConfig)
 		if err != nil {
 			return obj, fmt.Errorf("Unmashsalling EncryptionConfiguration json:\n%s", v)
