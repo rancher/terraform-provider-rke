@@ -1,0 +1,52 @@
+# This GitHub action can publish assets for release when a tag is created.
+# Currently it's setup to run on any tag that matches the pattern "v*" (ie. v0.1.0).
+#
+# This uses an action (paultyng/ghaction-import-gpg) that assumes you set your
+# private key in the `GPG_PRIVATE_KEY` secret and passphrase in the `PASSPHRASE`
+# secret. If you would rather own your own GPG handling, please fork this action
+# or use an alternative one for key handling.
+#
+# You will need to pass the `--batch` flag to `gpg` in your signing step
+# in `goreleaser` to indicate this is being used in a non-interactive mode.
+#
+name: Test and release
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Go 1.19.7
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19.7
+
+      - name: Format
+        run: go fmt && git diff --exit-code
+
+      - name: Vet
+        run: go vet
+
+      - name: Build
+        run: go build
+
+      - name: Test
+        run: make test
+
+  terraform-provider-release:
+    needs: test
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    name: 'Terraform Provider Release'
+    uses: hashicorp/ghaction-terraform-provider-release/.github/workflows/community.yml@v2
+    secrets:
+      gpg-private-key: '${{ secrets.GPG_PRIVATE_KEY }}'
+      gpg-private-key-passphrase: ${{ secrets.PASSPHRASE }}
+    with:
+      setup-go-version: '1.19.7'
