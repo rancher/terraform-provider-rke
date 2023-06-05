@@ -5,9 +5,9 @@ import (
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	rancher "github.com/rancher/rke/types"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
+	eventratelimitapi "k8s.io/kubernetes/plugin/pkg/admission/eventratelimit/apis/eventratelimit"
 )
 
 const (
@@ -154,8 +154,8 @@ func rkeClusterServicesKubeAPIEventRateLimitFields() map[string]*schema.Schema {
 				if old == "" || new == "" {
 					return false
 				}
-				oldObject := &rancher.Configuration{}
-				newObject := &rancher.Configuration{}
+				oldObject := &eventratelimitapi.Configuration{}
+				newObject := &eventratelimitapi.Configuration{}
 				oldMap, _ := ghodssyamlToMapInterface(old)
 				newMap, _ := ghodssyamlToMapInterface(new)
 				oldStr, _ := mapInterfaceToJSON(oldMap)

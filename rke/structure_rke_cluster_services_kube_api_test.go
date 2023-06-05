@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
+	eventratelimitapi "k8s.io/kubernetes/plugin/pkg/admission/eventratelimit/apis/eventratelimit"
 )
 
 var (
@@ -70,8 +71,8 @@ func init() {
 	}
 	testRKEClusterServicesKubeAPIEventRateLimitConf = &rancher.EventRateLimit{
 		Enabled: true,
-		Configuration: &rancher.Configuration{
-			Limits: []rancher.Limit{
+		Configuration: &eventratelimitapi.Configuration{
+			Limits: []eventratelimitapi.Limit{
 				{
 					Type:  "Server",
 					Burst: 30000,
@@ -224,8 +225,8 @@ func TestFlattenRKEClusterServicesKubeAPIEventRateLimit(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Error on flattenRKEClusterServicesKubeAPIEventRateLimit: %#v", err)
 		}
-		outputObject := &rancher.Configuration{}
-		expectedObject := &rancher.Configuration{}
+		outputObject := &eventratelimitapi.Configuration{}
+		expectedObject := &eventratelimitapi.Configuration{}
 		outputStr, _ := mapInterfaceToJSON(output[0].(map[string]interface{}))
 		expectedStr, _ := mapInterfaceToJSON(tc.ExpectedOutput[0].(map[string]interface{}))
 		jsonToInterface(outputStr, outputObject)
