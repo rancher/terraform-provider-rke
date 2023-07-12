@@ -1,3 +1,21 @@
+## 1.4.2 (July 12, 2023)
+
+FEATURES:
+
+
+
+ENHANCEMENTS:
+
+* Update docs with branching and release process info. See [#391](https://github.com/rancher/terraform-provider-rke/pull/391)
+* Update sdk to v2 for IDE debug capabilities. See [#347](https://github.com/rancher/terraform-provider-rke/pull/347)
+* Update RKE to [v1.4.6](https://github.com/rancher/rke/releases/tag/v1.4.6) for new 1.24-1.25 Rancher images and 1.26 cluster support, and update sdk v2 to [2.27.0](https://github.com/hashicorp/terraform-plugin-sdk/releases/tag/v2.27.0) to improve schema and logging performance. See [#406](https://github.com/rancher/terraform-provider-rke/pull/406)
+* Bump github.com/opencontainers/runc to 1.1.5. See [#393](https://github.com/rancher/terraform-provider-rke/pull/393)
+* Bump github.com/containerd/containerd to 1.5.18. See [#394](https://github.com/rancher/terraform-provider-rke/pull/394)
+
+BUG FIXES:
+
+
+
 ## 1.4.1 (March 23, 2023)
 
 FEATURES:
