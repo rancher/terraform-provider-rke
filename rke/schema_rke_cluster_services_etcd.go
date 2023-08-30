@@ -122,6 +122,11 @@ func rkeClusterServicesEtcdFields() map[string]*schema.Schema {
 			Optional: true,
 			Computed: true,
 		},
+		"extra_args_array": {
+			Type:     schema.TypeMap,
+			Optional: true,
+			Computed: true,
+		},
 		"extra_binds": {
 			Type:     schema.TypeList,
 			Optional: true,

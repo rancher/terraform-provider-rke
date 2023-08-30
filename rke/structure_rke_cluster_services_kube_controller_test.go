@@ -21,6 +21,10 @@ func init() {
 		"arg_one": "one",
 		"arg_two": "two",
 	}
+	testRKEClusterServicesKubeControllerConf.ExtraArgsArray = map[string][]string{
+		"arg_one": {"one", "two"},
+		"arg_two": {"two", "one"},
+	}
 	testRKEClusterServicesKubeControllerConf.ExtraBinds = []string{"bind_one", "bind_two"}
 	testRKEClusterServicesKubeControllerConf.ExtraEnv = []string{"env_one", "env_two"}
 	testRKEClusterServicesKubeControllerConf.Image = "image"
@@ -30,6 +34,10 @@ func init() {
 			"extra_args": map[string]interface{}{
 				"arg_one": "one",
 				"arg_two": "two",
+			},
+			"extra_args_array": map[string][]interface{}{
+				"arg_one": {"one", "two"},
+				"arg_two": {"two", "one"},
 			},
 			"extra_binds":              []interface{}{"bind_one", "bind_two"},
 			"extra_env":                []interface{}{"env_one", "env_two"},

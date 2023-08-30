@@ -86,10 +86,30 @@ func toMapString(in map[string]interface{}) map[string]string {
 	return out
 }
 
+func toMapStringSlice(in map[string][]interface{}) map[string][]string {
+	out := make(map[string][]string)
+	for i, v := range in {
+		for _, j := range v {
+			out[i] = append(out[i], j.(string))
+		}
+	}
+	return out
+}
+
 func toMapInterface(in map[string]string) map[string]interface{} {
 	out := make(map[string]interface{})
 	for i, v := range in {
 		out[i] = v
+	}
+	return out
+}
+
+func toMapInterfaceSlice(in map[string][]string) map[string][]interface{} {
+	out := make(map[string][]interface{})
+	for i, v := range in {
+		for _, j := range v {
+			out[i] = append(out[i], interface{}(j))
+		}
 	}
 	return out
 }

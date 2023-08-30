@@ -133,6 +133,10 @@ func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{},
 		obj["extra_args"] = toMapInterface(in.ExtraArgs)
 	}
 
+	if len(in.ExtraArgsArray) > 0 {
+		obj["extra_args_array"] = toMapInterfaceSlice(in.ExtraArgsArray)
+	}
+
 	if len(in.ExtraBinds) > 0 {
 		obj["extra_binds"] = toArrayInterface(in.ExtraBinds)
 	}
@@ -336,6 +340,10 @@ func expandRKEClusterServicesKubeAPI(p []interface{}) (rancher.KubeAPIService, e
 
 	if v, ok := in["extra_args"].(map[string]interface{}); ok && len(v) > 0 {
 		obj.ExtraArgs = toMapString(v)
+	}
+
+	if v, ok := in["extra_args_array"].(map[string][]interface{}); ok && len(v) > 0 {
+		obj.ExtraArgsArray = toMapStringSlice(v)
 	}
 
 	if v, ok := in["extra_binds"].([]interface{}); ok && len(v) > 0 {

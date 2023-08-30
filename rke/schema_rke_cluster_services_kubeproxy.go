@@ -14,6 +14,12 @@ func rkeClusterServicesKubeproxyFields() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Extra arguments that are added to the kubeproxy services",
 		},
+		"extra_args_array": {
+			Type:        schema.TypeMap,
+			Optional:    true,
+			Computed:    true,
+			Description: "Extra arguments array that is added to the kubeproxy services",
+		},
 		"extra_binds": {
 			Type:        schema.TypeList,
 			Optional:    true,
