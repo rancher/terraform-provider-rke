@@ -278,7 +278,6 @@ func getRKEClusterConfig(d *schema.ResourceData) (*v3.RancherKubernetesEngineCon
 		return nil, "", "", "", err
 	}
 	return rkeConfig, rkeClusterYaml, clusterFilePath, tempDir, err
-
 }
 
 func setRKEClusterState(d *schema.ResourceData, configDir string) error {

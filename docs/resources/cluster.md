@@ -13,17 +13,19 @@ RKE clusters can be defined in the provider:
 
 ## Example Usage
 
-Creating RKE cluster
+Create RKE cluster
 
 ```hcl
 # Configure RKE provider
 provider "rke" {
   log_file = "rke_debug.log"
 }
+
 # Create a new RKE cluster using config yaml
 resource "rke_cluster" "foo" {
   cluster_yaml = file("cluster.yaml")
 }
+
 # Create a new RKE cluster using arguments
 resource "rke_cluster" "foo2" {
   nodes {
@@ -37,12 +39,13 @@ resource "rke_cluster" "foo2" {
 	  max_unavailable_worker = "20%"
   }
 }
+
 # Create a new RKE cluster using both. In case of conflict, arguments override cluster_yaml arguments
 resource "rke_cluster" "foo2" {
   cluster_yaml = file("cluster.yaml")
   ssh_agent_auth = true
   ignore_docker_version = true
-  kubernetes_version = "<K8s_VERSION>"
+  kubernetes_version = "k8s-version"
   upgrade_strategy {
 	  drain = true
 	  max_unavailable_worker = "20%"
@@ -50,7 +53,7 @@ resource "rke_cluster" "foo2" {
 }
 ```
 
-Restore RKE cluster. RKE cluster must be already managed by terraform and etcd snapshot must exist
+Restore RKE cluster. RKE cluster must be already managed by Terraform and etcd snapshot must exist.
 
 ```hcl
 resource "rke_cluster" "cluster" {
@@ -73,6 +76,59 @@ resource "rke_cluster" "cluster" {
 ```
 
 **Note** Once the RKE cluster is restored, `rke_cluster.restore.restore` will be set to `false` to force tf diff on next apply until user set `rke_cluster.restore.restore = false` on tf file
+
+Provision RKE cluster with pre-defined PSACT. This is available for clusters with Kubernetes v1.23 and above.
+
+```hcl
+resource "rke_cluster" "cluster" {
+  cluster_name = "foo"
+  no
+    address = "1.2.3.4"
+    user    = "ubuntu"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = file("~/.ssh/id_rsa")
+  }
+  authorization {
+    mode = "rbac"
+  }
+  services {
+    kube_api {
+      pod_security_configuration = "<value>" # privileged or restricted
+    }
+  }
+  upgrade_strategy {
+    drain = true
+    max_unavailable_worker = "20%"
+  }
+}
+```
+
+Provision RKE cluster with bind mounted PSACT. This is available for clusters with Kubernetes v1.23 and above.
+
+```hcl
+resource "rke_cluster" "cluster" {
+  cluster_name = "foo"
+  nodes {
+    address = "1.2.3.4"
+    user    = "ubuntu"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = file("~/.ssh/id_rsa")
+  }
+  authorization {
+    mode = "rbac"
+  }
+  kube_api {
+    extra_args = {
+      admission-control-config-file: "<container-path>/admisison.yaml" // path in kube API server container
+    }
+    extra_binds = ["<node-path>:<container-path>"]
+  }
+  upgrade_strategy {
+    drain = true
+    max_unavailable_worker = "20%"
+  }
+}
+```
 
 ## Argument Reference
 
@@ -556,7 +612,7 @@ The following attributes are exported:
 
 ##### Arguments
 
-* `backup_config` - (Optional/Computed) Backup options for etcd service. Just for Rancher v2.2.x (list maxitems:1)
+* `backup_config` - (Optional/Computed) Backup options for etcd service. For Rancher v2.2.x and above (list maxitems:1)
 * `ca_cert` - (Optional/Computed/Sensitive) TLS CA certificate for etcd service (string)
 * `cert` - (Optional/Computed/Sensitive) TLS certificate for etcd service (string)
 * `creation` - (Optional/Computed) Creation option for etcd service (string)
@@ -564,13 +620,13 @@ The following attributes are exported:
 * `extra_args` - (Optional/Computed) Extra arguments for etcd service (map)
 * `extra_binds` - (Optional/Computed) Extra binds for etcd service (list)
 * `extra_env` - (Optional/Computed) Extra environment for etcd service (list)
-* `gid` - (Optional) Etcd service GID. Default: `0`. For Rancher v2.3.x or above (int)
+* `gid` - (Optional) Etcd service GID. Default: `0`. For Rancher v2.3.x and above (int)
 * `image` - (Optional/Computed) Docker image for etcd service (string)
 * `key` - (Optional/Computed/Sensitive) TLS key for etcd service (string)
 * `path` - (Optional/Computed) Path for etcd service (string)
 * `retention` - (Optional/Computed) Retention option for etcd service (string)
 * `snapshot` - (Optional) Snapshot option for etcd service. Default `true` (bool)
-* `uid` - (Optional) Etcd service UID. Default: `0`. For Rancher v2.3.x or above (int)
+* `uid` - (Optional) Etcd service UID. Default: `0`. For Rancher v2.3.x and above (int)
 
 ##### `backup_config`
 
@@ -581,7 +637,7 @@ The following attributes are exported:
 * `retention` - (Optional) Retention for etcd backup. Default `6` (int)
 * `s3_backup_config` - (Optional) S3 config options for etcd backup (list maxitems:1)
 * `safe_timestamp` - (Optional) Safe timestamp for etcd backup. Default: `false` (bool)
-* `timeout` - (Optional/Computed) Timeout in seconds for etcd backup. Default: `300`. Just for RKE v1.2.6 and above (int)
+* `timeout` - (Optional/Computed) Timeout in seconds for etcd backup. Default: `300`. For RKE v1.2.6 and above (int)
 
 ###### `s3_backup_config`
 
@@ -606,6 +662,7 @@ The following attributes are exported:
 * `extra_binds` - (Optional/Computed) Extra binds for kube API service (list)
 * `extra_env` - (Optional/Computed) Extra environment for kube API service (list)
 * `image` - (Optional/Computed) Docker image for kube API service (string)
+* `pod_security_configuration` (Optional/Computed) Built-in PodSecurityPolicy (privileged or restricted)
 * `pod_security_policy` - (Optional/Computed) Pod Security Policy option for kube API service (bool)
 * `secrets_encryption_config` - (Optional) [Encrypt k8s secret data configration](https://rancher.com/docs/rke/latest/en/config-options/secrets-encryption/). (list maxitem: 1)
 * `service_cluster_ip_range` - (Optional/Computed) Service Cluster IP Range option for kube API service (string)
@@ -615,7 +672,7 @@ The following attributes are exported:
 
 ###### Arguments
 
-* `configuration` - (Optional/Computed) Audit log configuration. (list maxtiem: 1)
+* `configuration` - (Optional/Computed) Audit log configuration. (list maxitem: 1)
 * `enabled` - (Optional/Computed) Enable audit log (bool)
 
 ###### `configuration`
