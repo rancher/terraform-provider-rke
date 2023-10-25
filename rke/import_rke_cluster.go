@@ -23,7 +23,7 @@ func resourceRKEClusterImport(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	_, err = yamlToMapInterface(string(clusterYamlBytes))
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unmarshaling RKE config yaml: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unmarshalling RKE config yaml: %v", err)
 	}
 
 	clusterStateBytes, err := ioutil.ReadFile(files[1])
@@ -35,7 +35,7 @@ func resourceRKEClusterImport(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	_, err = yamlToMapInterface(string(clusterStateBytes))
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unmarshaling RKE state yaml: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unmarshalling RKE state yaml: %v", err)
 	}
 
 	if len(files) == 3 && files[2] == "dind" {

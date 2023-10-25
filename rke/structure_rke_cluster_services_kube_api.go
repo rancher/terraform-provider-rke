@@ -76,11 +76,11 @@ func flattenRKEClusterServicesKubeAPIEventRateLimit(in *rancher.EventRateLimit) 
 		}
 		configMap, err := interfaceToMap(in.Configuration)
 		if err != nil {
-			return []interface{}{}, fmt.Errorf("Mashalling configuration map: %v", err)
+			return []interface{}{}, fmt.Errorf("marshalling configuration map: %v", err)
 		}
 		configStr, err := interfaceToGhodssyaml(configMap)
 		if err != nil {
-			return []interface{}{}, fmt.Errorf("Mashalling configuration yaml: %v", err)
+			return []interface{}{}, fmt.Errorf("marshalling configuration yaml: %v", err)
 		}
 		obj["configuration"] = configStr
 	}
@@ -99,7 +99,7 @@ func flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in *rancher.Secrets
 	if in.CustomConfig != nil {
 		configStr, err := interfaceToGhodssyaml(in.CustomConfig)
 		if err != nil {
-			return []interface{}{}, fmt.Errorf("Mashalling custom_config yaml: %v", err)
+			return []interface{}{}, fmt.Errorf("marshalling custom_config yaml: %v", err)
 		}
 		obj["custom_config"] = configStr
 	}
@@ -258,12 +258,12 @@ func expandRKEClusterServicesKubeAPIEventRateLimit(p []interface{}) (*rancher.Ev
 		}
 		configStr, err := mapInterfaceToJSON(configMap)
 		if err != nil {
-			return obj, fmt.Errorf("mashalling custom_config json: %v", err)
+			return obj, fmt.Errorf("marshalling custom_config json: %v", err)
 		}
 		newConfig := &eventratelimitapi.Configuration{}
 		err = jsonToInterface(configStr, newConfig)
 		if err != nil {
-			return obj, fmt.Errorf("Unmarshalling EncryptionConfiguration json:\n%s", v)
+			return obj, fmt.Errorf("unmarshalling EncryptionConfiguration json:\n%s", v)
 		}
 		obj.Configuration = newConfig
 	}
@@ -285,16 +285,16 @@ func expandRKEClusterServicesKubeAPISecretsEncryptionConfig(p []interface{}) (*r
 	if v, ok := in["custom_config"].(string); ok && len(v) > 0 {
 		configMap, err := ghodssyamlToMapInterface(v)
 		if err != nil {
-			return obj, fmt.Errorf("Unmashalling custom_config yaml: %v", err)
+			return obj, fmt.Errorf("unmarshalling custom_config yaml: %v", err)
 		}
 		configStr, err := mapInterfaceToJSON(configMap)
 		if err != nil {
-			return obj, fmt.Errorf("Mashalling custom_config json: %v", err)
+			return obj, fmt.Errorf("marshalling custom_config json: %v", err)
 		}
 		newConfigV1 := &apiserverconfigv1.EncryptionConfiguration{}
 		err = jsonToInterface(configStr, newConfigV1)
 		if err != nil {
-			return obj, fmt.Errorf("Unmashalling EncryptionConfiguration json: %v", err)
+			return obj, fmt.Errorf("unmarshalling EncryptionConfiguration json: %v", err)
 		}
 		obj.CustomConfig = newConfigV1
 	}

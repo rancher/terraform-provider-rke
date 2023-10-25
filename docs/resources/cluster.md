@@ -119,7 +119,7 @@ resource "rke_cluster" "cluster" {
   }
   kube_api {
     extra_args = {
-      admission-control-config-file: "<container-path>/admisison.yaml" // path in kube API server container
+      admission-control-config-file: "<container-path>/admission.yaml" // path in kube API server container
     }
     extra_binds = ["<node-path>:<container-path>"]
   }

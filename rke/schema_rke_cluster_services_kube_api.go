@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
 	eventratelimitapi "k8s.io/kubernetes/plugin/pkg/admission/eventratelimit/apis/eventratelimit"
@@ -25,6 +26,10 @@ var (
 	clusterServicesKubeAPIRequired = []string{
 		clusterServicesKubeAPIApiVersionTag,
 		clusterServicesKubeAPIKindTag,
+	}
+	clusterServicesKubeAPIPodSecurityConfigurationRequired = []string{
+		"privileged",
+		"restricted",
 	}
 )
 
@@ -283,10 +288,11 @@ func rkeClusterServicesKubeAPIFields() map[string]*schema.Schema {
 			Computed: true,
 		},
 		"pod_security_configuration": {
-			Type:        schema.TypeString,
-			Optional:    true,
-			Computed:    true,
-			Description: "Built-in PodSecurityPolicy (privileged or restricted)",
+			Type:         schema.TypeString,
+			Optional:     true,
+			Computed:     true,
+			Description:  "Built-in PodSecurityPolicy (privileged or restricted)",
+			ValidateFunc: validation.StringInSlice(clusterServicesKubeAPIPodSecurityConfigurationRequired, true),
 		},
 		"pod_security_policy": {
 			Type:        schema.TypeBool,
