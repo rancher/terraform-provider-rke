@@ -13,6 +13,7 @@ import (
 const (
 	clusterServicesKubeAPIApiversionTag                      = "apiVersion"
 	clusterServicesKubeAPIKindTag                            = "kind"
+	clusterServicesKubeAPIAdmissionConfigurationKindDefault  = "AdmissionConfiguration"
 	clusterServicesKubeAPIAuditLogConfigPolicyAPIDefault     = "audit.k8s.io/v1"
 	clusterServicesKubeAPIEventRateLimitConfigAPIDefault     = "eventratelimit.admission.k8s.io/v1alpha1"
 	clusterServicesKubeAPISecretsEncryptionConfigAPIDefault  = "apiserver.config.k8s.io/v1"
@@ -230,6 +231,44 @@ func rkeClusterServicesKubeAPISecretsEncryptionConfigFields() map[string]*schema
 
 func rkeClusterServicesKubeAPIFields() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
+		"admission_configuration": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Computed: true,
+			ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+				v, ok := val.(string)
+				if !ok || len(v) == 0 {
+					return
+				}
+				m, err := ghodssyamlToMapInterface(v)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("%q must be in yaml format, error: %v", key, err))
+					return
+				}
+				for _, k := range clusterServicesKubeAPIRequired {
+					check, ok := m[k].(string)
+					if !ok || len(check) == 0 {
+						errs = append(errs, fmt.Errorf("%s is required on yaml", k))
+					}
+					if k == clusterServicesKubeAPIKindTag {
+						if check != clusterServicesKubeAPIAdmissionConfigurationKindDefault {
+							errs = append(errs, fmt.Errorf("%s value %s should be: %s", k, check, clusterServicesKubeAPIAdmissionConfigurationKindDefault))
+						}
+					}
+
+				}
+				return
+			},
+			DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+				if old == "" || new == "" {
+					return false
+				}
+				oldMap, _ := ghodssyamlToMapInterface(old)
+				newMap, _ := ghodssyamlToMapInterface(new)
+				return reflect.DeepEqual(oldMap, newMap)
+			},
+			Description: "Cluster admission configuration",
+		},
 		"always_pull_images": {
 			Type:        schema.TypeBool,
 			Optional:    true,
