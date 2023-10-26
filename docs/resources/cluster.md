@@ -74,6 +74,43 @@ resource "rke_cluster" "cluster" {
 
 **Note** Once the RKE cluster is restored, `rke_cluster.restore.restore` will be set to `false` to force tf diff on next apply until user set `rke_cluster.restore.restore = false` on tf file
 
+Provision RKE cluster with custom PSACT. This is available for clusters with Kubernetes v1.23 and above.
+
+```hcl
+resource "rke_cluster" "cluster" {
+  cluster_name = "foo"
+  nodes {
+    address = "1.2.3.4"
+    user    = "ubuntu"
+    role    = ["controlplane", "worker", "etcd"]
+    ssh_key = file("~/.ssh/id_rsa")
+  }
+  authorization {
+    mode = "rbac"
+  }
+  kube_api {
+    admission_configuration = <<EOF
+    apiVersion: apiserver.config.k8s.io/v1
+kind: AdmissionConfiguration
+plugins:
+- configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1
+    defaults:
+      enforce: privileged
+      enforce-version: latest
+    exemptions: {}
+    kind: PodSecurityConfiguration
+  name: PodSecurity
+  path: ""
+EOF
+  }
+  upgrade_strategy {
+    drain = true
+    max_unavailable_worker = "20%"
+  }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -599,6 +636,7 @@ The following attributes are exported:
 
 ##### Arguments
 
+* `admission_configuration` - (Optional/Computed) "Cluster admission configuration (string)
 * `always_pull_images` - (Optional/Computed) Enable [AlwaysPullImages](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#alwayspullimages) Admission controller plugin. [Rancher docs](https://rancher.com/docs/rke/latest/en/config-options/services/#kubernetes-api-server-options) (bool)
 * `audit_log` - (Optional/Computed) K8s audit log configuration. (list maxitem: 1)
 * `event_rate_limit` - (Optional) K8s event rate limit configuration. (list maxitem: 1)

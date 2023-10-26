@@ -1,15 +1,18 @@
 package rke
 
 import (
-	//"encoding/json"
+	"encoding/json"
 	"fmt"
 
 	rancher "github.com/rancher/rke/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	v1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 	eventratelimitapi "k8s.io/kubernetes/plugin/pkg/admission/eventratelimit/apis/eventratelimit"
+	admissionv1 "k8s.io/pod-security-admission/admission/api/v1"
 )
 
 // Flatteners
@@ -111,6 +114,21 @@ func flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in *rancher.Secrets
 func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{}, error) {
 	obj := make(map[string]interface{})
 
+	// Different from the rancher2 provider because we are flattening the underlying rke type v1.AdmissionConfiguration
+	// instead of a map string interface.
+	if in.AdmissionConfiguration != nil {
+		// convert Admission Configuration to a map to maintain json order
+		admissionConfigMap, err := interfaceToMap(in.AdmissionConfiguration)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("interface to map err: %v", err)
+		}
+		admissionConfigStr, err := interfaceToJSON(admissionConfigMap)
+		if err != nil {
+			return []interface{}{}, fmt.Errorf("interface to json err: %v", err)
+		}
+		obj["admission_configuration"] = admissionConfigStr
+	}
+
 	obj["always_pull_images"] = in.AlwaysPullImages
 
 	if in.AuditLog != nil {
@@ -167,6 +185,99 @@ func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{},
 }
 
 // Expanders
+
+func expandRKEClusterServicesKubeAPIAdmissionConfiguration(in string) (*v1.AdmissionConfiguration, error) {
+	ac, _ := ghodssyamlToMapInterface(in)
+	//apiVersion, ok := ac["apiVersion"].(string)
+	//if !ok {
+	//	return nil, fmt.Errorf("invalid apiVersion %s", apiVersion)
+	//}
+	//kind, ok := ac["kind"].(string)
+	//if !ok {
+	//	return nil, fmt.Errorf("invalid kind %s", kind)
+	//}
+	plugins := ac["plugins"].([]interface{})
+
+	//var decodedPlugins []v1.AdmissionPluginConfiguration
+
+	var podSecurityConfig admissionv1.PodSecurityConfiguration
+
+	// decode plugins
+	// Note: RKE only supports PodSecurity and EventRateLimit plugins at the top-level. Therefore, we explicitly check
+	// for those plugin types here. The decoder used does not have the api schemes to decode other plugin configuration
+	// types; additional custom plugins are not supported.
+	for i := range plugins {
+		plugin := plugins[i].(map[string]interface{})
+		//pluginName := plugin["name"].(string)
+
+		pluginConfig := plugin["configuration"].(map[string]interface{})
+		pluginKind := "PodSecurityConfiguration" // todo: correctly pull plugin config Kind field
+
+		var bytes []byte
+
+		// check whether plugin is PodSecurity or EventRateLimit
+		switch pluginKind {
+		case "PodSecurityConfiguration":
+			bytes, _ = json.Marshal(pluginConfig)
+			_ = json.Unmarshal(bytes, &podSecurityConfig)
+
+			//scheme := runtime.NewScheme()
+			//err := admissionv1.AddToScheme(scheme)
+			//if err != nil {
+			//	return nil, fmt.Errorf("error adding to scheme: %v", err)
+			//}
+			//codecs := serializer.NewCodecFactory(scheme)
+			//err = runtime.DecodeInto(codecs.UniversalDecoder(), bytes, &decodedPluginConfig)
+			//if err != nil {
+			//	return nil, fmt.Errorf("error decoding admission configuration plugin configuration from %s\n to %v\n: %v", ac, decodedPluginConfig, err)
+			//}
+			//pBytes, _ = json.Marshal(decodedPluginConfig)
+		case "Configuration":
+			// decodedPluginConfig := eventratelimitapi.Configuration{}
+			// todo: write case
+		default:
+			return nil, fmt.Errorf("custom admission configuration is undefined")
+		}
+
+		//decodedPlugins = append(decodedPlugins, decodedPlugin)
+	}
+
+	// TEST
+	podSecurityConfig = admissionv1.PodSecurityConfiguration{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "PodSecurityConfiguration",
+			APIVersion: admissionv1.SchemeGroupVersion.String(),
+		},
+		Defaults: admissionv1.PodSecurityDefaults{
+			Enforce:        "restricted",
+			EnforceVersion: "latest",
+		},
+		Exemptions: admissionv1.PodSecurityExemptions{
+			Usernames:      nil,
+			Namespaces:     []string{"kube-system"},
+			RuntimeClasses: nil,
+		},
+	}
+	bytes, _ := json.Marshal(podSecurityConfig)
+
+	pluginTest := v1.AdmissionPluginConfiguration{
+		Name: "PodSecurity",
+		Configuration: &runtime.Unknown{
+			Raw:         bytes,
+			ContentType: "application/json",
+		},
+		//Configuration: &runtime.Unknown{
+		//	//Raw:             pBytes,
+		//	ContentEncoding: string(bytes),
+		//	ContentType:     "application/json",
+		//},
+	}
+
+	return &v1.AdmissionConfiguration{
+		TypeMeta: metav1.TypeMeta{APIVersion: v1.SchemeGroupVersion.String(), Kind: "AdmissionConfiguration"},
+		Plugins:  []v1.AdmissionPluginConfiguration{pluginTest},
+	}, nil
+}
 
 func expandRKEClusterServicesKubeAPIAuditLogConfig(p []interface{}) (*rancher.AuditLogConfig, error) {
 	obj := &rancher.AuditLogConfig{}
@@ -313,6 +424,33 @@ func expandRKEClusterServicesKubeAPI(p []interface{}) (rancher.KubeAPIService, e
 		return obj, nil
 	}
 	in := p[0].(map[string]interface{})
+
+	if v, ok := in["admission_configuration"].(string); ok && len(v) > 0 {
+		admissionConfig, err := expandRKEClusterServicesKubeAPIAdmissionConfiguration(v)
+		if err != nil {
+			return obj, err
+		}
+		obj.AdmissionConfiguration = admissionConfig
+
+		////TEST
+		//configMap, err := ghodssyamlToMapInterface(v)
+		//if err != nil {
+		//	return obj, fmt.Errorf("unmarshalling admission configuration yaml: %v", err)
+		//}
+		//configStr, err := mapInterfaceToJSON(configMap)
+		//if err != nil {
+		//	return obj, fmt.Errorf("mashalling custom_config json: %v", err)
+		//}
+		//newConfig := &v1.AdmissionConfiguration{}
+		//err = jsonToInterface(configStr, newConfig)
+		//if err != nil {
+		//	return obj, fmt.Errorf("unmarshalling admission configuration json:\n%s", v)
+		//}
+		//obj.AdmissionConfiguration = &v1.AdmissionConfiguration{
+		//	TypeMeta: metav1.TypeMeta{},
+		//	Plugins:  nil,
+		//}
+	}
 
 	if v, ok := in["always_pull_images"].(bool); ok {
 		obj.AlwaysPullImages = v
