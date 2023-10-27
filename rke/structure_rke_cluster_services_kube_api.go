@@ -1,7 +1,6 @@
 package rke
 
 import (
-	//"encoding/json"
 	"fmt"
 
 	rancher "github.com/rancher/rke/types"
@@ -27,7 +26,7 @@ func flattenRKEClusterServicesKubeAPIAuditLogConfig(in *rancher.AuditLogConfig) 
 	obj["path"] = in.Path
 
 	if in.Policy != nil {
-		// needed to convert Policy to map to maintain json order
+		// convert Policy to a map to maintain json order
 		policyMap, err := interfaceToMap(in.Policy)
 		if err != nil {
 			return []interface{}{}, fmt.Errorf("interface to map err: %v", err)
@@ -77,11 +76,11 @@ func flattenRKEClusterServicesKubeAPIEventRateLimit(in *rancher.EventRateLimit) 
 		}
 		configMap, err := interfaceToMap(in.Configuration)
 		if err != nil {
-			return []interface{}{}, fmt.Errorf("Mashalling configuration map: %v", err)
+			return []interface{}{}, fmt.Errorf("marshalling configuration map: %v", err)
 		}
 		configStr, err := interfaceToGhodssyaml(configMap)
 		if err != nil {
-			return []interface{}{}, fmt.Errorf("Mashalling configuration yaml: %v", err)
+			return []interface{}{}, fmt.Errorf("marshalling configuration yaml: %v", err)
 		}
 		obj["configuration"] = configStr
 	}
@@ -100,7 +99,7 @@ func flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in *rancher.Secrets
 	if in.CustomConfig != nil {
 		configStr, err := interfaceToGhodssyaml(in.CustomConfig)
 		if err != nil {
-			return []interface{}{}, fmt.Errorf("Mashalling custom_config yaml: %v", err)
+			return []interface{}{}, fmt.Errorf("marshalling custom_config yaml: %v", err)
 		}
 		obj["custom_config"] = configStr
 	}
@@ -143,6 +142,10 @@ func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{},
 
 	if len(in.Image) > 0 {
 		obj["image"] = in.Image
+	}
+
+	if len(in.PodSecurityConfiguration) > 0 {
+		obj["pod_security_configuration"] = in.PodSecurityConfiguration
 	}
 
 	obj["pod_security_policy"] = in.PodSecurityPolicy
@@ -196,14 +199,6 @@ func expandRKEClusterServicesKubeAPIAuditLogConfig(p []interface{}) (*rancher.Au
 	}
 
 	if v, ok := in["policy"].(string); ok && len(v) > 0 {
-		//err := jsonToInterface(v, obj.Policy)
-		//if err != nil {
-		//	return nil, fmt.Errorf("error marshalling audit policy: %v", err)
-		//}
-		/*policyBytes, err := json.Marshal(v)
-		if err != nil {
-			return nil, fmt.Errorf("error marshalling audit policy: %v", err)
-		}*/
 		policyBytes := []byte(v)
 		scheme := runtime.NewScheme()
 		err := auditv1.AddToScheme(scheme)
@@ -259,16 +254,16 @@ func expandRKEClusterServicesKubeAPIEventRateLimit(p []interface{}) (*rancher.Ev
 	if v, ok := in["configuration"].(string); ok && len(v) > 0 {
 		configMap, err := ghodssyamlToMapInterface(v)
 		if err != nil {
-			return obj, fmt.Errorf("Unmashalling configuration yaml: %v", err)
+			return obj, fmt.Errorf("unmarshalling configuration yaml: %v", err)
 		}
 		configStr, err := mapInterfaceToJSON(configMap)
 		if err != nil {
-			return obj, fmt.Errorf("Mashalling custom_config json: %v", err)
+			return obj, fmt.Errorf("marshalling custom_config json: %v", err)
 		}
 		newConfig := &eventratelimitapi.Configuration{}
 		err = jsonToInterface(configStr, newConfig)
 		if err != nil {
-			return obj, fmt.Errorf("Unmashsalling EncryptionConfiguration json:\n%s", v)
+			return obj, fmt.Errorf("unmarshalling EncryptionConfiguration json:\n%s", v)
 		}
 		obj.Configuration = newConfig
 	}
@@ -290,16 +285,16 @@ func expandRKEClusterServicesKubeAPISecretsEncryptionConfig(p []interface{}) (*r
 	if v, ok := in["custom_config"].(string); ok && len(v) > 0 {
 		configMap, err := ghodssyamlToMapInterface(v)
 		if err != nil {
-			return obj, fmt.Errorf("Unmashalling custom_config yaml: %v", err)
+			return obj, fmt.Errorf("unmarshalling custom_config yaml: %v", err)
 		}
 		configStr, err := mapInterfaceToJSON(configMap)
 		if err != nil {
-			return obj, fmt.Errorf("Mashalling custom_config json: %v", err)
+			return obj, fmt.Errorf("marshalling custom_config json: %v", err)
 		}
 		newConfigV1 := &apiserverconfigv1.EncryptionConfiguration{}
 		err = jsonToInterface(configStr, newConfigV1)
 		if err != nil {
-			return obj, fmt.Errorf("Unmashalling EncryptionConfiguration json: %v", err)
+			return obj, fmt.Errorf("unmarshalling EncryptionConfiguration json: %v", err)
 		}
 		obj.CustomConfig = newConfigV1
 	}
@@ -348,6 +343,10 @@ func expandRKEClusterServicesKubeAPI(p []interface{}) (rancher.KubeAPIService, e
 
 	if v, ok := in["image"].(string); ok && len(v) > 0 {
 		obj.Image = v
+	}
+
+	if v, ok := in["pod_security_configuration"].(string); ok && len(v) > 0 {
+		obj.PodSecurityConfiguration = v
 	}
 
 	if v, ok := in["pod_security_policy"].(bool); ok {

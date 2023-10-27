@@ -12,7 +12,7 @@ The RKE provider is used to interact with Rancher Kubernetes Engine kubernetes c
 # Configure the RKE provider
 provider "rke" {
   debug = true
-  log_file = "<RKE_LOG_FILE>"
+  log_file = "<rke_log_file>"
 }
 ```
 

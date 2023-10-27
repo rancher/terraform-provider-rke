@@ -390,7 +390,7 @@ func patchRKEClusterYaml(in *rancher.RancherKubernetesEngineConfig) (string, err
 		if len(inJSON) > 0 {
 			outFixed["audit_log"], err = jsonToMapInterface(inJSON)
 			if err != nil {
-				return "", fmt.Errorf("ummarshalling auditlog json: %s", err)
+				return "", fmt.Errorf("unmarshalling auditlog json: %s", err)
 			}
 		}
 	}
@@ -409,14 +409,14 @@ func patchRKEClusterYaml(in *rancher.RancherKubernetesEngineConfig) (string, err
 		if len(inJSON) > 0 {
 			outFixed["event_rate_limit"], err = jsonToMapInterface(inJSON)
 			if err != nil {
-				return "", fmt.Errorf("ummarshalling event_rate_limit json: %s", err)
+				return "", fmt.Errorf("unmarshalling event_rate_limit json: %s", err)
 			}
 		}
 	}
 	if in.Services.KubeAPI.SecretsEncryptionConfig != nil && in.Services.KubeAPI.SecretsEncryptionConfig.CustomConfig != nil {
 		customConfigV1Str, err := interfaceToGhodssyaml(in.Services.KubeAPI.SecretsEncryptionConfig.CustomConfig)
 		if err != nil {
-			return "", fmt.Errorf("Mashalling custom_config yaml: %v", err)
+			return "", fmt.Errorf("marshalling custom_config yaml: %v", err)
 		}
 		customConfigV1 := &apiserverconfigv1.EncryptionConfiguration{
 			TypeMeta: metav1.TypeMeta{
@@ -426,7 +426,7 @@ func patchRKEClusterYaml(in *rancher.RancherKubernetesEngineConfig) (string, err
 		}
 		err = ghodssyamlToInterface(customConfigV1Str, customConfigV1)
 		if err != nil {
-			return "", fmt.Errorf("Unmashalling custom_config yaml: %v", err)
+			return "", fmt.Errorf("unmarshalling custom_config yaml: %v", err)
 		}
 		inJSON, err := interfaceToJSON(customConfigV1)
 		if err != nil {
@@ -435,7 +435,7 @@ func patchRKEClusterYaml(in *rancher.RancherKubernetesEngineConfig) (string, err
 		if len(inJSON) > 0 {
 			outFixed["secrets_encryption_config"], err = jsonToMapInterface(inJSON)
 			if err != nil {
-				return "", fmt.Errorf("ummarshalling eventrate json: %s", err)
+				return "", fmt.Errorf("unmarshalling eventrate json: %s", err)
 			}
 		}
 	}
@@ -452,7 +452,7 @@ func patchRKEClusterYaml(in *rancher.RancherKubernetesEngineConfig) (string, err
 	out := make(map[string]interface{})
 	err = ghodssyamlToInterface(outYml, &out)
 	if err != nil {
-		return "", fmt.Errorf("ummarshalling RKE cluster yaml: %s", err)
+		return "", fmt.Errorf("unmarshalling RKE cluster yaml: %s", err)
 	}
 
 	if services, ok := out["services"].(map[string]interface{}); ok {
