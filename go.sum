@@ -794,8 +794,8 @@ github.com/rancher/lasso v0.0.0-20230830164424-d684fdeb6f29 h1:+kige/h8/LnzWgPjB
 github.com/rancher/lasso v0.0.0-20230830164424-d684fdeb6f29/go.mod h1:kgk9kJVMj9FIrrXU0iyM6u/9Je4bEjPImqswkTVaKsQ=
 github.com/rancher/norman v0.0.0-20230831160711-5de27f66385d h1:Ft/iTH91TlE2oBGmpkdO4I8o8cvUmCnytdwu52a/tN4=
 github.com/rancher/norman v0.0.0-20230831160711-5de27f66385d/go.mod h1:Sm2Xqai+aecgmJ86ygyEe+TdPMLkauEpykSstBAu4Ko=
-github.com/rancher/rke v1.4.10 h1:JP3j9mPjPojopN73Qwu5efKw9PQ7od+GKrHpVJLW3fg=
-github.com/rancher/rke v1.4.10/go.mod h1:zCL+we25sFDQb2jo6EojX8zxBfbB7FxL6Lte6A6eCiY=
+github.com/rancher/rke v1.4.10-rc1 h1:zZihOBX39gHWsOR4bRLdqjgth79YX+57UL1nnwewydM=
+github.com/rancher/rke v1.4.10-rc1/go.mod h1:wUwsm6dXyzzxWlVwmPPR5XMWX6ICjAdWJ+l45ZqV+P0=
 github.com/rancher/wrangler v1.1.1-0.20230831050635-df1bd5aae9df h1:WJ+aaUICHPX8HeLmHE9JL/RFHhilMfcJlqmhgpc7gJU=
 github.com/rancher/wrangler v1.1.1-0.20230831050635-df1bd5aae9df/go.mod h1:4T80p+rLh2OLbjCjdExIjRHKNBgK9NUAd7eIU/gRPKk=
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
@@ -1350,8 +1350,8 @@ google.golang.org/grpc v1.33.1/go.mod h1:fr5YgcSWrqhRRxogOsw7RzIpsmvOZ6IcH4kBYTp
 google.golang.org/grpc v1.33.2/go.mod h1:JMHMWHQWaTccqQQlmk3MJZS+GWXOdAesneDmEnv2fbc=
 google.golang.org/grpc v1.36.0/go.mod h1:qjiiYl8FncCW8feJPdyg3v6XW24KsRHe+dy9BAGRRjU=
 google.golang.org/grpc v1.40.0/go.mod h1:ogyxbiOoUXAkP+4+xa6PZSE9DZgIHtSpzjDTB9KAK34=
-google.golang.org/grpc v1.57.0 h1:kfzNeI/klCGD2YPMUlaGNT3pxvYfga7smW3Vth8Zsiw=
-google.golang.org/grpc v1.57.0/go.mod h1:Sd+9RMTACXwmub0zcNY2c4arhtrbBYD1AUHI/dt16Mo=
+google.golang.org/grpc v1.57.1 h1:upNTNqv0ES+2ZOOqACwVtS3Il8M12/+Hz41RCPzAjQg=
+google.golang.org/grpc v1.57.1/go.mod h1:Sd+9RMTACXwmub0zcNY2c4arhtrbBYD1AUHI/dt16Mo=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
 google.golang.org/protobuf v0.0.0-20200228230310-ab0ca4ff8a60/go.mod h1:cfTl7dwQJ+fmap5saPgwCLgHXTUD7jkjRqWcaiX5VyM=
@@ -1464,8 +1464,8 @@ k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f/go.mod h1:byini6yhqGC14c3
 k8s.io/kubectl v0.27.6 h1:mZJTqfIsRjahlHmYJth9r/ivWs9RhavFR0EvMM9Jb5Y=
 k8s.io/kubectl v0.27.6/go.mod h1:QgZcOIbcICjxHXOhrFC6jJXe5/Sik2fPuyV67kzjGX4=
 k8s.io/kubernetes v1.13.0/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
-k8s.io/kubernetes v1.27.6 h1:S89BDD6Rl316AMoxbkddiNhGyUHmxV3fdxGtrx8aqq8=
-k8s.io/kubernetes v1.27.6/go.mod h1:otFZGfN11HvC2Es0PN7FpbkSDRT7LYG7xyc9pCd6f4E=
+k8s.io/kubernetes v1.15.0-alpha.0 h1:gIwzzIgt0BX8fznDZRxdZv2837cEmVetI54aUfzkPk8=
+k8s.io/kubernetes v1.15.0-alpha.0/go.mod h1:ocZa8+6APFNC2tX1DZASIbocyYT5jHzqFVsY5aoB7Jk=
 k8s.io/pod-security-admission v0.27.6 h1:AqDhJ2KU8U1L0JI6QZG6ksjhG3CXyn+lGSvB+og6wqc=
 k8s.io/pod-security-admission v0.27.6/go.mod h1:5u8QuQiv4s3qeVvcGf1OjSgZz48A1qVml72afWCnitQ=
 k8s.io/utils v0.0.0-20201110183641-67b214c5f920/go.mod h1:jPW/WVKK9YHAvNhRxK0md/EJ228hCsBRufyofKtW8HA=
