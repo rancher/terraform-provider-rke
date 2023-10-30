@@ -1,10 +1,14 @@
 package rke
 
 import (
+	"context"
 	"fmt"
+	"sort"
 
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rancher/rke/cluster"
+	"github.com/rancher/rke/metadata"
 	rancher "github.com/rancher/rke/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
@@ -371,6 +375,10 @@ func expandRKECluster(in *schema.ResourceData) (string, *rancher.RancherKubernet
 		obj.Services.Kubeproxy.ExtraArgs["conntrack-max-per-core"] = "0"
 	}
 
+	if k8sVersionRequiresCri(obj.Version) && obj.EnableCRIDockerd != nil && !*obj.EnableCRIDockerd {
+		return "", nil, fmt.Errorf("kubernetes version %s requires enable_cri_dockerd to be set to true", obj.Version)
+	}
+
 	objYml, err := patchRKEClusterYaml(obj)
 	if err != nil {
 		return "", nil, fmt.Errorf("Failed to patch RKE cluster yaml: %v", err)
@@ -504,4 +512,25 @@ func expandRKEClusterFlag(in *schema.ResourceData, clusterFilePath string) clust
 	}
 
 	return obj
+}
+
+func k8sVersionRequiresCri(kuberenetsVersion string) bool {
+	metadata.InitMetadata(context.Background())
+	versions := make([]*version.Version, 0, len(metadata.K8sVersionToRKESystemImages))
+	for k := range metadata.K8sVersionToRKESystemImages {
+		v, _ := version.NewVersion(k)
+		versions = append(versions, v)
+	}
+
+	sort.Sort(sort.Reverse(version.Collection(versions)))
+	kuberenetsVersion = kuberenetsVersion[1:]
+	for _, v := range versions {
+		if v.String() == kuberenetsVersion {
+			return true
+		}
+		if v.String() == "1.23.4-rancher1-1" {
+			break
+		}
+	}
+	return false
 }
