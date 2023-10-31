@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -514,22 +515,24 @@ func expandRKEClusterFlag(in *schema.ResourceData, clusterFilePath string) clust
 	return obj
 }
 
-func k8sVersionRequiresCri(kuberenetsVersion string) bool {
+func k8sVersionRequiresCri(kubernetesVersion string) bool {
 	metadata.InitMetadata(context.Background())
+	// Get data from RKE package, change it to a slice so we can sort it.
 	versions := make([]*version.Version, 0, len(metadata.K8sVersionToRKESystemImages))
 	for k := range metadata.K8sVersionToRKESystemImages {
 		v, _ := version.NewVersion(k)
 		versions = append(versions, v)
 	}
-
 	sort.Sort(sort.Reverse(version.Collection(versions)))
-	kuberenetsVersion = kuberenetsVersion[1:]
+	// Removes the "v" from the version, so it matches the rke versions
+	kubernetesVersion = kubernetesVersion[1:]
+	// Go through the newer versions, stopping on 1.23.x
 	for _, v := range versions {
-		if v.String() == kuberenetsVersion {
-			return true
-		}
-		if v.String() == "1.23.4-rancher1-1" {
+		if strings.Contains(v.String(), "1.23.") {
 			break
+		}
+		if v.String() == kubernetesVersion {
+			return true
 		}
 	}
 	return false
