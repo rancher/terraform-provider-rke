@@ -15,6 +15,8 @@ import (
 	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 )
 
+const latestK8sMinorThatWorksWithoutCri = "1.23."
+
 // Flatteners
 
 func flattenRKEClusterFlag(d *schema.ResourceData, in *cluster.ExternalFlags) {
@@ -528,7 +530,7 @@ func k8sVersionRequiresCri(kubernetesVersion string) bool {
 	kubernetesVersion = kubernetesVersion[1:]
 	// Go through the newer versions, stopping on 1.23.x
 	for _, v := range versions {
-		if strings.Contains(v.String(), "1.23.") {
+		if strings.Contains(v.String(), latestK8sMinorThatWorksWithoutCri) {
 			break
 		}
 		if v.String() == kubernetesVersion {
