@@ -60,6 +60,13 @@ func Test_k8sVersionRequiresCri(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "invalid",
+			args: args{
+				kubernetesVersion: "invalid",
+			},
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

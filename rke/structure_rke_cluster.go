@@ -1,21 +1,16 @@
 package rke
 
 import (
-	"context"
 	"fmt"
-	"sort"
-	"strings"
 
-	"github.com/hashicorp/go-version"
+	"github.com/blang/semver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rancher/rke/cluster"
-	"github.com/rancher/rke/metadata"
 	rancher "github.com/rancher/rke/types"
+	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 )
-
-const latestK8sMinorThatWorksWithoutCri = "1.23."
 
 // Flatteners
 
@@ -518,24 +513,11 @@ func expandRKEClusterFlag(in *schema.ResourceData, clusterFilePath string) clust
 }
 
 func k8sVersionRequiresCri(kubernetesVersion string) bool {
-	metadata.InitMetadata(context.Background())
-	// Get data from RKE package, change it to a slice so we can sort it.
-	versions := make([]*version.Version, 0, len(metadata.K8sVersionToRKESystemImages))
-	for k := range metadata.K8sVersionToRKESystemImages {
-		v, _ := version.NewVersion(k)
-		versions = append(versions, v)
+
+	version, err := getClusterVersion(kubernetesVersion)
+	if err != nil {
+		// Ignoring the error, if the k8sVersion is not valid it should fail during the validation of the field.
+		log.Debug("invalid kubernetes version")
 	}
-	sort.Sort(sort.Reverse(version.Collection(versions)))
-	// Removes the "v" from the version, so it matches the rke versions
-	kubernetesVersion = kubernetesVersion[1:]
-	// Go through the newer versions, stopping on 1.23.x
-	for _, v := range versions {
-		if strings.Contains(v.String(), latestK8sMinorThatWorksWithoutCri) {
-			break
-		}
-		if v.String() == kubernetesVersion {
-			return true
-		}
-	}
-	return false
+	return semver.MustParseRange(">= 1.24.0-rancher0")(version)
 }
