@@ -3,7 +3,6 @@ package rke
 import (
 	"fmt"
 
-	"github.com/blang/semver"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rancher/rke/cluster"
 	rancher "github.com/rancher/rke/types"
@@ -513,11 +512,11 @@ func expandRKEClusterFlag(in *schema.ResourceData, clusterFilePath string) clust
 }
 
 func k8sVersionRequiresCri(kubernetesVersion string) bool {
-
 	version, err := getClusterVersion(kubernetesVersion)
 	if err != nil {
-		// Ignoring the error, if the k8sVersion is not valid it should fail during the validation of the field.
-		log.Debug("invalid kubernetes version")
+		// This debug / error is not supposed to happen, the kubernetesVersion should be validated by the provider.
+		log.Debugf("Unable to get the semantic version for kubernetesVersion, value: %s", kubernetesVersion)
+		return false
 	}
-	return semver.MustParseRange(">= 1.24.0-rancher0")(version)
+	return parsedRangeAtLeast124(version)
 }

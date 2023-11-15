@@ -19,6 +19,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var parsedRangeAtLeast124 = semver.MustParseRange(">= 1.24.0-rancher0")
+
 func splitImportID(s string) ([]string, error) {
 	sep := ":"
 	if len(s) == 0 {
