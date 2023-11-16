@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/rancher/rke/cluster"
 	rancher "github.com/rancher/rke/types"
+	log "github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 )
@@ -371,6 +372,10 @@ func expandRKECluster(in *schema.ResourceData) (string, *rancher.RancherKubernet
 		obj.Services.Kubeproxy.ExtraArgs["conntrack-max-per-core"] = "0"
 	}
 
+	if k8sVersionRequiresCri(obj.Version) && obj.EnableCRIDockerd != nil && !*obj.EnableCRIDockerd {
+		return "", nil, fmt.Errorf("kubernetes version %s requires enable_cri_dockerd to be set to true", obj.Version)
+	}
+
 	objYml, err := patchRKEClusterYaml(obj)
 	if err != nil {
 		return "", nil, fmt.Errorf("Failed to patch RKE cluster yaml: %v", err)
@@ -504,4 +509,14 @@ func expandRKEClusterFlag(in *schema.ResourceData, clusterFilePath string) clust
 	}
 
 	return obj
+}
+
+func k8sVersionRequiresCri(kubernetesVersion string) bool {
+	version, err := getClusterVersion(kubernetesVersion)
+	if err != nil {
+		// This debug / error is not supposed to happen, the kubernetesVersion should be validated by the provider.
+		log.Debugf("Unable to get the semantic version for kubernetesVersion, value: %s", kubernetesVersion)
+		return false
+	}
+	return parsedRangeAtLeast124(version)
 }

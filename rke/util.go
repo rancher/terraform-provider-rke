@@ -12,11 +12,14 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/blang/semver"
 	ghodssyaml "github.com/ghodss/yaml"
 	gover "github.com/hashicorp/go-version"
 	uuid "github.com/satori/go.uuid"
 	"gopkg.in/yaml.v2"
 )
+
+var parsedRangeAtLeast124 = semver.MustParseRange(">= 1.24.0-rancher0")
 
 func splitImportID(s string) ([]string, error) {
 	sep := ":"
@@ -250,6 +253,18 @@ func sortVersions(list map[string]string) ([]*gover.Version, error) {
 
 	sort.Sort(gover.Collection(versions))
 	return versions, nil
+}
+
+func getClusterVersion(version string) (semver.Version, error) {
+	var parsedVersion semver.Version
+	if len(version) <= 1 || !strings.HasPrefix(version, "v") {
+		return parsedVersion, fmt.Errorf("%s is not valid version", version)
+	}
+	parsedVersion, err := semver.Parse(version[1:])
+	if err != nil {
+		return parsedVersion, fmt.Errorf("%s is not valid semver", version)
+	}
+	return parsedVersion, nil
 }
 
 func getLatestVersion(list map[string]string) (string, error) {
