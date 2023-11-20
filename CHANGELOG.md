@@ -1,3 +1,21 @@
+## 1.4.3 (November 20, 2023)
+
+FEATURES:
+
+* Update libs and add Pod Security Admission Configuration Template (PSACT) support for `pod_security_configuration` and bind mount options. See [#416](https://github.com/rancher/terraform-provider-rke/pull/416)
+
+ENHANCEMENTS:
+
+* Add PR Template. See [#411](https://github.com/rancher/terraform-provider-rke/pull/411)
+* Update gitignore. See [#412](https://github.com/rancher/terraform-provider-rke/pull/412)
+* Use dl.k8s.io url for getting kubectl. See [#420](https://github.com/rancher/terraform-provider-rke/pull/420)
+* Update RKE to [v1.4.11](https://github.com/rancher/rke/releases/tag/v1.4.11). See [#430](https://github.com/rancher/terraform-provider-rke/pull/430)
+* Document and add validation on `enable_cri_dockerd` option. See [#415](https://github.com/rancher/terraform-provider-rke/pull/415)
+
+BUG FIXES:
+
+
+
 ## 1.4.2 (July 12, 2023)
 
 FEATURES:
