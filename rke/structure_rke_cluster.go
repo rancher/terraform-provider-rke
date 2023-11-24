@@ -293,11 +293,11 @@ func expandRKECluster(in *schema.ResourceData) (string, *rancher.RancherKubernet
 		obj.DNS = expandRKEClusterDNS(v)
 	}
 
-	if v, ok := in.Get("enable_cri_dockerd").(bool); ok {
+	if v, ok := in.Get("enable_cri_dockerd").(bool); ok && obj.EnableCRIDockerd == nil {
 		obj.EnableCRIDockerd = &v
 	}
 
-	if v, ok := in.Get("ignore_docker_version").(bool); ok {
+	if v, ok := in.Get("ignore_docker_version").(bool); ok && obj.IgnoreDockerVersion == nil {
 		obj.IgnoreDockerVersion = &v
 	}
 
