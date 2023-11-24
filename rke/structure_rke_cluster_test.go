@@ -11,13 +11,13 @@ func Test_k8sVersionRequiresCri(t *testing.T) {
 		args args
 		want bool
 	}{
-        {
-            name: "v1.26.9-rancher1-1",
-            args: args{
-                kubernetesVersion: "v1.26.9-rancher1-1",
-            },
-            want: true,
-        },
+	        {
+	            name: "v1.26.9-rancher1-1",
+	            args: args{
+	                kubernetesVersion: "v1.26.9-rancher1-1",
+	            },
+	            want: true,
+	        },
 		{
 			name: "v1.26.4-rancher2-1",
 			args: args{
