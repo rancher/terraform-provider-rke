@@ -137,6 +137,18 @@ func init() {
 		"arg_one": "one",
 		"arg_two": "two",
 	}
+	testRKEClusterServicesKubeAPIConf.WindowsExtraArgs = map[string]string{
+		"arg_one": "one",
+		"arg_two": "two",
+	}
+	testRKEClusterServicesKubeAPIConf.ExtraArgsArray = map[string][]string{
+		"arg1": {"v1", "v2"},
+		"arg2": {"v1", "v2"},
+	}
+	testRKEClusterServicesKubeAPIConf.WindowsExtraArgsArray = map[string][]string{
+		"arg1": {"v1", "v2"},
+		"arg2": {"v1", "v2"},
+	}
 	testRKEClusterServicesKubeAPIConf.ExtraBinds = []string{"bind_one", "bind_two"}
 	testRKEClusterServicesKubeAPIConf.ExtraEnv = []string{"env_one", "env_two"}
 	testRKEClusterServicesKubeAPIConf.Image = "image"
@@ -149,6 +161,12 @@ func init() {
 				"arg_one": "one",
 				"arg_two": "two",
 			},
+			"windows_extra_args": map[string]interface{}{
+				"arg_one": "one",
+				"arg_two": "two",
+			},
+			"extra_args_array":          "{\"arg1\":[\"v1\",\"v2\"],\"arg2\":[\"v1\",\"v2\"]}",
+			"windows_extra_args_array":  "{\"arg1\":[\"v1\",\"v2\"],\"arg2\":[\"v1\",\"v2\"]}",
 			"extra_binds":               []interface{}{"bind_one", "bind_two"},
 			"extra_env":                 []interface{}{"env_one", "env_two"},
 			"image":                     "image",

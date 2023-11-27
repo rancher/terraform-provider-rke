@@ -70,6 +70,18 @@ func init() {
 		"arg_one": "one",
 		"arg_two": "two",
 	}
+	testRKEClusterServicesETCDConf.WindowsExtraArgs = map[string]string{
+		"arg_one": "one",
+		"arg_two": "two",
+	}
+	testRKEClusterServicesETCDConf.ExtraArgsArray = map[string][]string{
+		"arg1": {"v1", "v2"},
+		"arg2": {"v1", "v2"},
+	}
+	testRKEClusterServicesETCDConf.WindowsExtraArgsArray = map[string][]string{
+		"arg1": {"v1", "v2"},
+		"arg2": {"v1", "v2"},
+	}
 	testRKEClusterServicesETCDConf.ExtraBinds = []string{"bind_one", "bind_two"}
 	testRKEClusterServicesETCDConf.ExtraEnv = []string{"env_one", "env_two"}
 	testRKEClusterServicesETCDConf.Image = "image"
@@ -84,15 +96,21 @@ func init() {
 				"arg_one": "one",
 				"arg_two": "two",
 			},
-			"extra_binds": []interface{}{"bind_one", "bind_two"},
-			"extra_env":   []interface{}{"env_one", "env_two"},
-			"gid":         1001,
-			"image":       "image",
-			"key":         "ZZZZZZZZ",
-			"path":        "/etcd",
-			"retention":   "6h",
-			"snapshot":    true,
-			"uid":         1001,
+			"win_extra_args": map[string]interface{}{
+				"arg_one": "one",
+				"arg_two": "two",
+			},
+			"extra_args_array":         "{\"arg1\":[\"v1\",\"v2\"],\"arg2\":[\"v1\",\"v2\"]}",
+			"windows_extra_args_array": "{\"arg1\":[\"v1\",\"v2\"],\"arg2\":[\"v1\",\"v2\"]}",
+			"extra_binds":              []interface{}{"bind_one", "bind_two"},
+			"extra_env":                []interface{}{"env_one", "env_two"},
+			"gid":                      1001,
+			"image":                    "image",
+			"key":                      "ZZZZZZZZ",
+			"path":                     "/etcd",
+			"retention":                "6h",
+			"snapshot":                 true,
+			"uid":                      1001,
 		},
 	}
 }
@@ -152,7 +170,10 @@ func TestFlattenRKEClusterServicesEtcd(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterServicesEtcd(tc.Input, testRKEClusterServicesETCDInterface)
+		output, err := flattenRKEClusterServicesEtcd(tc.Input, testRKEClusterServicesETCDInterface)
+		if err != nil {
+			t.Fatalf("Unexpected error from flattener: %v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
