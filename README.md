@@ -159,4 +159,4 @@ git remote add upstream-release git@github.com:rancher/terraform-provider-rke.gi
 git checkout upstream-release/master
 git push upstream-release v1.24.0
 ```
-* Create an [EIO issue](https://github.com/rancherlabs/eio) for Hashicorp to publish the release
+* Check that version has been published on the [Hashicorp registry](https://registry.terraform.io/providers/rancher/rke/latest). If it has not been published after 2 hours, create an [EIO issue](https://github.com/rancherlabs/eio) to trigger the registry sync.
