@@ -1,3 +1,12 @@
+## 1.4.4 (March 6, 2024)
+FEATURES:
+
+ENHANCEMENTS:
+
+- Update RKE to [v1.4.15](https://github.com/rancher/rke/releases/tag/v1.4.15)
+
+BUG FIXES:
+
 ## 1.4.3 (November 20, 2023)
 
 FEATURES:
