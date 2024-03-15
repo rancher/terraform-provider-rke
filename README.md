@@ -127,14 +127,18 @@ On Openstack you can use [terraform-openstack-rke](https://github.com/remche/ter
 Branching the Provider
 ---------------------------
 
-The provider is branched into two release lines `master` and `release/v1.3` that align with the minor versions of RKE. `master` is aligned with RKE v1.4 and `release/v1.3` is aligned with RKE v1.3.
+The provider is branched to align with RKE versions:
+
+- `master` is aligned with RKE v1.5
+- `release/v1.4` is aligned with RKE v1.4
+- `release/v1.3` is aligned with RKE v1.3 
 
 Release process
 
 * When there's an RKE/KDM release and the RKE release has new kubernetes versions, create an issue that will list the RKE version + provide links
-* Backport CVEs or fixes as needed to `release/v1.3`
-* Release the provider that includes the new version/s
-* It depends on what RKE version just got released (v1.3 / v1.4) as to what line of the provider gets released. Could be one or the other, or both.
+* Backport CVEs or fixes as needed
+* Release the provider that includes the new version(s)
+* It depends on what RKE version just got released (v1.3 / v1.4) as to what line of the provider gets released. Could be one or the other, or both
 
 Releasing the Provider
 ---------------------------
