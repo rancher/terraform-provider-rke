@@ -1,4 +1,17 @@
-## 1.4.4 (March 14, 2024)
+### 1.5.0 (April 8, 2024)
+
+FEATURES:
+
+ENHANCEMENTS:
+
+* bump Go to 1.20 and RKE to v1.5.7 to support k8s 1.28. See [#447](https://github.com/rancher/terraform-provider-rke/issues/447)
+
+BUG FIXES:
+
+* Fix the issue that importing a cluster fails because `enable_cri_dockerd` is always set to the default value false. See [#432](https://github.com/rancher/terraform-provider-rke/issues/432)
+
+
+# 1.4.4 (March 14, 2024) 
 
 FEATURES:
 
