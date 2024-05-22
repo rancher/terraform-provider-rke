@@ -1,5 +1,4 @@
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
-GO111MODULE=off
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=rke
 TEST?="./${PKG_NAME}"
@@ -19,7 +18,7 @@ dapper-testacc: .dapper
 build: validate
 	@sh -c "'$(CURDIR)/scripts/gobuild.sh'"
 
-validate: vet lint fmtcheck
+validate: vet fmtcheck
 
 package:
 	@sh -c "'$(CURDIR)/scripts/gopackage.sh'"
@@ -41,21 +40,11 @@ testacc:
 
 vet:
 	@echo "==> Checking that code complies with go vet requirements..."
-	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -gt 0 ]; then \
+	@go vet ./... ; if [ $$? -gt 0 ]; then \
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
 		echo "and fix them if necessary before submitting the code for review."; \
 		exit 1; \
-	fi
-
-lint:
-	@echo "==> Checking that code complies with golint requirements..."
-	@GO111MODULE=off go get -u golang.org/x/lint/golint
-	@if [ -n "$$(golint $$(go list ./...) | grep -v 'should have comment.*or be unexported' | tee /dev/stderr)" ]; then \
-		echo ""; \
-		echo "golint found style issues. Please check the reported issues"; \
-		echo "and fix them if necessary before submitting the code for review."; \
-    	exit 1; \
 	fi
 
 bin:
