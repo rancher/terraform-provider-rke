@@ -1,5 +1,5 @@
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: digitalocean-cloud-controller-manager
@@ -7,6 +7,9 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: digitalocean-cloud-controller-manager
   template:
     metadata:
       labels:
@@ -29,7 +32,7 @@ spec:
         - key: "node-role.kubernetes.io/master"
           effect: NoSchedule
       containers:
-      - image: digitalocean/digitalocean-cloud-controller-manager:v0.1.15
+      - image: digitalocean/digitalocean-cloud-controller-manager:v0.1.30
         name: digitalocean-cloud-controller-manager
         command:
           - "/bin/digitalocean-cloud-controller-manager"
@@ -59,6 +62,22 @@ metadata:
     rbac.authorization.kubernetes.io/autoupdate: "true"
   name: system:cloud-controller-manager
 rules:
+# The following is necessary to support leader election when running DO-CCM on
+# a multi-master cluster. We leave it commented out on the assumption that the
+# typical user is not running a multi-master cluster and therefore does not
+# need the additional permissions.
+#
+# - apiGroups:
+#   - coordination.k8s.io
+#   resources:
+#   - leases
+#   verbs:
+#   - get
+#   - watch
+#   - list
+#   - create
+#   - update
+#   - delete
 - apiGroups:
   - ""
   resources:
@@ -135,4 +154,3 @@ subjects:
 - kind: ServiceAccount
   name: cloud-controller-manager
   namespace: kube-system
-

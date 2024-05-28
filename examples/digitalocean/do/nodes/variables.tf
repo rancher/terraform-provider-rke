@@ -1,0 +1,9 @@
+variable "do_key_id"      { type = number }
+variable "do_token"       { type = string }
+variable "droplet_size"   { type = string }
+variable "name"           { type = string }
+variable "node_count"     { type = number }
+variable "private_key"    { type = string }
+variable "region"         { type = string }
+variable "cluster_domain" { type = string }
+variable "ssh_username"   { default = "rancher" }
