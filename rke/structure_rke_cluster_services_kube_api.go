@@ -1,8 +1,8 @@
 package rke
 
 import (
+	"encoding/json"
 	"fmt"
-
 	rancher "github.com/rancher/rke/types"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -130,6 +130,26 @@ func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{},
 
 	if len(in.ExtraArgs) > 0 {
 		obj["extra_args"] = toMapInterface(in.ExtraArgs)
+	}
+
+	if len(in.WindowsExtraArgs) > 0 {
+		obj["windows_extra_args"] = toMapInterface(in.WindowsExtraArgs)
+	}
+
+	if len(in.ExtraArgsArray) > 0 {
+		j, err := json.Marshal(in.ExtraArgsArray)
+		if err != nil {
+			return nil, err
+		}
+		obj["extra_args_array"] = string(j)
+	}
+
+	if len(in.WindowsExtraArgsArray) > 0 {
+		j, err := json.Marshal(in.WindowsExtraArgsArray)
+		if err != nil {
+			return nil, err
+		}
+		obj["windows_extra_args_array"] = string(j)
 	}
 
 	if len(in.ExtraBinds) > 0 {
@@ -331,6 +351,26 @@ func expandRKEClusterServicesKubeAPI(p []interface{}) (rancher.KubeAPIService, e
 
 	if v, ok := in["extra_args"].(map[string]interface{}); ok && len(v) > 0 {
 		obj.ExtraArgs = toMapString(v)
+	}
+
+	if v, ok := in["windows_extra_args"].(map[string]interface{}); ok && len(v) > 0 {
+		obj.WindowsExtraArgs = toMapString(v)
+	}
+
+	if v, ok := in["extra_args_array"].(string); ok && len(v) != 0 {
+		array, err := jsonToMapStringSlice(v)
+		if err != nil {
+			return rancher.KubeAPIService{}, err
+		}
+		obj.ExtraArgsArray = array
+	}
+
+	if v, ok := in["windows_extra_args_array"].(string); ok && len(v) != 0 {
+		array, err := jsonToMapStringSlice(v)
+		if err != nil {
+			return rancher.KubeAPIService{}, err
+		}
+		obj.WindowsExtraArgsArray = array
 	}
 
 	if v, ok := in["extra_binds"].([]interface{}); ok && len(v) > 0 {
