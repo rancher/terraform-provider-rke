@@ -6,8 +6,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	apiserverconfig "k8s.io/apiserver/pkg/apis/apiserver"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
-	apiserverconfig "k8s.io/apiserver/pkg/apis/config"
 	eventratelimitapi "k8s.io/kubernetes/plugin/pkg/admission/eventratelimit/apis/eventratelimit"
 )
 
