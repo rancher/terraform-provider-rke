@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
@@ -123,12 +122,12 @@ func testAccCheckRKENodeExists(n string, nodeIPs ...string) resource.TestCheckFu
 		}
 
 		// save kube_config_yaml to tmpfile
-		tmpFile, err := ioutil.TempFile("", "test_acc_rke_cluster_kube_config_")
+		tmpFile, err := os.CreateTemp("", "test_acc_rke_cluster_kube_config_")
 		if err != nil {
 			return errors.New("failed to create temp file")
 		}
 		defer os.Remove(tmpFile.Name()) // nolint
-		if err := ioutil.WriteFile(tmpFile.Name(), []byte(strKubeConfig), 0644); err != nil {
+		if err := os.WriteFile(tmpFile.Name(), []byte(strKubeConfig), 0644); err != nil {
 			return errors.New("failed to create temp file")
 		}
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -14,7 +14,7 @@ func resourceRKEClusterImport(ctx context.Context, d *schema.ResourceData, meta 
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
-	clusterYamlBytes, err := ioutil.ReadFile(files[0])
+	clusterYamlBytes, err := os.ReadFile(files[0])
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Reading RKE config file %s: %v", files[0], err)
 	}
@@ -26,7 +26,7 @@ func resourceRKEClusterImport(ctx context.Context, d *schema.ResourceData, meta 
 		return []*schema.ResourceData{}, fmt.Errorf("unmarshalling RKE config yaml: %v", err)
 	}
 
-	clusterStateBytes, err := ioutil.ReadFile(files[1])
+	clusterStateBytes, err := os.ReadFile(files[1])
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Reading RKE state file %s: %v", files[0], err)
 	}

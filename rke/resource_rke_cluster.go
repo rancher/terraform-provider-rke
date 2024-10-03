@@ -3,7 +3,6 @@ package rke
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -245,8 +244,8 @@ func clusterDelete(d *schema.ResourceData) error {
 	// setting up the flags
 	flags := cluster.GetExternalFlags(false, false, false, false, "", clusterFilePath)
 
-	// Omiting ClusterRemove  errors
-	cmd.ClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)
+	// Omitting ClusterRemove  errors
+	_ = cmd.ClusterRemove(context.Background(), rkeConfig, hosts.DialersOptions{}, flags)
 
 	return nil
 }
@@ -365,7 +364,7 @@ func readKubeConfig(dir string) (string, error) {
 	localKubeConfigPath := pki.GetLocalKubeConfig(configPath, "")
 	if _, err := os.Stat(localKubeConfigPath); err == nil {
 		var data []byte
-		if data, err = ioutil.ReadFile(localKubeConfigPath); err != nil {
+		if data, err = os.ReadFile(localKubeConfigPath); err != nil {
 			return "", err
 		}
 		return string(data), nil
@@ -378,7 +377,7 @@ func readRKEStateFile(dir string) (string, error) {
 	stateFilePath := cluster.GetStateFilePath(configPath, "")
 	if _, err := os.Stat(stateFilePath); err == nil {
 		var data []byte
-		if data, err = ioutil.ReadFile(stateFilePath); err != nil {
+		if data, err = os.ReadFile(stateFilePath); err != nil {
 			return "", err
 		}
 		return string(data), nil
@@ -409,7 +408,7 @@ func writeRKEConfigFiles(d *schema.ResourceData) (string, string, error) {
 func writeRKEState(dir string, d *schema.ResourceData) error {
 	if strState, ok := d.Get("rke_state").(string); ok && len(strState) > 0 {
 		stateFilePath := cluster.GetStateFilePath(dir, "")
-		return ioutil.WriteFile(stateFilePath, []byte(strState), 0640)
+		return os.WriteFile(stateFilePath, []byte(strState), 0640)
 	}
 	return nil
 }
@@ -417,14 +416,14 @@ func writeRKEState(dir string, d *schema.ResourceData) error {
 func writeKubeConfig(dir string, d *schema.ResourceData) error {
 	if strConf, ok := d.Get("kube_config_yaml").(string); ok && len(strConf) > 0 {
 		localKubeConfigPath := pki.GetLocalKubeConfig(dir, "")
-		return ioutil.WriteFile(localKubeConfigPath, []byte(strConf), 0640)
+		return os.WriteFile(localKubeConfigPath, []byte(strConf), 0640)
 	}
 	return nil
 }
 
 func writeRKEConfig(configFile string, d *schema.ResourceData) error {
 	if strConf, ok := d.Get("rke_cluster_yaml").(string); ok && len(strConf) > 0 {
-		return ioutil.WriteFile(configFile, []byte(strConf), 0640)
+		return os.WriteFile(configFile, []byte(strConf), 0640)
 	}
 	return nil
 
@@ -436,7 +435,7 @@ func createTempDir() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	tempDir, err := ioutil.TempDir(workDir, "terraform-provider-rke-tmp-")
+	tempDir, err := os.MkdirTemp(workDir, "terraform-provider-rke-tmp-")
 	if err != nil {
 		return "", err
 	}

@@ -1,22 +1,18 @@
 Terraform Provider for RKE
 ==================================
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/rancher/terraform-provider-rke)](https://goreportcard.com/report/github.com/rancher/terraform-provider-rke) [![Build Status](https://drone-publish.rancher.io/api/badges/rancher/terraform-provider-rke/status.svg)](https://drone-publish.rancher.io/rancher/terraform-provider-rke)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rancher/terraform-provider-rke)](https://goreportcard.com/report/github.com/rancher/terraform-provider-rke)
 
 Terraform RKE providers can easily deploy Kubernetes clusters with [Rancher Kubernetes Engine](https://github.com/rancher/rke).  
 
 - Website: https://registry.terraform.io/providers/rancher/rke
 - Docs: https://registry.terraform.io/providers/rancher/rke/latest/docs
-- [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
-- Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
-
-<img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" width="600px">
 
 Requirements
 ------------
 
 - [Terraform](https://www.terraform.io/downloads.html) >= 0.12.x
-- [Go](https://golang.org/doc/install) 1.14 to build the provider plugin
+- [Go](https://golang.org/doc/install) 1.22 to build the provider plugin
 - [Docker](https://docs.docker.com/install/) 17.03.x to run acceptance tests
 
 Installing The Provider
@@ -34,15 +30,15 @@ How to install manually:
 * Place provider binary on your terraform plugin directory: `mv terraform-provider-rke_vX.Y.Z <TERRAFORM_PLUGIN_DIRECTORY>`
   * `terraform init` will search the following terraform plugin directories (More info at [terra-farm.github.io](https://terra-farm.github.io/main/installation.html)):
 
-| Directory | Purpose |
-|-|-|
-| . | In case the provider is only used in a single Terraform project. |
-| Location of the terraform binary (/usr/local/bin, for example.) | For airgapped installations; see terraform bundle. |
-| terraform.d/plugins/<OS>_<ARCH> | For checking custom providers into a configuration’s VCS repository. Not usually desirable, but sometimes necessary in Terraform Enterprise. |
-| .terraform/plugins/<OS>_<ARCH> | Automatically downloaded providers. |
-| ~/.terraform.d/plugins | The user plugins directory. |
-| ~/.terraform.d/plugins/<OS>_<ARCH> | The user plugins directory, with explicit OS and architecture. |
-| /my/custom/path | Custom plugin directory. Use the `-plug-dir=/my/custom/path` when running `terraform init` |
+| Directory                                                       | Purpose                                                                                                                                      |
+|-----------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| .                                                               | In case the provider is only used in a single Terraform project.                                                                             |
+| Location of the terraform binary (/usr/local/bin, for example.) | For airgapped installations; see terraform bundle.                                                                                           |
+| terraform.d/plugins/<OS>_<ARCH>                                 | For checking custom providers into a configuration’s VCS repository. Not usually desirable, but sometimes necessary in Terraform Enterprise. |
+| .terraform/plugins/<OS>_<ARCH>                                  | Automatically downloaded providers.                                                                                                          |
+| ~/.terraform.d/plugins                                          | The user plugins directory.                                                                                                                  |
+| ~/.terraform.d/plugins/<OS>_<ARCH>                              | The user plugins directory, with explicit OS and architecture.                                                                               |
+| /my/custom/path                                                 | Custom plugin directory. Use the `-plug-dir=/my/custom/path` when running `terraform init`                                                   |
 
 Building The Provider
 ---------------------
@@ -64,7 +60,7 @@ $ cd $GOPATH/src/github.com/rancher/terraform-provider-rke
 $ make build
 ```
 
-**Current master is focusing on RKE v1.0.x** There are some breaking changes from previous provider version.
+**Current master is focusing on RKE v1.x** There are some breaking changes from previous provider version.
 
 **If you use RKE v0.2.x or v0.1.x, please set proper branch.**
 
@@ -129,7 +125,8 @@ Branching the Provider
 
 The provider is branched to align with RKE versions:
 
-- `master` is aligned with RKE v1.5
+- `master` is aligned with RKE v1.6
+- `release/v1.5` is aligned with RKE v1.5
 - `release/v1.4` is aligned with RKE v1.4
 - `release/v1.3` is aligned with RKE v1.3 
 
