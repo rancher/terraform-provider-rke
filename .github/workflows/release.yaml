@@ -37,11 +37,16 @@ jobs:
           GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}
         run: |
           echo "Importing gpg key"
-          echo -n "$GPG_KEY" | base64 --decode | gpg --import --batch >/dev/null          
+          echo -n "$GPG_KEY" | base64 --decode | gpg --import --batch >/dev/null
+          # Extract the key ID from the list of secret keys
+          GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/ {print $5}')
+          echo "Extracted GPG Key ID: $GPG_KEY_ID"
+          # Automatically trust the key
+          echo -e "5\ny\n" | gpg --command-fd 0 --expert --edit-key "$GPG_KEY_ID" trust quit
           echo "signing SHASUM file"
           VERSION_NO_V=$(echo ${{ github.ref_name }} | sed "s/^[v|V]//")
           SHASUM_FILE=dist/artifacts/${{ github.ref_name }}/terraform-provider-rke_"$VERSION_NO_V"_SHA256SUMS
-          echo "$GPG_PASSPHRASE" | gpg --detach-sig --pinentry-mode loopback --passphrase-fd 0 --output "$SHASUM_FILE".sig --sign "$SHASUM_FILE"
+          echo "$GPG_PASSPHRASE" | gpg --detach-sig --pinentry-mode loopback --passphrase-fd 0 --default-key "$GPG_KEY_ID" --output "$SHASUM_FILE".sig --sign "$SHASUM_FILE"
 
       - name: GH release
         env:
