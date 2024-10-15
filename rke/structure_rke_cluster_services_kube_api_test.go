@@ -6,8 +6,8 @@ import (
 
 	rancher "github.com/rancher/rke/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
-	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 	eventratelimitapi "k8s.io/kubernetes/plugin/pkg/admission/eventratelimit/apis/eventratelimit"
 )
 
@@ -128,7 +128,6 @@ func init() {
 		AlwaysPullImages:        true,
 		AuditLog:                testRKEClusterServicesKubeAPIAuditLogConf,
 		EventRateLimit:          testRKEClusterServicesKubeAPIEventRateLimitConf,
-		PodSecurityPolicy:       true,
 		SecretsEncryptionConfig: testRKEClusterServicesKubeAPISecretsEncryptionConfigConf,
 		ServiceClusterIPRange:   "10.43.0.0/16",
 		ServiceNodePortRange:    "30000-32000",

@@ -6,8 +6,8 @@ import (
 	rancher "github.com/rancher/rke/types"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
-	apiserverconfigv1 "k8s.io/apiserver/pkg/apis/config/v1"
 	eventratelimitapi "k8s.io/kubernetes/plugin/pkg/admission/eventratelimit/apis/eventratelimit"
 )
 
@@ -147,8 +147,6 @@ func flattenRKEClusterServicesKubeAPI(in rancher.KubeAPIService) ([]interface{},
 	if len(in.PodSecurityConfiguration) > 0 {
 		obj["pod_security_configuration"] = in.PodSecurityConfiguration
 	}
-
-	obj["pod_security_policy"] = in.PodSecurityPolicy
 
 	if in.SecretsEncryptionConfig != nil {
 		secretEnc, err := flattenRKEClusterServicesKubeAPISecretsEncryptionConfig(in.SecretsEncryptionConfig)
@@ -347,10 +345,6 @@ func expandRKEClusterServicesKubeAPI(p []interface{}) (rancher.KubeAPIService, e
 
 	if v, ok := in["pod_security_configuration"].(string); ok && len(v) > 0 {
 		obj.PodSecurityConfiguration = v
-	}
-
-	if v, ok := in["pod_security_policy"].(bool); ok {
-		obj.PodSecurityPolicy = v
 	}
 
 	if v, ok := in["secrets_encryption_config"].([]interface{}); ok && len(v) > 0 {
