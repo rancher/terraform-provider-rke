@@ -28,8 +28,8 @@ jobs:
         uses: rancher-eio/read-vault-secrets@main
         with:
           secrets: |
-            secret/data/github/repo/${{ github.repository }}/key/app-credentials passphrase | GPG_PASSPHRASE ;
-            secret/data/github/repo/${{ github.repository }}/key/app-credentials privateKey | GPG_KEY
+            secret/data/github/repo/${{ github.repository }}/key/credentials passphrase | GPG_PASSPHRASE ;
+            secret/data/github/repo/${{ github.repository }}/key/credentials key | GPG_KEY
 
       - name: sign SHASUM
         env:
