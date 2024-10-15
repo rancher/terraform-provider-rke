@@ -39,7 +39,7 @@ jobs:
           echo "Importing gpg key"
           echo -n "$GPG_KEY" | base64 --decode | gpg --import --batch >/dev/null
           # Extract the key ID from the list of secret keys
-          GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec/ {print $5}')
+          GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr/ {print $10}')
           echo "Extracted GPG Key ID: $GPG_KEY_ID"
           # Automatically trust the key by creating a trust level entry for the key (ultimate trust)
           echo -e "$GPG_KEY_ID:6:" | gpg --import-ownertrust
