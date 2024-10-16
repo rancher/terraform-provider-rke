@@ -37,11 +37,11 @@ jobs:
           GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}
         run: |
           echo "Importing gpg key"
-          echo -n '${{ env.GPG_KEY }}' | gpg --import --batch > /dev/null
+          echo -n '${{ env.GPG_KEY }}' | base64 -d | gpg --import --batch > /dev/null
           echo "signing SHASUM file"
           VERSION_NO_V="$(echo ${{ github.ref_name }} | tr -d 'v')"
-          SHASUM_FILE="dist/artifacts/${{ github.ref_name }}/terraform-provider-rancher2_${VERSION_NO_V}_SHA256SUMS"
-          echo '${{ env.GPG_PASSPHRASE }}' | gpg --detach-sig --pinentry-mode loopback --passphrase-fd 0 --output "${SHASUM_FILE}.sig" --sign "${SHASUM_FILE}"
+          SHASUM_FILE="dist/artifacts/${{ github.ref_name }}/terraform-provider-rke_${VERSION_NO_V}_SHA256SUMS"
+          echo -n '${{ env.GPG_PASSPHRASE }}' | base64 -d | gpg --detach-sig --pinentry-mode loopback --passphrase-fd 0 --output "${SHASUM_FILE}.sig" --sign "${SHASUM_FILE}"
 
       - name: GH release
         env:
