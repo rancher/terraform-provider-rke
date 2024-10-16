@@ -31,25 +31,17 @@ jobs:
             secret/data/github/repo/${{ github.repository }}/key/credentials passphrase | GPG_PASSPHRASE ;
             secret/data/github/repo/${{ github.repository }}/key/credentials key | GPG_KEY
 
-      - name: sign SHASUM
+      - name: sign shasum
         env:
           GPG_KEY: ${{ env.GPG_KEY }}
           GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}
         run: |
           echo "Importing gpg key"
-          echo -n "$GPG_KEY" | base64 --decode | gpg --import --batch >/dev/null
-          
-          # Extract the correct secret subkey fingerprint
-          GPG_KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^ssb/ {found=1} found && /^fpr/ {print $10; exit}')
-          echo "Extracted GPG Key ID: $GPG_KEY_ID"
-          
-          # Automatically trust the key by creating a trust level entry for the key (ultimate trust)
-          echo -e "$GPG_KEY_ID:6:" | gpg --import-ownertrust
-          
+          echo -n '${{ env.GPG_KEY }}' | gpg --import --batch > /dev/null
           echo "signing SHASUM file"
-          VERSION_NO_V=$(echo ${{ github.ref_name }} | sed "s/^[v|V]//")
-          SHASUM_FILE=dist/artifacts/${{ github.ref_name }}/terraform-provider-rke_"$VERSION_NO_V"_SHA256SUMS
-          echo "$GPG_PASSPHRASE" | gpg --detach-sig --pinentry-mode loopback --passphrase-fd 0 --default-key "$GPG_KEY_ID" --output "$SHASUM_FILE".sig --sign "$SHASUM_FILE"
+          VERSION_NO_V="$(echo ${{ github.ref_name }} | tr -d 'v')"
+          SHASUM_FILE="dist/artifacts/${{ github.ref_name }}/terraform-provider-rancher2_${VERSION_NO_V}_SHA256SUMS"
+          echo '${{ env.GPG_PASSPHRASE }}' | gpg --detach-sig --pinentry-mode loopback --passphrase-fd 0 --output "${SHASUM_FILE}.sig" --sign "${SHASUM_FILE}"
 
       - name: GH release
         env:
