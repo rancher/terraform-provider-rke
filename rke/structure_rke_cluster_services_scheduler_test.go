@@ -18,6 +18,18 @@ func init() {
 		"arg_one": "one",
 		"arg_two": "two",
 	}
+	testRKEClusterServicesSchedulerConf.WindowsExtraArgs = map[string]string{
+		"arg_one": "one",
+		"arg_two": "two",
+	}
+	testRKEClusterServicesSchedulerConf.ExtraArgsArray = map[string][]string{
+		"arg1": {"v1", "v2"},
+		"arg2": {"v1", "v2"},
+	}
+	testRKEClusterServicesSchedulerConf.WindowsExtraArgsArray = map[string][]string{
+		"arg1": {"v1", "v2"},
+		"arg2": {"v1", "v2"},
+	}
 	testRKEClusterServicesSchedulerConf.ExtraBinds = []string{"bind_one", "bind_two"}
 	testRKEClusterServicesSchedulerConf.ExtraEnv = []string{"env_one", "env_two"}
 	testRKEClusterServicesSchedulerConf.Image = "image"
@@ -27,9 +39,15 @@ func init() {
 				"arg_one": "one",
 				"arg_two": "two",
 			},
-			"extra_binds": []interface{}{"bind_one", "bind_two"},
-			"extra_env":   []interface{}{"env_one", "env_two"},
-			"image":       "image",
+			"windows_extra_args": map[string]interface{}{
+				"arg_one": "one",
+				"arg_two": "two",
+			},
+			"extra_args_array":         "{\"arg1\":[\"v1\",\"v2\"],\"arg2\":[\"v1\",\"v2\"]}",
+			"windows_extra_args_array": "{\"arg1\":[\"v1\",\"v2\"],\"arg2\":[\"v1\",\"v2\"]}",
+			"extra_binds":              []interface{}{"bind_one", "bind_two"},
+			"extra_env":                []interface{}{"env_one", "env_two"},
+			"image":                    "image",
 		},
 	}
 }
@@ -47,7 +65,10 @@ func TestFlattenRKEClusterServicesScheduler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterServicesScheduler(tc.Input)
+		output, err := flattenRKEClusterServicesScheduler(tc.Input)
+		if err != nil {
+			t.Fatalf("Unexpected error from flattener: %v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
@@ -68,7 +89,10 @@ func TestExpandRKEClusterServicesScheduler(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := expandRKEClusterServicesScheduler(tc.Input)
+		output, err := expandRKEClusterServicesScheduler(tc.Input)
+		if err != nil {
+			t.Fatalf("Unexpected error from expander: %v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
