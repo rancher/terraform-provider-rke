@@ -1,9 +1,9 @@
-output "private_key" {
-  value = tls_private_key.node-key.private_key_pem
+output "ssh_username" {
+  value = var.ssh_username
 }
 
-output "ssh_username" {
-  value = "root"
+output "names" {
+  value = digitalocean_droplet.rke-node[*].name
 }
 
 output "addresses" {
