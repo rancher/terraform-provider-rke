@@ -1630,8 +1630,8 @@ github.com/opencontainers/runc v1.0.0-rc8.0.20190926000215-3e425f80a8c9/go.mod h
 github.com/opencontainers/runc v1.0.0-rc9/go.mod h1:qT5XzbpPznkRYVz/mWwUaVBUv2rmF59PVA73FjuZG0U=
 github.com/opencontainers/runc v1.0.0-rc93/go.mod h1:3NOsor4w32B2tC0Zbl8Knk4Wg84SM2ImC1fxBuqJ/H0=
 github.com/opencontainers/runc v1.0.2/go.mod h1:aTaHFFwQXuA71CiyxOdFFIorAoemI04suvGRQFzWTD0=
-github.com/opencontainers/runc v1.1.12 h1:BOIssBaW1La0/qbNZHXOOa71dZfZEQOzW7dqQf3phss=
-github.com/opencontainers/runc v1.1.12/go.mod h1:S+lQwSfncpBha7XTy/5lBwWgm5+y5Ma/O44Ekby9FK8=
+github.com/opencontainers/runc v1.1.14 h1:rgSuzbmgz5DUJjeSnw337TxDbRuqjs6iqQck/2weR6w=
+github.com/opencontainers/runc v1.1.14/go.mod h1:E4C2z+7BxR7GHXp0hAY53mek+x49X1LjPNeMTfRGvOA=
 github.com/opencontainers/runtime-spec v0.1.2-0.20190507144316-5b71a03e2700/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/runtime-spec v1.0.1/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/runtime-spec v1.0.2-0.20190207185410-29686dbc5559/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
@@ -1719,8 +1719,8 @@ github.com/rancher/lasso v0.0.0-20240430201833-6f3def65ffc5 h1:6K4RhfmCy7uxaw9Oz
 github.com/rancher/lasso v0.0.0-20240430201833-6f3def65ffc5/go.mod h1:7WkdfPEvWAdnHVioMUkhpZkshJzjDY62ocHVhcbw89M=
 github.com/rancher/norman v0.0.0-20240604183301-20cd23aadce1 h1:7g0yOiUGfT4zK4N9H0PSijnS/e2YrObi4Gj19JgE1L8=
 github.com/rancher/norman v0.0.0-20240604183301-20cd23aadce1/go.mod h1:sGnN5ayvAHLfInOFZ4N1fzZw1IMy3i+9PZA7IxlPsRg=
-github.com/rancher/rke v1.6.2 h1:ttGk77t5oe7bsiS7s7SOFmAl3PALYI5M2SQQenjKevk=
-github.com/rancher/rke v1.6.2/go.mod h1:5xRbf3L8PxqJRhABjYRfaBqbpVqAnqyH3maUNQEuwvk=
+github.com/rancher/rke v1.6.3 h1:jZByofLNK/hB+EQH4FxIZgrUO1HRNek4wuuOjTA7ZME=
+github.com/rancher/rke v1.6.3/go.mod h1:n9ys1XDbjh3BN7GYl9Vbu+zm4CWVSBvpRkBGiJ9JvIw=
 github.com/rancher/wrangler/v3 v3.0.0-rc2 h1:XGSPPp6GXELqlLvwJp5MsdqyCPu6SCA4UKJ7rQJzE40=
 github.com/rancher/wrangler/v3 v3.0.0-rc2/go.mod h1:f54hh7gFkwwbjsieT2b63FowzTU8FvrBonPe//0CIXo=
 github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
