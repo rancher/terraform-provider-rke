@@ -1,4 +1,42 @@
-### 1.5.0 (April 8, 2024)
+## v1.6.0 (November 4, 2024)
+
+FEATURES:
+
+ENHANCEMENTS:
+
+* Migrate to Github Actions by @HarrisonWAffel in https://github.com/rancher/terraform-provider-rke/pull/458
+* Replace 3rd party action with native CLI by @rancher-security-bot in https://github.com/rancher/terraform-provider-rke/pull/408
+* [v1.6] Bump Go to 1.22 and RKE to 1.6.2 by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/462
+
+BUG FIXES:
+
+* [1.6] fix CI by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/464
+* [1.6] fix env var in the GHA by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/466
+* [1.6] fix errors around signing the shasum file by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/467
+* [1.6] set the trust level non-interactively by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/468
+* [1.6] use the full 40-character fingerprint by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/469
+* use the first key by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/470
+* find and use the secret subkey fingerprint   by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/471
+* [1.6] fix CI error by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/472
+* fix the decoding issue in ci by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/473
+* update secret names used in CI  by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/474
+* [1.6] bump rke to v1.6.3 by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/478
+
+## v1.5.1 (November 4, 2024)
+
+FEATURES:
+
+ENHANCEMENTS:
+
+* [1.5] bump RKE to 1.5.13, update README by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/463
+* [1.5] bump RKE to v1.5.14 by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/477
+* Migrate to Github Actions by @HarrisonWAffel in https://github.com/rancher/terraform-provider-rke/pull/458
+
+BUG FIXES:
+
+* [1.5] fix CI  by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/465
+
+## 1.5.0 (April 8, 2024)
 
 FEATURES:
 
@@ -11,7 +49,7 @@ BUG FIXES:
 * Fix the issue that importing a cluster fails because `enable_cri_dockerd` is always set to the default value false. See [#432](https://github.com/rancher/terraform-provider-rke/issues/432)
 
 
-# 1.4.4 (March 14, 2024) 
+## 1.4.4 (March 14, 2024)
 
 FEATURES:
 
