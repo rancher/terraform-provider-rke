@@ -125,7 +125,8 @@ Branching the Provider
 
 The provider is branched to align with RKE versions:
 
-- `master` is aligned with RKE v1.6
+- `master` is aligned with RKE v1.7
+- `release/v1.6` is aligned with RKE v1.6
 - `release/v1.5` is aligned with RKE v1.5
 - `release/v1.4` is aligned with RKE v1.4
 - `release/v1.3` is aligned with RKE v1.3 
