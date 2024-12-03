@@ -1,3 +1,23 @@
+## v1.7.0 (December 3, 2024)
+
+FEATURES:
+
+ENHANCEMENTS:
+
+* Bump RKE to v1.7.0 by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/488
+
+BUG FIXES:
+
+## v1.6.1 (December 3, 2024)
+
+FEATURES:
+
+ENHANCEMENTS:
+
+* Bump RKE to v1.6.4 by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/486
+
+BUG FIXES:
+
 ## v1.6.0 (November 4, 2024)
 
 FEATURES:
@@ -21,6 +41,16 @@ BUG FIXES:
 * fix the decoding issue in ci by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/473
 * update secret names used in CI  by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/474
 * [1.6] bump rke to v1.6.3 by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/478
+
+## v1.5.2 (December 3, 2024)
+
+FEATURES:
+
+ENHANCEMENTS:
+
+* Bump RKE to v1.5.15 by @jiaqiluo in https://github.com/rancher/terraform-provider-rke/pull/487
+
+BUG FIXES:
 
 ## v1.5.1 (November 4, 2024)
 
