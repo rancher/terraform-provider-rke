@@ -362,5 +362,9 @@ func expandRKEClusterNetwork(p []interface{}) rancher.NetworkConfig {
 		obj.Plugin = v
 	}
 
-	return obj
+  if v, ok := in["enable_br_netfilter"].(bool); ok {
+		obj.EnableBrNetfilter = &v
+	}
+
+  return obj
 }
