@@ -249,12 +249,12 @@ func rkeClusterNetworkFields() map[string]*schema.Schema {
 			Description:  "Network provider plugin",
 			ValidateFunc: validation.StringInSlice(rkeClusterNetworkPluginList, true),
 		},
-    "enable_br_netfilter": {
-      Type:        schema.TypeBool,
-      Optional:    true,
-      Default:     true,
-      Description: "Enable/Disable br_netfilter on nodes",
-    }
-  }
+		"enable_br_netfilter": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			Description: "Enable/Disable br_netfilter on nodes",
+		},
+	}
 	return s
 }
