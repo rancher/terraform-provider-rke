@@ -492,6 +492,7 @@ The following attributes are exported:
 * `mtu` - (Optional) Network provider MTU. Default `0` (int)
 * `options` - (Optional/Computed) Network provider options (map)
 * `plugin` - (Optional) Network provider plugin. `calico`, `canal` (default), `flannel`, `none` and `weave` are supported. (string)
+* `enable_br_netfilter` - (Optional) Enable/Disable br_netfilter on nodes. Default `true` (bool)
 
 #### `calico_network_provider`
 

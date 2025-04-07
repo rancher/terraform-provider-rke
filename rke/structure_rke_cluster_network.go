@@ -162,6 +162,10 @@ func flattenRKEClusterNetwork(in rancher.NetworkConfig) []interface{} {
 		obj["aci_network_provider"] = flattenRKEClusterNetworkAci(in.AciNetworkProvider)
 	}
 
+	if in.EnableBrNetfilter != nil {
+		obj["enable_br_netfilter"] = in.EnableBrNetfilter
+	}
+
 	if in.MTU > 0 {
 		obj["mtu"] = in.MTU
 	}
@@ -356,6 +360,10 @@ func expandRKEClusterNetwork(p []interface{}) rancher.NetworkConfig {
 
 	if v, ok := in["plugin"].(string); ok && len(v) > 0 {
 		obj.Plugin = v
+	}
+
+	if v, ok := in["enable_br_netfilter"].(bool); ok {
+		obj.EnableBrNetfilter = &v
 	}
 
 	return obj
