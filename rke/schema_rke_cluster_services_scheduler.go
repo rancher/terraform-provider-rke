@@ -14,6 +14,22 @@ func rkeClusterServicesSchedulerFields() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Extra arguments that are added to the scheduler services",
 		},
+		"windows_extra_args": {
+			Type:        schema.TypeMap,
+			Optional:    true,
+			Computed:    true,
+			Description: "Extra arguments that are added to the scheduler services",
+		},
+		"extra_args_array": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "A JSON Representation of extra kube-api service arguments which can be passed multiple times",
+		},
+		"windows_extra_args_array": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "A JSON Representation of extra kube-api service arguments which can be passed multiple times for windows nodes",
+		},
 		"extra_binds": {
 			Type:        schema.TypeList,
 			Optional:    true,

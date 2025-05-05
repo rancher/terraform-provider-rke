@@ -169,6 +169,15 @@ EOL
         delete-collection-workers = 3
         v                         = 4
       }
+      # Add additional arguments multiple times for the kubernetes API service
+      # the expected format is a json encoded object of strings mapping to string arrays.
+      # This WILL OVERRIDE any existing defaults
+      extra_args_array = jsonencode(
+        {
+          service-account-key-file = ["/etc/kubernetes/ssl/kube-apiserver-key.pem"],
+          service-account-issuer   = ["example", "issuers", "here"]
+        }
+      )
     }
     kube_controller {
       # CIDR pool used to assign IP addresses to pods in the cluster

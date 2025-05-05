@@ -97,6 +97,15 @@ func toMapInterface(in map[string]string) map[string]interface{} {
 	return out
 }
 
+func jsonToMapStringSlice(in string) (map[string][]string, error) {
+	out := make(map[string][]string)
+	err := json.Unmarshal([]byte(in), &out)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func jsonToMapInterface(in string) (map[string]interface{}, error) {
 	out := make(map[string]interface{})
 	err := json.Unmarshal([]byte(in), &out)

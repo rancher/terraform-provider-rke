@@ -619,6 +619,9 @@ The following attributes are exported:
 * `creation` - (Optional/Computed) Creation option for etcd service (string)
 * `external_urls` - (Optional/Computed) External urls for etcd service (list)
 * `extra_args` - (Optional/Computed) Extra arguments for etcd service (map)
+* `windows_extra_args` - (Optional) Extra arguments for etcd service when running on windows (map)
+* `extra_args_array` - (Optional) Extra arguments for the etcd service which may be specified multiple times (json)
+* `windows_extra_args_array` - (Optional) Extra arguments for the etcd service running on windows nodes, which may be specified multiple times (json)
 * `extra_binds` - (Optional/Computed) Extra binds for etcd service (list)
 * `extra_env` - (Optional/Computed) Extra environment for etcd service (list)
 * `gid` - (Optional) Etcd service GID. Default: `0`. For Rancher v2.3.x and above (int)
@@ -707,6 +710,9 @@ The following attributes are exported:
 
 * `cluster_cidr` - (Optional/Computed) Cluster CIDR option for kube controller service (string)
 * `extra_args` - (Optional/Computed) Extra arguments for kube controller service (map)
+* `windows_extra_args` - (Optional) Extra arguments for kube controller service when running on windows (map)
+* `extra_args_array` - (Optional) Extra arguments for the kube controller service which may be specified multiple times (json)
+* `windows_extra_args_array` - (Optional) Extra arguments for the kube controller service running on windows nodes, which may be specified multiple times (json)
 * `extra_binds` - (Optional/Computed) Extra binds for kube controller service (list)
 * `extra_env` - (Optional/Computed) Extra environment for kube controller service (list)
 * `image` - (Optional/Computed) Docker image for kube controller service (string)
@@ -719,6 +725,9 @@ The following attributes are exported:
 * `cluster_dns_server` - (Optional/Computed) Cluster DNS Server option for kubelet service (string)
 * `cluster_domain` - (Optional) Cluster Domain option for kubelet service. Default `cluster.local` (string)
 * `extra_args` - (Optional/Computed) Extra arguments for kubelet service (map)
+* `windows_extra_args` - (Optional) Extra arguments for kubelet service when running on windows (map)
+* `extra_args_array` - (Optional) Extra arguments for the kubelet service which may be specified multiple times (json)
+* `windows_extra_args_array` - (Optional) Extra arguments for the kubelet service running on windows nodes, which may be specified multiple times (json)
 * `extra_binds` - (Optional/Computed) Extra binds for kubelet service (list)
 * `extra_env` - (Optional/Computed) Extra environment for kubelet service (list)
 * `fail_swap_on` - (Optional/Computed) Enable or disable failing when swap on is not supported (bool)
@@ -731,6 +740,9 @@ The following attributes are exported:
 ##### Arguments
 
 * `extra_args` - (Optional/Computed) Extra arguments for kubeproxy service (map)
+* `windows_extra_args` - (Optional) Extra arguments for kubeproxy service when running on windows (map)
+* `extra_args_array` - (Optional) Extra arguments for the kubeproxy service which may be specified multiple times (json)
+* `windows_extra_args_array` - (Optional) Extra arguments for the kubeproxy service running on windows nodes, which may be specified multiple times (json)
 * `extra_binds` - (Optional/Computed) Extra binds for kubeproxy service (list)
 * `extra_env` - (Optional/Computed) Extra environment for kubeproxy service (list)
 * `image` - (Optional/Computed) Docker image for kubeproxy service (string)
@@ -740,6 +752,9 @@ The following attributes are exported:
 ##### Arguments
 
 * `extra_args` - (Optional/Computed) Extra arguments for scheduler service (map)
+* `windows_extra_args` - (Optional) Extra arguments for scheduler service when running on windows (map)
+* `extra_args_array` - (Optional) Extra arguments for the scheduler service which may be specified multiple times (json)
+* `windows_extra_args_array` - (Optional) Extra arguments for the scheduler service running on windows nodes, which may be specified multiple times (json)
 * `extra_binds` - (Optional/Computed) Extra binds for scheduler service (list)
 * `extra_env` - (Optional/Computed) Extra environment for scheduler service (list)
 * `image` - (Optional/Computed) Docker image for scheduler service (string)

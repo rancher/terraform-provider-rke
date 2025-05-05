@@ -122,6 +122,21 @@ func rkeClusterServicesEtcdFields() map[string]*schema.Schema {
 			Optional: true,
 			Computed: true,
 		},
+		"windows_extra_args": {
+			Type:     schema.TypeMap,
+			Optional: true,
+			Computed: true,
+		},
+		"extra_args_array": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "A JSON Representation of extra kube-api service arguments which can be passed multiple times",
+		},
+		"windows_extra_args_array": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "A JSON Representation of extra kube-api service arguments which can be passed multiple times for windows nodes",
+		},
 		"extra_binds": {
 			Type:     schema.TypeList,
 			Optional: true,

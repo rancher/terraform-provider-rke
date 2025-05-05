@@ -24,6 +24,18 @@ func init() {
 		"arg_one": "one",
 		"arg_two": "two",
 	}
+	testRKEClusterServicesKubeletConf.WindowsExtraArgs = map[string]string{
+		"arg_one": "one",
+		"arg_two": "two",
+	}
+	testRKEClusterServicesKubeletConf.ExtraArgsArray = map[string][]string{
+		"arg1": {"v1", "v2"},
+		"arg2": {"v1", "v2"},
+	}
+	testRKEClusterServicesKubeletConf.WindowsExtraArgsArray = map[string][]string{
+		"arg1": {"v1", "v2"},
+		"arg2": {"v1", "v2"},
+	}
 	testRKEClusterServicesKubeletConf.ExtraBinds = []string{"bind_one", "bind_two"}
 	testRKEClusterServicesKubeletConf.ExtraEnv = []string{"env_one", "env_two"}
 	testRKEClusterServicesKubeletConf.Image = "image"
@@ -35,6 +47,12 @@ func init() {
 				"arg_one": "one",
 				"arg_two": "two",
 			},
+			"windows_extra_args": map[string]interface{}{
+				"arg_one": "one",
+				"arg_two": "two",
+			},
+			"extra_args_array":             "{\"arg1\":[\"v1\",\"v2\"],\"arg2\":[\"v1\",\"v2\"]}",
+			"windows_extra_args_array":     "{\"arg1\":[\"v1\",\"v2\"],\"arg2\":[\"v1\",\"v2\"]}",
 			"extra_binds":                  []interface{}{"bind_one", "bind_two"},
 			"extra_env":                    []interface{}{"env_one", "env_two"},
 			"fail_swap_on":                 true,
@@ -58,7 +76,10 @@ func TestFlattenRKEClusterServicesKubelet(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := flattenRKEClusterServicesKubelet(tc.Input)
+		output, err := flattenRKEClusterServicesKubelet(tc.Input)
+		if err != nil {
+			t.Fatalf("Unexpected error from flattener: %v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from flattener.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)
@@ -79,7 +100,10 @@ func TestExpandRKEClusterServicesKubelet(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		output := expandRKEClusterServicesKubelet(tc.Input)
+		output, err := expandRKEClusterServicesKubelet(tc.Input)
+		if err != nil {
+			t.Fatalf("Unexpected error from expander: %v", err)
+		}
 		if !reflect.DeepEqual(output, tc.ExpectedOutput) {
 			t.Fatalf("Unexpected output from expander.\nExpected: %#v\nGiven:    %#v",
 				tc.ExpectedOutput, output)

@@ -1,18 +1,38 @@
 package rke
 
 import (
+	"encoding/json"
 	rancher "github.com/rancher/rke/types"
 )
 
 // Flatteners
 
-func flattenRKEClusterServicesKubeproxy(in rancher.KubeproxyService) []interface{} {
+func flattenRKEClusterServicesKubeproxy(in rancher.KubeproxyService) ([]interface{}, error) {
 	obj := make(map[string]interface{})
 
 	if len(in.ExtraArgs) > 0 {
 		obj["extra_args"] = toMapInterface(in.ExtraArgs)
 	}
 
+	if len(in.WindowsExtraArgs) > 0 {
+		obj["windows_extra_args"] = toMapInterface(in.WindowsExtraArgs)
+	}
+
+	if len(in.ExtraArgsArray) > 0 {
+		j, err := json.Marshal(in.ExtraArgsArray)
+		if err != nil {
+			return nil, err
+		}
+		obj["extra_args_array"] = string(j)
+	}
+
+	if len(in.WindowsExtraArgsArray) > 0 {
+		j, err := json.Marshal(in.WindowsExtraArgsArray)
+		if err != nil {
+			return nil, err
+		}
+		obj["windows_extra_args_array"] = string(j)
+	}
 	if len(in.ExtraBinds) > 0 {
 		obj["extra_binds"] = toArrayInterface(in.ExtraBinds)
 	}
@@ -25,20 +45,40 @@ func flattenRKEClusterServicesKubeproxy(in rancher.KubeproxyService) []interface
 		obj["image"] = in.Image
 	}
 
-	return []interface{}{obj}
+	return []interface{}{obj}, nil
 }
 
 // Expanders
 
-func expandRKEClusterServicesKubeproxy(p []interface{}) rancher.KubeproxyService {
+func expandRKEClusterServicesKubeproxy(p []interface{}) (rancher.KubeproxyService, error) {
 	obj := rancher.KubeproxyService{}
 	if len(p) == 0 || p[0] == nil {
-		return obj
+		return obj, nil
 	}
 	in := p[0].(map[string]interface{})
 
 	if v, ok := in["extra_args"].(map[string]interface{}); ok && len(v) > 0 {
 		obj.ExtraArgs = toMapString(v)
+	}
+
+	if v, ok := in["windows_extra_args"].(map[string]interface{}); ok && len(v) > 0 {
+		obj.WindowsExtraArgs = toMapString(v)
+	}
+
+	if v, ok := in["extra_args_array"].(string); ok && len(v) != 0 {
+		array, err := jsonToMapStringSlice(v)
+		if err != nil {
+			return rancher.KubeproxyService{}, err
+		}
+		obj.ExtraArgsArray = array
+	}
+
+	if v, ok := in["windows_extra_args_array"].(string); ok && len(v) != 0 {
+		array, err := jsonToMapStringSlice(v)
+		if err != nil {
+			return rancher.KubeproxyService{}, err
+		}
+		obj.WindowsExtraArgsArray = array
 	}
 
 	if v, ok := in["extra_binds"].([]interface{}); ok && len(v) > 0 {
@@ -53,5 +93,5 @@ func expandRKEClusterServicesKubeproxy(p []interface{}) rancher.KubeproxyService
 		obj.Image = v
 	}
 
-	return obj
+	return obj, nil
 }

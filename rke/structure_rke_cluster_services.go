@@ -18,16 +18,37 @@ func flattenRKEClusterServices(in rancher.RKEConfigServices, p []interface{}) ([
 	if !ok {
 		v = []interface{}{}
 	}
-	obj["etcd"] = flattenRKEClusterServicesEtcd(in.Etcd, v)
+	obj["etcd"], _ = flattenRKEClusterServicesEtcd(in.Etcd, v)
+
 	kubeAPI, err := flattenRKEClusterServicesKubeAPI(in.KubeAPI)
 	if err != nil {
 		return []interface{}{obj}, err
 	}
 	obj["kube_api"] = kubeAPI
-	obj["kube_controller"] = flattenRKEClusterServicesKubeController(in.KubeController)
-	obj["kubelet"] = flattenRKEClusterServicesKubelet(in.Kubelet)
-	obj["kubeproxy"] = flattenRKEClusterServicesKubeproxy(in.Kubeproxy)
-	obj["scheduler"] = flattenRKEClusterServicesScheduler(in.Scheduler)
+
+	kubeController, err := flattenRKEClusterServicesKubeController(in.KubeController)
+	if err != nil {
+		return []interface{}{obj}, err
+	}
+	obj["kube_controller"] = kubeController
+
+	kubelet, err := flattenRKEClusterServicesKubelet(in.Kubelet)
+	if err != nil {
+		return []interface{}{obj}, err
+	}
+	obj["kubelet"] = kubelet
+
+	kubeproxy, err := flattenRKEClusterServicesKubeproxy(in.Kubeproxy)
+	if err != nil {
+		return []interface{}{obj}, err
+	}
+	obj["kubeproxy"] = kubeproxy
+
+	scheduler, err := flattenRKEClusterServicesScheduler(in.Scheduler)
+	if err != nil {
+		return []interface{}{obj}, err
+	}
+	obj["scheduler"] = scheduler
 
 	return []interface{}{obj}, nil
 }
@@ -58,19 +79,35 @@ func expandRKEClusterServices(p []interface{}) (rancher.RKEConfigServices, error
 	}
 
 	if v, ok := in["kube_controller"].([]interface{}); ok && len(v) > 0 {
-		obj.KubeController = expandRKEClusterServicesKubeController(v)
+		kubeController, err := expandRKEClusterServicesKubeController(v)
+		if err != nil {
+			return obj, err
+		}
+		obj.KubeController = kubeController
 	}
 
 	if v, ok := in["kubelet"].([]interface{}); ok && len(v) > 0 {
-		obj.Kubelet = expandRKEClusterServicesKubelet(v)
+		kubelet, err := expandRKEClusterServicesKubelet(v)
+		if err != nil {
+			return obj, err
+		}
+		obj.Kubelet = kubelet
 	}
 
 	if v, ok := in["kubeproxy"].([]interface{}); ok && len(v) > 0 {
-		obj.Kubeproxy = expandRKEClusterServicesKubeproxy(v)
+		kubeproxy, err := expandRKEClusterServicesKubeproxy(v)
+		if err != nil {
+			return obj, err
+		}
+		obj.Kubeproxy = kubeproxy
 	}
 
 	if v, ok := in["scheduler"].([]interface{}); ok && len(v) > 0 {
-		obj.Scheduler = expandRKEClusterServicesScheduler(v)
+		scheduler, err := expandRKEClusterServicesScheduler(v)
+		if err != nil {
+			return obj, err
+		}
+		obj.Scheduler = scheduler
 	}
 
 	return obj, nil
